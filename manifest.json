@@ -1,8 +1,8 @@
 {
-  "name": "A Kilenc Pecsét",
-  "short_name": "Kilenc Pecsét",
-  "description": "Felülnézetes akció-túlélő játék — kilenc hős, egyedi képességekkel.",
-  "start_url": "./kilencpecset-7.html",
+  "name": "The Lost Survivor",
+  "short_name": "Lost Survivor",
+  "description": "Felülnézetes akció-túlélő játék — tizenkét hős, egyedi képességekkel.",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "landscape",
