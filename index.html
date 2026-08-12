@@ -1275,6 +1275,11 @@ function musScheduleStep(step, t){
 function musTick(){
   const c = SND.ctx; if(!c) return;
   const spb = 60/((game && game.boss)?118:92)/2;   // nyolcad hossza (boss alatt gyorsabb tempó)
+  // Háttérben a böngésző erősen ritkítja a setInterval-t, így a következő ütem ideje
+  // (nextT) akár percekkel is lemaradhat az AudioContext órájától. Visszatéréskor az
+  // alábbi ciklus egyetlen menetben próbálta volna "bepótolni" az összes kimaradt
+  // ütemet — ezrével ütemezve hangot egyszerre. Ilyenkor egyszerűen a jelenhez igazítunk.
+  if(SND.mus.nextT < c.currentTime - 0.5){ SND.mus.nextT = c.currentTime + 0.05; SND.mus.step = 0; }
   while(SND.mus.nextT < c.currentTime + 0.35){
     musScheduleStep(SND.mus.step, SND.mus.nextT);
     SND.mus.nextT += spb; SND.mus.step = (SND.mus.step+1)%16;
@@ -2237,8 +2242,10 @@ function drawPlayer(g, p){
   });
   // fej
   drawPlayerHead(g, p.x, p.y, p.r*0.72, p.facing, p.head, skin.col);
-  // név
-  g.font='12px Trebuchet MS'; g.fillStyle='rgba(255,255,255,0.7)'; g.textAlign='center';
+  // név — a textBaseline-t is beállítjuk: a ládák/hordók rajzolása 'middle'-re állítja,
+  // és az örökölt érték miatt a név eddig elcsúszva jelent meg a fej fölött
+  g.font='12px Trebuchet MS'; g.fillStyle='rgba(255,255,255,0.7)';
+  g.textAlign='center'; g.textBaseline='alphabetic';
   g.fillText(p.name, p.x, p.y - p.r - 16);
   if(p.hidden) g.restore();
 }
@@ -3280,6 +3287,20 @@ function dodgeBullets(en, strength){
 /* =========================================================
    SZINTLÉPÉS
    ========================================================= */
+let _luFadeTimer = null, _luHideTimer = null;
+function showLevelBanner(){
+  const banner = document.getElementById('levelUpBanner');
+  clearTimeout(_luFadeTimer); clearTimeout(_luHideTimer);
+  banner.classList.remove('hidden');
+  banner.style.transition = ''; banner.style.opacity = 1;
+  _luFadeTimer = setTimeout(()=>{ banner.style.transition='opacity .6s'; banner.style.opacity=0; }, 1400);
+  _luHideTimer = setTimeout(()=>{ banner.classList.add('hidden'); banner.style.transition=''; }, 2000);
+}
+function hideLevelBanner(){
+  const banner = document.getElementById('levelUpBanner');
+  clearTimeout(_luFadeTimer); clearTimeout(_luHideTimer);
+  banner.classList.add('hidden'); banner.style.transition=''; banner.style.opacity=1;
+}
 function levelUp(){
   const p = game.player;
   p.level++; p.xp = Math.max(0, p.xp - p.xpNext); p.xpNext = Math.floor(p.xpNext*1.45);
@@ -3298,10 +3319,10 @@ function levelUp(){
   SFX.levelup();
   document.getElementById('luText').textContent = 'SZINT ' + p.level;
   document.getElementById('luSub').textContent = sub;
-  const banner = document.getElementById('levelUpBanner');
-  banner.classList.remove('hidden'); banner.style.opacity = 1;
-  setTimeout(()=>{ banner.style.transition='opacity .6s'; banner.style.opacity=0; }, 1400);
-  setTimeout(()=>{ banner.classList.add('hidden'); banner.style.transition=''; }, 2000);
+  // Két gyors szintlépésnél az ELSŐ időzítője elrejtette volna a MÁSODIK bannerét
+  // (egy nagy XP-orb-zápor után ez rendszeresen megtörtént) — ezért az elrejtést
+  // minden új szintlépés előtt visszavonjuk.
+  showLevelBanner();
 }
 /* =========================================================
    FRISSÍTÉS
@@ -3501,6 +3522,11 @@ function update(){
   // --- Csapdák/aknák (Vadász, Gépész) — az első ráérő ellenfelet sebzik és gyökeret eresztik ---
   game.traps.forEach(tr=>{
     if(!tr.armed) return;
+    // Élettartam: a ki nem váltott csapdák eddig örökre a pályán maradtak, és egy hosszú
+    // futamban felhalmozódtak a sarkokban — minden képkockában végigmérve az összes
+    // ellenfelet. 25 másodperc bőven elég ahhoz, hogy a lerakott csapda hasznos legyen.
+    tr.life = (tr.life===undefined ? 1500 : tr.life-1);
+    if(tr.life<=0){ tr.armed=false; return; }
     for(const en of game.enemies){
       if(dist(en.x,en.y,tr.x,tr.y) < tr.r+en.r){
         en.hp -= tr.dmg; en.hitFlash=8; en.frozen = Math.max(en.frozen||0, tr.root||50);
@@ -3948,6 +3974,10 @@ function nextChapter(){
   // repülő lövedékek / effektek / ellenfelek takarítása (endlessBtn minta)
   game.enemies=[]; game.enemyBullets=[]; game.bullets=[]; game.particles=[]; game.orbs=[];
   game.clouds=[]; game.beams=[]; game.fireballs=[]; game.meteors=[]; game.pendingSpawns=[]; game.slowT=0;
+  // az idézett egységek és a lerakott csapdák is az előző pályához tartoztak — eddig
+  // átúsztak az új fejezetbe, és a semmi közepén lebegve lövöldöztek tovább
+  game.turrets=[]; game.drones=[]; game.traps=[];
+  hideLevelBanner();
   // a fejezet-boss legyőzése "megerősíti" a hőst — részleges gyógyulás, és garantáltan élve lép tovább
   // (különben egy azonos frame-ben kapott halálos sérülés átúszna az új fejezetbe)
   const pl = game.player; pl.hp = Math.min(pl.maxHp, Math.max(pl.hp, 0) + pl.maxHp*0.4); pl.invuln = Math.max(pl.invuln, 30);
@@ -3998,6 +4028,11 @@ function goMenu(){
   document.getElementById('winScreen').classList.add('hidden');
   document.getElementById('deathScreen').classList.add('hidden');
   document.getElementById('pauseScreen').classList.add('hidden');
+  // a párbeszéd- és modális ablak nem tartozik a képernyő-váltóhoz, ezért menübe
+  // lépéskor nyitva maradhatott volna a menü fölött
+  document.getElementById('dialogueBox').classList.add('hidden');
+  closeModal();
+  hideLevelBanner();
   hideCombatUI();
   stopMusic();
   game = null;
@@ -4268,7 +4303,9 @@ function draw(){
   // csapdák/aknák — halványan látszó jelölés a talajon (nem teljesen láthatatlan, hogy fair legyen)
   game.traps.forEach(tr=>{
     if(!tr.armed) return;
-    ctx.save(); ctx.globalAlpha = 0.55 + 0.25*Math.sin(Date.now()/220);
+    // a lejárat előtti utolsó 3 másodpercben halványul, hogy látszódjon: mindjárt elmúlik
+    const fade = clamp((tr.life===undefined?1500:tr.life)/180, 0, 1);
+    ctx.save(); ctx.globalAlpha = (0.55 + 0.25*Math.sin(Date.now()/220)) * fade;
     ctx.beginPath(); ctx.arc(tr.x,tr.y,tr.r*0.55,0,PI2);
     ctx.strokeStyle='#c9a24a'; ctx.lineWidth=2; ctx.setLineDash([4,3]); ctx.stroke(); ctx.setLineDash([]);
     ctx.fillStyle='rgba(201,162,74,0.18)'; ctx.fill();
@@ -4348,8 +4385,17 @@ function draw(){
   if(game.boss){
     const b = game.boss;
     drawBoss(ctx, b, Math.atan2(p.y-b.y, p.x-b.x));
-    ctx.fillStyle='#1c2333'; ctx.fillRect(w/2-160,20,320,10);
-    ctx.fillStyle='#ff5c7c'; ctx.fillRect(w/2-160,20,320*clamp(b.hp/b.maxHp,0,1),10);
+    // A csík eddig fixen y=20-nál volt — pontosan a képernyő tetején középre rögzített
+    // szünet gomb mögött, ami kis kijelzőn eltakarta. Most a gomb alá kerül, a
+    // felülethez mért méretaránnyal, és ki is írjuk a boss nevét.
+    const bw = Math.min(320*uiScale, w*0.72), bx = w/2-bw/2;
+    const by = Math.round(56*uiScale) + 14;
+    ctx.fillStyle='rgba(10,14,20,0.65)'; ctx.fillRect(bx-2,by-2,bw+4,14);
+    ctx.fillStyle='#1c2333'; ctx.fillRect(bx,by,bw,10);
+    ctx.fillStyle = b.col || '#ff5c7c'; ctx.fillRect(bx,by,bw*clamp(b.hp/b.maxHp,0,1),10);
+    ctx.font=`bold ${Math.round(12*uiScale)}px Trebuchet MS`; ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+    ctx.fillStyle='rgba(255,255,255,0.9)';
+    ctx.fillText((b.name||'BOSS').toUpperCase(), w/2, by-5);
   }
 
   // ellenség golyók
