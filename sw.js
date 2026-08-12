@@ -1,9 +1,10 @@
-// A Kilenc Pecsét — service worker
+// THE LOST SURVIVOR — service worker
 // Célja: telepíthetőség (PWA) + alap offline működés. Nem szerver, csak a böngésző
 // saját cache-ét használja ezen az eszközön belül.
-const CACHE_NAME = 'kilencpecset-cache-v1';
+const CACHE_NAME = 'lostsurvivor-cache-v4';
 const PRECACHE = [
   './',
+  './index.html',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
@@ -12,11 +13,9 @@ const PRECACHE = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      // az aktuális HTML-t is elmentjük, bármi is a fájlneve
-      cache.add(new Request(self.registration.scope, { cache: 'reload' })).catch(()=>{});
-      return cache.addAll(PRECACHE.map(u => new Request(u, { cache: 'reload' }))).catch(()=>{});
-    })
+    caches.open(CACHE_NAME).then((cache) =>
+      cache.addAll(PRECACHE.map(u => new Request(u, { cache: 'reload' }))).catch(()=>{})
+    )
   );
   self.skipWaiting();
 });
@@ -30,17 +29,23 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Stratégia: hálózat előnyben (friss tartalom), ha nincs net, cache-ből szolgál ki —
-// így fejlesztés közben mindig a legfrissebbet látod, offline pedig még mindig működik.
+// Stratégia: MINDIG a hálózatot próbáljuk először, és kifejezetten a böngésző saját
+// HTTP-cache-ét is megkerüljük ('no-store') — így soha nem ragadhat be egy régi verzió.
+// Csak akkor szolgálunk ki a mentett másolatból, ha tényleg nincs internet.
 self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
+  const req = event.request;
+  if(req.method !== 'GET') return;
+  // csak a saját origin-ünket kezeljük — külső kérés (pl. felhő-mentés) menjen érintetlenül
+  if(new URL(req.url).origin !== self.location.origin) return;
   event.respondWith(
-    fetch(event.request)
+    fetch(req, { cache: 'no-store' })
       .then((resp) => {
         const copy = resp.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy)).catch(()=>{});
+        caches.open(CACHE_NAME).then((cache) => cache.put(req, copy)).catch(()=>{});
         return resp;
       })
-      .catch(() => caches.match(event.request).then((r) => r || caches.match('./')))
+      .catch(() => caches.match(req).then((r) =>
+        r || (req.mode === 'navigate' ? caches.match('./index.html').then(x => x || caches.match('./')) : undefined)
+      ))
   );
 });

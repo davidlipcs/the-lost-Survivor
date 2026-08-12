@@ -9,7 +9,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Kilenc Pecsét">
+<meta name="apple-mobile-web-app-title" content="Lost Survivor">
+<meta name="description" content="Felülnézetes akció-túlélő játék — tizenkét hős, egyedi képességekkel.">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" href="icon-192.png">
 <style>
@@ -46,7 +47,10 @@
   #hpLabel{ font-size:calc(12px*var(--ui-scale)); letter-spacing:1px; color:var(--dim); margin-bottom:4px; }
   #hpBarBg{ width:100%; height:calc(13px*var(--ui-scale)); background:#1c2333; border-radius:7px; overflow:hidden; border:1px solid #2a3348; }
   #hpBarFill{ height:100%; width:100%; background: linear-gradient(90deg, var(--accent2), #ff8a9d); transition: width .15s; }
-  #xpWrap{ width:calc(210px*var(--ui-scale)); max-width:44vw; margin-top:calc(6px*var(--ui-scale)); }
+  /* Az XP-sáv a HP-panel BELSEJÉBEN van, ezért a panel belső szélességét kell kitöltenie.
+     Korábban a külső panel méretét ismételte (210px*scale), így pontosan a panel bal
+     oldali belméretével lógott ki a keretből — minden kijelzőméreten látszott. */
+  #xpWrap{ width:100%; margin-top:calc(6px*var(--ui-scale)); }
   #xpBarBg{ width:100%; height:calc(7px*var(--ui-scale)); background:#1c2333; border-radius:5px; overflow:hidden; border:1px solid #2a3348; }
   #xpBarFill{ height:100%; width:0%; background: linear-gradient(90deg, var(--gold), #ffe9a8); transition: width .15s; }
   #lvlLabel{ font-size:calc(11px*var(--ui-scale)); color:var(--gold); margin-top:4px; letter-spacing:1px;}
@@ -267,6 +271,22 @@
     display:flex; gap:calc(5px*var(--ui-scale)); pointer-events:none; }
   #buffTray .buff{ font-size:calc(12px*var(--ui-scale)); background:rgba(18,24,38,0.85); border:1px solid #3a4560; border-radius:6px; padding:1px 5px; }
 
+  /* ---- Saját párbeszédablak a natív alert()/confirm() helyett ----
+     Teljes képernyős PWA-ban a böngésző saját ablaka kizökkent (és egyes
+     beágyazott nézetekben egyáltalán meg sem jelenik), ezért a vásárlás-
+     megerősítések a játék saját stílusában, a kontrollerrel is kezelhető
+     gombokkal jelennek meg. */
+  #modalBox{ position:absolute; inset:0; z-index:40; display:flex; align-items:center; justify-content:center;
+    padding:20px; background:rgba(4,5,8,0.82); }
+  #modalCard{ max-width:420px; width:100%; background:linear-gradient(165deg,#161c2a,#0c0f16);
+    border:2px solid rgba(110,231,255,0.35); border-radius:16px; padding:20px 22px; text-align:center;
+    box-shadow:0 18px 50px rgba(0,0,0,0.6); }
+  #modalTitle{ font-size:15px; font-weight:bold; color:var(--gold); letter-spacing:2px;
+    text-transform:uppercase; margin-bottom:10px; }
+  #modalText{ font-size:13.5px; line-height:1.6; color:var(--text); margin-bottom:16px; }
+  #modalBtns{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+  #modalBtns .bigBtn{ padding:10px 22px; font-size:14px; margin:0; }
+
   /* nagyobb tappintható elemek érintőn — de arányosan a mért játéktérhez, ne fixen */
   @media (pointer:coarse){
     .abIcon{ width:calc(46px*var(--ui-scale)); height:calc(46px*var(--ui-scale)); font-size:calc(19px*var(--ui-scale)); }
@@ -370,6 +390,7 @@
     </div>
     <div class="pickLabel" data-i18n="difficultyLabel">NEHÉZSÉGI SZINT</div>
     <div class="diffRow" id="diffRow"></div>
+    <button class="bigBtn" id="heroPlayBtn">▶ JÁTÉK INDÍTÁSA</button>
     <button class="bigBtn gold" id="storyProceedBtn">📖 SZTORI KEZDÉSE</button>
     <button class="bigBtn ghost" id="heroSelectBackBtn" style="margin-top:10px;" data-i18n="backBtn">Vissza a főmenübe</button>
   </div>
@@ -425,6 +446,14 @@
     <div class="storyBox" id="winText"></div>
     <button class="bigBtn gold" id="endlessBtn">VÉGTELEN MÓD FOLYTATÁSA</button>
     <button class="bigBtn" id="restartBtnWin">ÚJ JÁTÉK</button>
+  </div>
+
+  <div id="modalBox" class="hidden">
+    <div id="modalCard">
+      <div id="modalTitle"></div>
+      <div id="modalText"></div>
+      <div id="modalBtns"></div>
+    </div>
   </div>
 
   <div id="deathScreen" class="overlay hidden">
@@ -490,6 +519,12 @@ function computeUiScale(){
   document.documentElement.style.setProperty('--ui-scale', uiScale.toFixed(3));
 }
 let safeTop = 92, safeBottom = 150;
+// Az érintős botkormányok aktívak-e. Külön jelzőben tartjuk (nem az `input` objektumból
+// olvassuk), mert az updateSafeMargins() már az első resize()-kor lefut — jóval azelőtt,
+// hogy az `input` const létrejönne. A korábbi `typeof input` vizsgálat ilyenkor
+// ReferenceError-t dobott (a let/const "temporal dead zone"-ja miatt a typeof sem védett),
+// amit a try/catch elnyelt — így viszont a safeBottom értékadása is kimaradt.
+let touchControlsActive = false;
 function updateSafeMargins(){
   try{
     const hud = document.getElementById('hud');
@@ -503,7 +538,7 @@ function updateSafeMargins(){
       const r = bar.getBoundingClientRect();
       if(r.height>4) bottom = Math.max(bottom, Math.round(window.innerHeight - r.top + 16*uiScale));
     }
-    if(typeof input!=='undefined' && input.touchMode) bottom = Math.max(bottom, Math.round(130*uiScale));
+    if(touchControlsActive) bottom = Math.max(bottom, Math.round(130*uiScale));
     safeBottom = bottom;
   }catch(e){}
 }
@@ -609,10 +644,23 @@ function generateGroundTexture(w, h){
   tx.fillStyle = vg; tx.fillRect(0,0,w,h);
   groundTexture = tc;
 }
+let lastViewW = 0, lastViewH = 0;
 function resize(){
   const vv = window.visualViewport;
   const w = vv ? Math.round(vv.width) : window.innerWidth;
   const h = vv ? Math.round(vv.height) : window.innerHeight;
+  if(w<=0 || h<=0) return;
+
+  // A mobil szoftverbillentyűzet megnyitása is visualViewport-resize-t szül (a névmezőnél).
+  // Ilyenkor NEM méretezzük át a játékteret a billentyűzet fölött maradt keskeny sávra —
+  // különben gépelés közben újragenerálódna a teljes talaj-textúra, és beugrálna a pálya.
+  const ae = document.activeElement;
+  if(ae && ae.tagName==='INPUT' && lastViewH>0 && h < lastViewH*0.85) return;
+
+  // ha semmi nem változott, ne nyúljunk a canvas-hoz: a canvas.width újraírása
+  // önmagában is törli a képet és eldobja a rajzolási állapotot
+  if(w===lastViewW && h===lastViewH) return;
+  lastViewW = w; lastViewH = h;
 
   document.documentElement.style.width = w+'px';
   document.documentElement.style.height = h+'px';
@@ -628,6 +676,8 @@ function resize(){
   computeUiScale();
   updateSafeMargins();
   generateGroundTexture(w,h);
+  // a sztori-pálya elemei normalizált koordinátákon ülnek — az új mérethez igazítjuk őket
+  if(typeof relayoutChapter==='function') relayoutChapter();
 }
 window.addEventListener('resize', resize);
 window.addEventListener('orientationchange', ()=>setTimeout(resize, 300));
@@ -781,7 +831,10 @@ document.getElementById('langToggleBtn').addEventListener('click', ()=>{
 })();
 
 const PI2 = Math.PI*2;
-function dist(ax,ay,bx,by){ return Math.hypot(ax-bx, ay-by); }
+// A dist() a játék legforróbb függvénye (AI, ütközés, célzás — képkockánként ezrek).
+// A Math.hypot túlcsordulás-biztos, ezért jóval lassabb a sima gyökvonásnál; a pálya
+// koordinátái viszont néhány ezer pixelen belül vannak, ahol ez a védelem sosem számít.
+function dist(ax,ay,bx,by){ const dx=ax-bx, dy=ay-by; return Math.sqrt(dx*dx+dy*dy); }
 function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
 // forgatott lokális rajzoláshoz: (0,0) a középpont, +x = "előre" (facing irány)
 function withRot(g,x,y,a,fn){ g.save(); g.translate(x,y); g.rotate(a); fn(); g.restore(); }
@@ -844,7 +897,21 @@ function levelCoinReward(lvl){
   const capped = Math.min(lvl, REWARD_LADDER_MAX);
   return Math.round(20 + capped*4);   // fokozatosan egyre nagyobb jutalom szintenként
 }
-function saveProfile(){ try{ localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); }catch(e){} if(typeof pantryQueueSave==='function') pantryQueueSave(); }
+/* A mentés a localStorage-ba szinkron, blokkoló művelet (JSON.stringify + lemezre írás).
+   Játék közben viszont sűrűn hívódik — minden pecsét-használatnál és küldetés-lépésnél —,
+   ami látható akadást okozott. Ezért az írásokat összevonjuk: a memóriabeli állapot azonnal
+   frissül, a lemezre írás pedig egy rövid késleltetés után, egyszer történik meg.
+   Kilépéskor/háttérbe váltáskor azonnal kiírjuk, hogy semmi ne vesszen el. */
+let _profileSaveTimer = null, _heroStatsSaveTimer = null;
+function flushProfileSave(){
+  if(_profileSaveTimer){ clearTimeout(_profileSaveTimer); _profileSaveTimer = null; }
+  try{ localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); }catch(e){}
+  if(typeof pantryQueueSave==='function') pantryQueueSave();
+}
+function saveProfile(){
+  if(_profileSaveTimer) return;
+  _profileSaveTimer = setTimeout(flushProfileSave, 700);
+}
 function awardXp(a){
   const beforeLevel = profileLevel();
   profile.xp = (profile.xp||0) + Math.max(0,Math.round(a));
@@ -950,7 +1017,19 @@ function buyAbilityUpgrade(id){
 const HERO_STATS_KEY = 'kilencpecset_herostats_v1';
 let heroStats = { plays:{}, mult:{}, abilityUses:{}, abilityMult:{}, lastCheck:'' };
 try{ const s=localStorage.getItem(HERO_STATS_KEY); if(s) heroStats = Object.assign({plays:{},mult:{},abilityUses:{},abilityMult:{},lastCheck:''}, JSON.parse(s)); }catch(e){}
-function saveHeroStats(){ try{ localStorage.setItem(HERO_STATS_KEY, JSON.stringify(heroStats)); }catch(e){} if(typeof pantryQueueSave==='function') pantryQueueSave(); }
+function flushHeroStatsSave(){
+  if(_heroStatsSaveTimer){ clearTimeout(_heroStatsSaveTimer); _heroStatsSaveTimer = null; }
+  try{ localStorage.setItem(HERO_STATS_KEY, JSON.stringify(heroStats)); }catch(e){}
+  if(typeof pantryQueueSave==='function') pantryQueueSave();
+}
+function saveHeroStats(){
+  if(_heroStatsSaveTimer) return;
+  _heroStatsSaveTimer = setTimeout(flushHeroStatsSave, 700);
+}
+// minden még ki nem írt mentés azonnali lemezre írása (háttérbe váltás / bezárás előtt)
+function flushAllSaves(){ flushProfileSave(); flushHeroStatsSave(); }
+window.addEventListener('pagehide', flushAllSaves);
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden) flushAllSaves(); });
 
 /* =========================================================
    ADMIN-FELHASZNÁLÓNÉV — nincs szerver, nincs jelszó: ha a karakter
@@ -959,16 +1038,26 @@ function saveHeroStats(){ try{ localStorage.setItem(HERO_STATS_KEY, JSON.stringi
    így nem kell külön "teszt" verziót fenntartani.
    ========================================================= */
 const ADMIN_USERNAMES = ['davidlipcs1234'];
-function isAdminUser(){
-  const el = document.getElementById('nameInput');
-  const n = (el ? el.value : '').trim().toLowerCase();
-  return ADMIN_USERNAMES.includes(n);
+const nameInputEl = document.getElementById('nameInput');
+// Az eredmény gyorsítótárazva van: az isAdminUser() a kártya- és pecsét-rajzolás közben
+// elemenként hívódik, és a DOM-olvasás + string-műveletek ott feleslegesen ismétlődnének.
+let _adminCached = false;
+function refreshAdminCache(){
+  _adminCached = ADMIN_USERNAMES.includes((nameInputEl ? nameInputEl.value : '').trim().toLowerCase());
 }
-// gépelés közben azonnal frissítse a zárolás-jelzéseket, ne csak képernyőváltáskor
-document.getElementById('nameInput').addEventListener('input', ()=>{
-  if(typeof renderClassCards==='function') renderClassCards();
-  if(typeof renderMapCards==='function') renderMapCards();
-  if(typeof buildLoadoutUI==='function') buildLoadoutUI();
+refreshAdminCache();
+function isAdminUser(){ return _adminCached; }
+// gépelés közben frissítse a zárolás-jelzéseket, ne csak képernyőváltáskor — de
+// késleltetve: minden leütésre 12 hőskártya-portré újrarajzolása akadóvá tette a gépelést
+let _nameRerenderTimer = null;
+nameInputEl.addEventListener('input', ()=>{
+  refreshAdminCache();
+  clearTimeout(_nameRerenderTimer);
+  _nameRerenderTimer = setTimeout(()=>{
+    if(typeof renderClassCards==='function') renderClassCards();
+    if(typeof renderMapCards==='function') renderMapCards();
+    if(typeof buildLoadoutUI==='function') buildLoadoutUI();
+  }, 220);
 });
 (function initPantryUi(){
   const btn = document.getElementById('pantryLoadBtn');
@@ -1189,6 +1278,11 @@ function musScheduleStep(step, t){
 function musTick(){
   const c = SND.ctx; if(!c) return;
   const spb = 60/((game && game.boss)?118:92)/2;   // nyolcad hossza (boss alatt gyorsabb tempó)
+  // Háttérben a böngésző erősen ritkítja a setInterval-t, így a következő ütem ideje
+  // (nextT) akár percekkel is lemaradhat az AudioContext órájától. Visszatéréskor az
+  // alábbi ciklus egyetlen menetben próbálta volna "bepótolni" az összes kimaradt
+  // ütemet — ezrével ütemezve hangot egyszerre. Ilyenkor egyszerűen a jelenhez igazítunk.
+  if(SND.mus.nextT < c.currentTime - 0.5){ SND.mus.nextT = c.currentTime + 0.05; SND.mus.step = 0; }
   while(SND.mus.nextT < c.currentTime + 0.35){
     musScheduleStep(SND.mus.step, SND.mus.nextT);
     SND.mus.nextT += spb; SND.mus.step = (SND.mus.step+1)%16;
@@ -1506,6 +1600,7 @@ let ultKey = 'v';
 let listeningSlot = null;    // képesség-id, 'ult', vagy null — épp billentyűre vár
 const MAX_SLOTS = 5;
 
+const TOTAL_SEALS = 9;     // a teljes hadjárat pecsétjeinek száma (a történet kerete)
 const MAX_WAVES = 12;      // ennyi rendes hullám után jön a fő boss
 const MINIBOSS_EVERY = 8;  // végtelen módban ennyi hullámonként jön egy mini-boss
 
@@ -1619,12 +1714,20 @@ function setPadFocus(el){
     if(padFocusEl.scrollIntoView) padFocusEl.scrollIntoView({ block:'nearest' });
   }
 }
+// A fókuszálható elemek gyökere: ha épp modális ablak vagy sztori-párbeszéd van nyitva,
+// az kap elsőbbséget — különben a mögötte lévő menü gombjaira lehetne ugrani a kontrollerrel.
+function padFocusRoot(){
+  for(const id of ['modalBox','dialogueBox']){
+    const el = document.getElementById(id);
+    if(el && !el.classList.contains('hidden')) return el;
+  }
+  const scr = SCREENS.find(id=>{ const el=document.getElementById(id); return el && !el.classList.contains('hidden'); });
+  return scr ? document.getElementById(scr) : null;
+}
 // az épp látható képernyő kattintható elemei
 function padFocusables(){
-  const scr = SCREENS.find(id=>{ const el=document.getElementById(id); return el && !el.classList.contains('hidden'); });
-  if(!scr) return [];
-  const root = document.getElementById(scr);
-  if(!root.querySelectorAll) return [];
+  const root = padFocusRoot();
+  if(!root || !root.querySelectorAll) return [];
   return Array.from(root.querySelectorAll(
     '.swatch, .headOpt, .classCard:not(.locked), .abCell:not(.locked), .diffBtn, .keyBtn, button.bigBtn'))
     .filter(el=>!el.classList.contains('hidden'));
@@ -1660,14 +1763,25 @@ function padActivate(){
     if(!padFocusEl || !els2.includes(padFocusEl)) setPadFocus(els2[Math.min(idx, els2.length-1)] || null);
     return;
   }
-  const scr = SCREENS.find(id=>{ const el=document.getElementById(id); return el && !el.classList.contains('hidden'); });
-  if(scr==='startScreen' || scr==='mapScreen') setPadFocus(els[0] || null);
+  const root = padFocusRoot();
+  const rootId = root ? root.id : '';
+  // modális ablak / párbeszéd nyitva: mindig a saját gombjaira fókuszálunk, sosem a háttérre
+  if(rootId==='modalBox' || rootId==='dialogueBox'){ setPadFocus(els[0] || null); return; }
+  if(rootId==='startScreen' || rootId==='mapScreen') setPadFocus(els[0] || null);
   else padConfirm();
 }
 // B/Kör: vissza / folytatás
 function padBack(){
   if(game && game.state==='playing') return;
   const vis = id => !document.getElementById(id).classList.contains('hidden');
+  // nyitott megerősítő ablakban a B a "Mégse" (az utolsó gomb), párbeszédben nem lép ki
+  if(vis('modalBox')){
+    const btns = document.getElementById('modalBtns');
+    const last = btns && btns.lastChild;
+    if(last) last.click(); else closeModal();
+    return;
+  }
+  if(vis('dialogueBox')) return;
   if(vis('pauseScreen')) document.getElementById('resumeBtn').click();
   else if(vis('mapScreen')) document.getElementById('mapBackBtn').click();
 }
@@ -1686,6 +1800,22 @@ window.addEventListener('keydown', e=>{
   if((k==='escape' || k==='p') && game) togglePause();
 });
 window.addEventListener('keyup', e=> keys[e.key.toLowerCase()] = false);
+// Ha az ablak elveszíti a fókuszt (alt-tab, értesítés, másik app), a keyup MÁR NEM érkezik
+// meg — a lenyomott gomb "beragad", és visszatéréskor a karakter magától fut/lő tovább.
+// Ezért fókuszvesztéskor minden bemenetet nullázunk.
+function releaseAllInput(){
+  keys = {};
+  mouse.down = false;
+  resetSticks();
+}
+window.addEventListener('blur', releaseAllInput);
+// Háttérbe váltáskor automatikus szünet — telefonon eddig a játék tovább futott
+// a képernyő mögött, és gyakran halállal tértél vissza.
+document.addEventListener('visibilitychange', ()=>{
+  if(!document.hidden) return;
+  releaseAllInput();
+  if(game && game.state==='playing') togglePause();
+});
 canvas.addEventListener('mousemove', e=>{ mouse.x = e.clientX; mouse.y = e.clientY; });
 canvas.addEventListener('mousedown', ()=> mouse.down = true);
 window.addEventListener('mouseup', ()=> mouse.down = false);
@@ -1695,7 +1825,7 @@ const STICK_MAX = 72;
 function stickZone(x){ return x < window.innerWidth/2 ? 'left' : 'right'; }
 canvas.addEventListener('pointerdown', e=>{
   if(e.pointerType !== 'touch') return;
-  input.touchMode = true;
+  if(!input.touchMode){ input.touchMode = true; touchControlsActive = true; updateSafeMargins(); }
   const x=e.clientX, y=e.clientY, zone=stickZone(x);
   const s = input[zone];
   // ha már foglalt a fél, az új érintés veszi át (nem marad "halott" botkormány)
@@ -2115,8 +2245,10 @@ function drawPlayer(g, p){
   });
   // fej
   drawPlayerHead(g, p.x, p.y, p.r*0.72, p.facing, p.head, skin.col);
-  // név
-  g.font='12px Trebuchet MS'; g.fillStyle='rgba(255,255,255,0.7)'; g.textAlign='center';
+  // név — a textBaseline-t is beállítjuk: a ládák/hordók rajzolása 'middle'-re állítja,
+  // és az örökölt érték miatt a név eddig elcsúszva jelent meg a fej fölött
+  g.font='12px Trebuchet MS'; g.fillStyle='rgba(255,255,255,0.7)';
+  g.textAlign='center'; g.textBaseline='alphabetic';
   g.fillText(p.name, p.x, p.y - p.r - 16);
   if(p.hidden) g.restore();
 }
@@ -2192,6 +2324,12 @@ function drawEnemyFace(g, en, face){
   });
 }
 
+// A canvas árnyék-elmosása (shadowBlur) messze a legdrágább rajzoló-művelet: minden
+// ellenfélnél kétszer is szerepelt (aura + perem). Zsúfolt hullámoknál ez egyedül képes
+// beszakítani a képkocka-időt gyengébb telefonon, ezért sok ellenfélnél kikapcsoljuk —
+// a sziluett és a típus-szín ilyenkor is megkülönböztethetővé tesz mindenkit.
+let lowFx = false;
+
 // --- típusonként ELTÉRŐ test-sziluett: alakról egy pillantás alatt felismerhető ---
 function drawEnemyBody(g, en, face){
   const R = en.r;
@@ -2200,9 +2338,10 @@ function drawEnemyBody(g, en, face){
   // azonnal jelzi a típust a színén keresztül, mielőtt a részletek kivehetők lennének
   const pulse = 0.55 + 0.25*Math.sin(Date.now()/260 + en.x*0.05);
   g.save();
-  g.globalAlpha = pulse*0.5;
+  g.globalAlpha = pulse*(lowFx?0.32:0.5);
   g.beginPath(); g.arc(en.x,en.y,R*1.55,0,PI2);
-  g.fillStyle = en.color; g.shadowColor = en.color; g.shadowBlur = R*0.9;
+  g.fillStyle = en.color;
+  if(!lowFx){ g.shadowColor = en.color; g.shadowBlur = R*0.9; }
   g.fill();
   g.restore();
   g.save();
@@ -2285,6 +2424,45 @@ function drawStickHint(g, x, y, col, label){
   g.restore();
 }
 /* =========================================================
+   SAJÁT ÜZENET-/MEGERŐSÍTŐ ABLAK
+   A natív alert()/confirm() teljes képernyős PWA-ban kizökkent, a fő szálat
+   megállítja, és beágyazott nézetekben (pl. alkalmazáson belüli böngésző)
+   akár teljesen le is lehet tiltva — ilyenkor a vásárlás megerősítés nélkül,
+   némán elmaradt volna. Ez a változat a játék saját stílusában jelenik meg,
+   billentyűzetről és kontrollerről is használható.
+   ========================================================= */
+const modalBoxEl = document.getElementById('modalBox');
+function closeModal(){
+  modalBoxEl.classList.add('hidden');
+  document.getElementById('modalBtns').innerHTML = '';
+  if(typeof setPadFocus==='function') setPadFocus(null);
+}
+function showModal(title, html, buttons){
+  document.getElementById('modalTitle').textContent = title || '';
+  document.getElementById('modalText').innerHTML = html || '';
+  const box = document.getElementById('modalBtns'); box.innerHTML='';
+  (buttons && buttons.length ? buttons : [{label:'Rendben'}]).forEach(b=>{
+    const btn = document.createElement('button');
+    btn.className = 'bigBtn' + (b.style ? ' '+b.style : '');
+    btn.textContent = b.label;
+    btn.addEventListener('click', ()=>{ closeModal(); if(b.action) b.action(); });
+    box.appendChild(btn);
+  });
+  modalBoxEl.classList.remove('hidden');
+  if(typeof pad!=='undefined' && pad.connected && typeof setPadFocus==='function'){
+    setPadFocus(box.firstChild || null);
+  }
+}
+function gameAlert(msg, title){ showModal(title || 'Figyelem', msg, [{label:'Rendben'}]); }
+function gameConfirm(msg, onYes, opts){
+  const o = opts || {};
+  showModal(o.title || 'Megerősítés', msg, [
+    { label:o.yes || 'Igen', style:o.yesStyle || 'gold', action:onYes },
+    { label:o.no  || 'Mégse', style:'ghost' },
+  ]);
+}
+
+/* =========================================================
    MENÜ UI
    ========================================================= */
 const colorRow = document.getElementById('colorRow');
@@ -2350,19 +2528,20 @@ function renderHeroLooks(){
     wrap.addEventListener('click', ()=>{
       if(!isSkinUnlocked(chosenClass, i)){
         if((profile.coins||0) < sk.price){
-          alert(`Nincs elég pénzed ehhez a kinézethez — ${sk.price} 💰 kell, neked ${profile.coins||0} van.`);
+          gameAlert(`Nincs elég pénzed ehhez a kinézethez — <b>${sk.price} 💰</b> kell, neked <b>${profile.coins||0} 💰</b> van.`, 'Kevés a pénz');
           return;
         }
-        if(!confirm(`Megveszed ezt a kinézetet — "${sk.label}" — ${sk.price} 💰-ért?`)) return;
-        buySkin(chosenClass, i);
-        renderProfile();
+        gameConfirm(`Megveszed ezt a kinézetet — <b>„${sk.label}"</b> — <b>${sk.price} 💰</b>-ért?`, ()=>{
+          buySkin(chosenClass, i);
+          chosenSkin=i; renderHeroLooks(); drawPreview(); renderHeroDetail(); renderProfile();
+        }, { title:'Kinézet vásárlása', yes:'Megveszem' });
+        return;
       }
       chosenSkin=i; renderHeroLooks(); drawPreview(); renderHeroDetail();
     });
     heroLookRow.appendChild(wrap);
   });
 }
-renderHeroLooks();
 // kezdéskor is essen egybe az alapértelmezett harcos (tank) első kinézetével
 renderHeadOptions(); renderHeroLooks(); renderHeroDetail();
 
@@ -2507,10 +2686,14 @@ function renderHeroDetail(){
       if(ownedTier>=t){ return; }   // már megvan
       if(t !== ownedTier+1){ return; }   // csak sorban lehet fejleszteni
       const cost = HERO_TIER_COSTS[t-1];
-      if((profile.shards||0) < cost){ alert(`Nincs elég kristályod — ${cost} 🔷 kell, neked ${profile.shards||0} van. Kristályt a napi küldetésekből kapsz.`); return; }
-      if(!confirm(`Fejleszted "${c.label}"-t a(z) ${t}. szintre ${cost} 🔷-ért?`)) return;
-      buyHeroTier(id);
-      renderHeroDetail(); renderProfile();
+      if((profile.shards||0) < cost){
+        gameAlert(`Nincs elég kristályod — <b>${cost} 🔷</b> kell, neked <b>${profile.shards||0} 🔷</b> van.<br>Kristályt a napi küldetésekből kapsz.`, 'Kevés a kristály');
+        return;
+      }
+      gameConfirm(`Fejleszted <b>„${c.label}"</b>-t a(z) <b>${t}. szintre</b> <b>${cost} 🔷</b>-ért?<br><span style="color:var(--dim);font-size:12px;">+5% élet és sebzés szintenként</span>`, ()=>{
+        buyHeroTier(id);
+        renderHeroDetail(); renderProfile();
+      }, { title:'Hős fejlesztése', yes:'Fejlesztés' });
     });
   });
 }
@@ -2613,13 +2796,17 @@ function buildLoadoutUI(){
       upgEl.addEventListener('click', (ev)=>{
         ev.stopPropagation();
         const cur = profile.abilityUpgrades[id]||0;
-        if(isAdminUser()){ alert('Admin: ez a pecsét már a legmagasabb (teszt) szinten van.'); return; }
-        if(cur>=3){ alert(`"${ab.label}" már a legmagasabb (3.) fejlesztési szinten van.`); return; }
+        if(isAdminUser()){ gameAlert('Admin: ez a pecsét már a legmagasabb (teszt) szinten van.', 'Admin'); return; }
+        if(cur>=3){ gameAlert(`<b>„${ab.label}"</b> már a legmagasabb (3.) fejlesztési szinten van.`, 'Kész'); return; }
         const cost = ABILITY_UPGRADE_COSTS[cur];
-        if((profile.shards||0) < cost){ alert(`Nincs elég kristályod — ${cost} 🔷 kell, neked ${profile.shards||0} van. Kristályt a napi küldetésekből kapsz.`); return; }
-        if(!confirm(`Fejleszted "${ab.label}"-t a(z) ${cur+1}. szintre ${cost} 🔷-ért? (+8% erő szintenként)`)) return;
-        buyAbilityUpgrade(id);
-        buildLoadoutUI(); renderProfile();
+        if((profile.shards||0) < cost){
+          gameAlert(`Nincs elég kristályod — <b>${cost} 🔷</b> kell, neked <b>${profile.shards||0} 🔷</b> van.<br>Kristályt a napi küldetésekből kapsz.`, 'Kevés a kristály');
+          return;
+        }
+        gameConfirm(`Fejleszted <b>„${ab.label}"</b>-t a(z) <b>${cur+1}. szintre</b> <b>${cost} 🔷</b>-ért?<br><span style="color:var(--dim);font-size:12px;">+8% erő szintenként</span>`, ()=>{
+          buyAbilityUpgrade(id);
+          buildLoadoutUI(); renderProfile();
+        }, { title:'Pecsét fejlesztése', yes:'Fejlesztés' });
       });
     }
     abilityGrid.appendChild(cell);
@@ -2682,7 +2869,17 @@ document.getElementById('ladderToggleBtnTL').addEventListener('click', ()=>{
   renderRewardLadder();
 });
 document.getElementById('ladderBackBtn').addEventListener('click', ()=> showScreen('startScreen'));
-document.getElementById('heroSelectOpenBtn').addEventListener('click', ()=> showScreen('heroSelectScreen'));
+/* A hős-választó képernyőt két irányból lehet elérni: a "Hős kiválasztása" gombbal
+   (kampányhoz) és a "Sztori mód" gombbal. Korábban mindkét esetben csak a
+   "SZTORI KEZDÉSE" gomb látszott, így a kampányból érkezve nem volt egyértelmű,
+   mivel lehet elindulni. Most a képernyő ahhoz igazodik, honnan jöttél. */
+function openHeroSelect(forStory){
+  startMode = forStory ? 'story' : 'campaign';
+  document.getElementById('storyProceedBtn').classList.toggle('hidden', !forStory);
+  document.getElementById('heroPlayBtn').classList.toggle('hidden', forStory);
+  showScreen('heroSelectScreen');
+}
+document.getElementById('heroSelectOpenBtn').addEventListener('click', ()=> openHeroSelect(false));
 document.getElementById('heroSelectBackBtn').addEventListener('click', ()=> showScreen('startScreen'));
 
 equipDefaults();
@@ -2759,6 +2956,9 @@ const CHAPTERS = [
 ];
 let selectedChapter = 0;     // épp kiválasztott/aktív fejezet indexe
 let startMode = 'campaign';  // 'campaign' | 'story' — a resetGame ezt olvassa
+// Ettől a fejezettől kezdve veled tart a társ. A fejezet id-jéből számoljuk, hogy egy
+// későbbi átrendezés (új fejezet beszúrása) ne csússzon el a történettől.
+const COMPANION_JOIN_CHAPTER = Math.max(1, CHAPTERS.findIndex(c=>c.id==='farm'));
 
 /* =========================================================
    KARAKTER / JÁTÉK LÉTREHOZÁSA
@@ -2829,7 +3029,7 @@ function resetGame(){
   }
   game = {
     player: makePlayer(name, chosenColor, chosenHead),
-    companion: null,   // a barát csak a Farm fejezetnél (2. pálya) csatlakozik, ne az induláskor
+    companion: null,   // az 1. pályán még egyedül vagy; a társ a Farmnál csatlakozik (lásd lentebb)
     bullets:[], enemyBullets:[], enemies:[], particles:[], orbs:[], fireballs:[], turrets:[], meteors:[], obstacles:[],
     clouds:[], drones:[], beams:[], traps:[], slowT:0,
     barrels:[], hazards:[], crates:[],
@@ -2845,7 +3045,13 @@ function resetGame(){
   };
   const p = game.player;
   p.x = canvas.width/2; p.y = canvas.height/2; p._px=p.x; p._py=p.y;
-  if(game.companion){ game.companion.x = p.x-46; game.companion.y = p.y+46; }
+  // Ha a térképről közvetlenül egy olyan fejezetre ugrasz, ahol a történet szerint már
+  // veled van a társ (Farm és utána), akkor rögtön mellé is áll — korábban ilyenkor
+  // örökre hiányzott, mert csak a fejezetváltó jelenet hozta létre.
+  if(story && selectedChapter >= COMPANION_JOIN_CHAPTER && chosenCompanionClass){
+    game.companion = makeCompanion(chosenCompanionClass);
+    game.companion.x = p.x-46; game.companion.y = p.y+46;
+  }
   resetSticks();
   buildAbilityBar();
   if(game.chapter) loadChapterLayout(game.chapter);
@@ -3084,6 +3290,20 @@ function dodgeBullets(en, strength){
 /* =========================================================
    SZINTLÉPÉS
    ========================================================= */
+let _luFadeTimer = null, _luHideTimer = null;
+function showLevelBanner(){
+  const banner = document.getElementById('levelUpBanner');
+  clearTimeout(_luFadeTimer); clearTimeout(_luHideTimer);
+  banner.classList.remove('hidden');
+  banner.style.transition = ''; banner.style.opacity = 1;
+  _luFadeTimer = setTimeout(()=>{ banner.style.transition='opacity .6s'; banner.style.opacity=0; }, 1400);
+  _luHideTimer = setTimeout(()=>{ banner.classList.add('hidden'); banner.style.transition=''; }, 2000);
+}
+function hideLevelBanner(){
+  const banner = document.getElementById('levelUpBanner');
+  clearTimeout(_luFadeTimer); clearTimeout(_luHideTimer);
+  banner.classList.add('hidden'); banner.style.transition=''; banner.style.opacity=1;
+}
 function levelUp(){
   const p = game.player;
   p.level++; p.xp = Math.max(0, p.xp - p.xpNext); p.xpNext = Math.floor(p.xpNext*1.45);
@@ -3102,10 +3322,10 @@ function levelUp(){
   SFX.levelup();
   document.getElementById('luText').textContent = 'SZINT ' + p.level;
   document.getElementById('luSub').textContent = sub;
-  const banner = document.getElementById('levelUpBanner');
-  banner.classList.remove('hidden'); banner.style.opacity = 1;
-  setTimeout(()=>{ banner.style.transition='opacity .6s'; banner.style.opacity=0; }, 1400);
-  setTimeout(()=>{ banner.classList.add('hidden'); banner.style.transition=''; }, 2000);
+  // Két gyors szintlépésnél az ELSŐ időzítője elrejtette volna a MÁSODIK bannerét
+  // (egy nagy XP-orb-zápor után ez rendszeresen megtörtént) — ezért az elrejtést
+  // minden új szintlépés előtt visszavonjuk.
+  showLevelBanner();
 }
 /* =========================================================
    FRISSÍTÉS
@@ -3305,6 +3525,11 @@ function update(){
   // --- Csapdák/aknák (Vadász, Gépész) — az első ráérő ellenfelet sebzik és gyökeret eresztik ---
   game.traps.forEach(tr=>{
     if(!tr.armed) return;
+    // Élettartam: a ki nem váltott csapdák eddig örökre a pályán maradtak, és egy hosszú
+    // futamban felhalmozódtak a sarkokban — minden képkockában végigmérve az összes
+    // ellenfelet. 25 másodperc bőven elég ahhoz, hogy a lerakott csapda hasznos legyen.
+    tr.life = (tr.life===undefined ? 1500 : tr.life-1);
+    if(tr.life<=0){ tr.armed=false; return; }
     for(const en of game.enemies){
       if(dist(en.x,en.y,tr.x,tr.y) < tr.r+en.r){
         en.hp -= tr.dmg; en.hitFlash=8; en.frozen = Math.max(en.frozen||0, tr.root||50);
@@ -3434,15 +3659,25 @@ function update(){
   });
 
   // --- Golyó -> ellenfél ütközés ---
+  // Szándékosan egyszerű kettős ciklus, négyzetes távolsággal (gyökvonás nélkül).
+  // Térbeli ráccsal is megpróbáltuk, de az itt lassabb volt: a rács képkockánkénti
+  // újraépítése és a lövedékenkénti 9 cellalekérdezés (szöveges kulcs + tömb-allokáció)
+  // többe kerül, mint amennyit a megspórolt összehasonlítás hoz — a lövedékek és
+  // ellenfelek száma ugyanis felülről korlátos, nem ezres nagyságrendű.
+  const enemies = game.enemies;
   game.bullets.forEach(b=>{
     const bd = b.dmg || 12;
-    game.enemies.forEach(en=>{
-      if(b.life>0 && !(b._hit && b._hit.has(en)) && dist(b.x,b.y,en.x,en.y) < en.r+b.r){
+    for(let i=0;i<enemies.length;i++){
+      if(b.life<=0) break;
+      const en = enemies[i];
+      if(en.hp<=0 || (b._hit && b._hit.has(en))) continue;
+      const dx = b.x-en.x, dy = b.y-en.y, rad = en.r+b.r;
+      if(dx*dx + dy*dy < rad*rad){
         en.hp -= bd; en.hitFlash=6; addParticles(b.x,b.y,en.color,4); addUltCharge(bd*0.35); SFX.hit();
         if(!b.friendly && (p.buffs.lifesteal>0 || p.buffs.berserkUlt>0)) p.hp=Math.min(p.maxHp, p.hp + bd*0.12);
         if(b.pierce){ if(!b._hit) b._hit=new Set(); b._hit.add(en); } else { b.life=0; }
       }
-    });
+    }
     if(game.boss && b.life>0 && !(b._hit && b._hit.has(game.boss)) && dist(b.x,b.y,game.boss.x,game.boss.y) < game.boss.r+b.r){
       game.boss.hp -= bd*0.85; game.boss.hitFlash=6; addParticles(b.x,b.y,'#ff5c7c',5); addUltCharge(bd*0.35); SFX.hit();
       if(b.pierce){ if(!b._hit) b._hit=new Set(); b._hit.add(game.boss); } else { b.life=0; }
@@ -3631,7 +3866,14 @@ function bulletHitsObstacle(b){
   }
   return false;
 }
+// Részecske-plafon: nagy csatában (ultimate + sok robbanás) a részecskeszám ezresekbe
+// szaladt, és a rajzolásuk vitte el a képkockát. A látvány gyakorlatilag ugyanaz, ha
+// zsúfoltságnál kevesebbet szórunk — a felső korlát fölött pedig egyáltalán nem születik új.
+const PARTICLE_SOFT_CAP = 320, PARTICLE_HARD_CAP = 600;
 function addParticles(x,y,color,n=8){
+  const have = game.particles.length;
+  if(have >= PARTICLE_HARD_CAP) return;
+  if(have >= PARTICLE_SOFT_CAP) n = Math.max(1, Math.round(n*0.35));
   for(let i=0;i<n;i++){
     const a = Math.random()*PI2, sp = 1+Math.random()*3;
     game.particles.push({ x,y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, life:24+Math.random()*10, color });
@@ -3735,6 +3977,10 @@ function nextChapter(){
   // repülő lövedékek / effektek / ellenfelek takarítása (endlessBtn minta)
   game.enemies=[]; game.enemyBullets=[]; game.bullets=[]; game.particles=[]; game.orbs=[];
   game.clouds=[]; game.beams=[]; game.fireballs=[]; game.meteors=[]; game.pendingSpawns=[]; game.slowT=0;
+  // az idézett egységek és a lerakott csapdák is az előző pályához tartoztak — eddig
+  // átúsztak az új fejezetbe, és a semmi közepén lebegve lövöldöztek tovább
+  game.turrets=[]; game.drones=[]; game.traps=[];
+  hideLevelBanner();
   // a fejezet-boss legyőzése "megerősíti" a hőst — részleges gyógyulás, és garantáltan élve lép tovább
   // (különben egy azonos frame-ben kapott halálos sérülés átúszna az új fejezetbe)
   const pl = game.player; pl.hp = Math.min(pl.maxHp, Math.max(pl.hp, 0) + pl.maxHp*0.4); pl.invuln = Math.max(pl.invuln, 30);
@@ -3746,17 +3992,20 @@ function nextChapter(){
   }
   loadChapterLayout(game.chapter);
   startMusic(game.chapter.id);   // fejezet-téma váltás (a loop megy tovább)
-  if(ni===2 && !game.companion && chosenCompanionClass){
-    // a barát-megismerés önálló, lépésenkénti (OK-gombos) jelenet, mielőtt a Királyság bevezetője jönne
+  // A társ a FARM fejezetnél (2. pálya, index 1) csatlakozik — ezt mondja a fejezet
+  // bevezetője és a célja is ("most már a barátoddal együtt"). Korábban ez a jelenet
+  // csak a Királyságnál (index 2) futott le, így a Farmot végig egyedül játszottad,
+  // miközben a szöveg társat ígért.
+  if(ni===COMPANION_JOIN_CHAPTER && !game.companion && chosenCompanionClass){
     const compLabel = (CLASSES[chosenCompanionClass]||{}).label || 'Idegen';
     game.state = 'dialogue';
     playDialogueSequence([
-      { speaker:'', text:'A farmot magatok mögött hagyva tovább vágtok neki az ismeretlennek.' },
-      { speaker:'', text:'Egy nap, ahogy egy leomlott hídnál pihentek, halk nyögést hallotok a bozótból.' },
-      { speaker:'', text:'Egy magányos, sebesült katonára bukkantok — ő is eltévedt, egyedül, ugyanúgy, ahogy egykor te.' },
+      { speaker:'', text:'A fák ritkulnak, és egy elhagyatottnak tűnő farm udvarára lépsz.' },
+      { speaker:'', text:'Ahogy körülnézel, mozgást látsz az egyik csűr mögött — valaki figyel téged.' },
+      { speaker:'', text:'Egy magányos, sebesült alak lép elő. Először óvatosan méreget, aztán leengedi a fegyverét.' },
       { speaker: compLabel, text:'"Hé... szevasz. Egyedül vágsz neki ennek az egésznek? Na, azt már nem — tartok veled, ha nem bánod."' },
     ], {
-      speaker:'', text:'Mostantól nem vagytok egyedül ezen az úton.',
+      speaker:'', text:'Mostantól nem vagy egyedül ezen az úton.',
       choices:[ { label:'Rendben', action: ()=>{
         game.companion = makeCompanion(chosenCompanionClass);
         const pl = game.player; game.companion.x = pl.x-46; game.companion.y = pl.y+46;
@@ -3782,6 +4031,11 @@ function goMenu(){
   document.getElementById('winScreen').classList.add('hidden');
   document.getElementById('deathScreen').classList.add('hidden');
   document.getElementById('pauseScreen').classList.add('hidden');
+  // a párbeszéd- és modális ablak nem tartozik a képernyő-váltóhoz, ezért menübe
+  // lépéskor nyitva maradhatott volna a menü fölött
+  document.getElementById('dialogueBox').classList.add('hidden');
+  closeModal();
+  hideLevelBanner();
   hideCombatUI();
   stopMusic();
   game = null;
@@ -3830,9 +4084,12 @@ function winGame(){
   if(story){
     endlessBtnEl.classList.add('hidden');
     if(winTitle) winTitle.textContent = 'A PECSÉTEK MEGERŐSÍTVE';
+    // a fejezetszámot ne írjuk kézzel a szövegbe: új fejezet felvételekor a régi
+    // ("mind a három") mondat azonnal hazuggá vált volna
+    const doneCh = CHAPTERS.length, leftCh = Math.max(0, TOTAL_SEALS - doneCh);
     document.getElementById('winText').innerHTML =
-      `${game.player.name} mind a három pecsétet megerősítette, és a Sötétség visszahúzódott a mélybe.<br>`+
-      `Ám hat pecsét még feltöretlen — a háború nem ért véget.<br>`+
+      `${game.player.name} mind a(z) ${doneCh} fejezeten átjutott, és a Sötétség visszahúzódott a mélybe.<br>`+
+      (leftCh>0 ? `Ám még ${leftCh} pecsét feltöretlen — a háború nem ért véget.<br>` : `Mind a kilenc pecsét megerősítve — a háború véget ért.<br>`)+
       `<b>+${r.earned} profil-XP</b> &nbsp;|&nbsp; <b>+${r.coins} 💰</b>` + (r.up?` — elérted a <b>${r.up}.</b> profilszintet! Új tartalom oldódott fel.`:'');
     document.getElementById('restartBtnWin').textContent = 'VISSZA A TÉRKÉPRE';
   } else {
@@ -3874,26 +4131,43 @@ function togglePause(){
     document.getElementById('pauseScreen').classList.add('hidden');
   }
 }
+/* A HUD képkockánként (rossz esetben többször is) frissült, elemenként új
+   getElementById-jal és feltétel nélküli szöveg-/stílusírással. A DOM-írás akkor is
+   újraszámolást kényszerít a böngészőre, ha a beírt érték ugyanaz — ezért az elemeket
+   egyszer keressük ki, és csak tényleges változáskor írunk. */
+const HUD = {
+  hpFill: document.getElementById('hpBarFill'),
+  xpFill: document.getElementById('xpBarFill'),
+  lvl:    document.getElementById('lvlLabel'),
+  waveNum:document.getElementById('waveNum'),
+  modeTag:document.getElementById('modeTag'),
+  count:  document.getElementById('enemyCount'),
+};
+const _hudLast = {};
+function hudSet(key, el, value, prop){
+  if(_hudLast[key] === value) return;
+  _hudLast[key] = value;
+  if(prop) el.style[prop] = value; else el.textContent = value;
+}
 function updateHud(){
   const p = game.player;
-  document.getElementById('hpBarFill').style.width = Math.max(0,(p.hp/p.maxHp*100))+'%';
-  document.getElementById('xpBarFill').style.width = (p.xp/p.xpNext*100)+'%';
-  document.getElementById('lvlLabel').textContent = 'SZINT '+p.level;
+  hudSet('hp', HUD.hpFill, Math.max(0, p.hp/p.maxHp*100).toFixed(1)+'%', 'width');
+  hudSet('xp', HUD.xpFill, clamp(p.xp/p.xpNext*100,0,100).toFixed(1)+'%', 'width');
+  hudSet('lvl', HUD.lvl, 'SZINT '+p.level);
+  const bossTag = game.boss ? (game.boss.isMini?'MINI-BOSS':'BOSS') : null;
   if(game.chapter){
-    document.getElementById('waveTitle').textContent = 'HULLÁM';
-    document.getElementById('waveNum').textContent = game.boss ? (game.boss.isMini?'MINI-BOSS':'BOSS') : (game.chapterWave+'/'+game.chapter.waveCount);
-    document.getElementById('modeTag').textContent = (game.chapterIndex+1)+'. FEJEZET · '+game.chapter.title.toUpperCase();
+    hudSet('wave', HUD.waveNum, bossTag || (game.chapterWave+'/'+game.chapter.waveCount));
+    hudSet('mode', HUD.modeTag, (game.chapterIndex+1)+'. FEJEZET · '+game.chapter.title.toUpperCase());
   } else {
-    document.getElementById('waveTitle').textContent = 'HULLÁM';
-    document.getElementById('waveNum').textContent = game.boss ? (game.boss.isMini?'MINI-BOSS':'BOSS') : game.wave;
-    document.getElementById('modeTag').textContent = (game.endless?'VÉGTELEN · ':'') + game.diff.label.toUpperCase();
+    hudSet('wave', HUD.waveNum, bossTag || String(game.wave));
+    hudSet('mode', HUD.modeTag, (game.endless?'VÉGTELEN · ':'') + game.diff.label.toUpperCase());
   }
   const alive = game.enemies.length + game.pendingSpawns.length;
-  document.getElementById('enemyCount').textContent = game.boss
+  hudSet('count', HUD.count, game.boss
     ? Math.max(0,Math.ceil(game.boss.hp))+' / '+game.boss.maxHp+' HP'
     : (isFinalWaveOut()
         ? alive+' ellenfél · utána BOSS'
-        : alive+' ellenfél · köv. hullám '+Math.max(0,Math.ceil(game.waveTimer/60))+'s');
+        : alive+' ellenfél · köv. hullám '+Math.max(0,Math.ceil(game.waveTimer/60))+'s'));
 }
 
 /* =========================================================
@@ -4032,7 +4306,9 @@ function draw(){
   // csapdák/aknák — halványan látszó jelölés a talajon (nem teljesen láthatatlan, hogy fair legyen)
   game.traps.forEach(tr=>{
     if(!tr.armed) return;
-    ctx.save(); ctx.globalAlpha = 0.55 + 0.25*Math.sin(Date.now()/220);
+    // a lejárat előtti utolsó 3 másodpercben halványul, hogy látszódjon: mindjárt elmúlik
+    const fade = clamp((tr.life===undefined?1500:tr.life)/180, 0, 1);
+    ctx.save(); ctx.globalAlpha = (0.55 + 0.25*Math.sin(Date.now()/220)) * fade;
     ctx.beginPath(); ctx.arc(tr.x,tr.y,tr.r*0.55,0,PI2);
     ctx.strokeStyle='#c9a24a'; ctx.lineWidth=2; ctx.setLineDash([4,3]); ctx.stroke(); ctx.setLineDash([]);
     ctx.fillStyle='rgba(201,162,74,0.18)'; ctx.fill();
@@ -4084,6 +4360,7 @@ function draw(){
   });
 
   // ellenfelek
+  lowFx = game.enemies.length > 24;
   game.enemies.forEach(en=>{
     const face = Math.atan2(p.y-en.y, p.x-en.x);
     // rohamozó figyelmeztetés / töltés-nyom
@@ -4093,7 +4370,8 @@ function draw(){
     ctx.beginPath(); ctx.ellipse(en.x, en.y+en.r*0.55, en.r*0.85, en.r*0.32, 0, 0, PI2);
     ctx.fillStyle='rgba(0,0,0,0.4)'; ctx.fill();
     // típus-színű glow-perem, hogy messziről is felismerhető legyen
-    ctx.save(); ctx.shadowColor = en.color; ctx.shadowBlur = en.hitFlash>0 ? 4 : 12;
+    ctx.save();
+    if(!lowFx){ ctx.shadowColor = en.color; ctx.shadowBlur = en.hitFlash>0 ? 4 : 12; }
     // törzs: típusonként eltérő sziluett
     drawEnemyBody(ctx, en, face);
     ctx.restore();
@@ -4110,8 +4388,17 @@ function draw(){
   if(game.boss){
     const b = game.boss;
     drawBoss(ctx, b, Math.atan2(p.y-b.y, p.x-b.x));
-    ctx.fillStyle='#1c2333'; ctx.fillRect(w/2-160,20,320,10);
-    ctx.fillStyle='#ff5c7c'; ctx.fillRect(w/2-160,20,320*clamp(b.hp/b.maxHp,0,1),10);
+    // A csík eddig fixen y=20-nál volt — pontosan a képernyő tetején középre rögzített
+    // szünet gomb mögött, ami kis kijelzőn eltakarta. Most a gomb alá kerül, a
+    // felülethez mért méretaránnyal, és ki is írjuk a boss nevét.
+    const bw = Math.min(320*uiScale, w*0.72), bx = w/2-bw/2;
+    const by = Math.round(56*uiScale) + 14;
+    ctx.fillStyle='rgba(10,14,20,0.65)'; ctx.fillRect(bx-2,by-2,bw+4,14);
+    ctx.fillStyle='#1c2333'; ctx.fillRect(bx,by,bw,10);
+    ctx.fillStyle = b.col || '#ff5c7c'; ctx.fillRect(bx,by,bw*clamp(b.hp/b.maxHp,0,1),10);
+    ctx.font=`bold ${Math.round(12*uiScale)}px Trebuchet MS`; ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+    ctx.fillStyle='rgba(255,255,255,0.9)';
+    ctx.fillText((b.name||'BOSS').toUpperCase(), w/2, by-5);
   }
 
   // ellenség golyók
@@ -4185,6 +4472,8 @@ function draw(){
 const abilityBarEl = document.getElementById('abilityBar');
 const buffTrayEl = document.getElementById('buffTray');
 const ultBtnEl = document.getElementById('ultBtn');
+const ultFillEl = ultBtnEl.querySelector('.ultFill');
+let _ultFillLast = null, _buffKeyLast = null;
 function buildAbilityBar(){
   const p = game.player;
   abilityBarEl.innerHTML='';
@@ -4206,20 +4495,27 @@ function updateAbilityBar(){
   const p = game.player;
   p.abilities.forEach(ab=>{
     const el = ab._el; if(!el) return;
-    let ov = el.querySelector('.cd');
     if(ab.cd>0){
-      if(!ov){ ov=document.createElement('div'); ov.className='cd'; el.appendChild(ov); }
-      ov.textContent = Math.ceil(ab.cd/60*10)/10;
-    } else if(ov){ ov.remove(); }
+      if(!ab._cdEl){ ab._cdEl=document.createElement('div'); ab._cdEl.className='cd'; el.appendChild(ab._cdEl); }
+      const txt = String(Math.ceil(ab.cd/60*10)/10);
+      if(ab._cdTxt !== txt){ ab._cdTxt = txt; ab._cdEl.textContent = txt; }
+    } else if(ab._cdEl){ ab._cdEl.remove(); ab._cdEl=null; ab._cdTxt=null; }
   });
   const u=p.ult, pct=clamp(u.charge/u.chargeMax,0,1);
-  ultBtnEl.querySelector('.ultFill').style.height = (pct*100)+'%';
+  const fillH = (pct*100).toFixed(1)+'%';
+  if(_ultFillLast !== fillH){ _ultFillLast = fillH; ultFillEl.style.height = fillH; }
   ultBtnEl.classList.toggle('ready', pct>=1);
   const B=p.buffs, act=[];
   if(B.precision>0) act.push('🎯'); if(B.berserkUlt>0) act.push('🔥'); if(B.invisible>0) act.push('🌑');
   if(B.lifesteal>0) act.push('🩸'); if(B.berserk>0) act.push('😤'); if(B.multishot>0) act.push('🎇');
   if(p.surgeActive>0) act.push('🌀'); if(game.slowT>0) act.push('⏳');
-  buffTrayEl.innerHTML = act.map(e=>`<span class="buff">${e}</span>`).join('');
+  // a buff-tálcát csak akkor építjük újra, ha tényleg más lett a tartalma — a képkockánkénti
+  // innerHTML-írás minden alkalommal HTML-elemzést és újrarendezést kényszerített ki
+  const buffKey = act.join('');
+  if(_buffKeyLast !== buffKey){
+    _buffKeyLast = buffKey;
+    buffTrayEl.innerHTML = act.map(e=>`<span class="buff">${e}</span>`).join('');
+  }
 }
 // ult gomb bekötése (tap / kattintás)
 (function(){
@@ -4269,10 +4565,10 @@ function startPlay(){
   resetGame();
 }
 document.getElementById('startBtn').addEventListener('click', startPlay);
+document.getElementById('heroPlayBtn').addEventListener('click', startPlay);
 document.getElementById('storyModeBtn').addEventListener('click', ()=>{
   if(listeningSlot!==null){ listeningSlot=null; buildLoadoutUI(); }
-  startMode='story';
-  showScreen('heroSelectScreen');
+  openHeroSelect(true);
 });
 document.getElementById('storyProceedBtn').addEventListener('click', ()=>{
   if(listeningSlot!==null){ listeningSlot=null; buildLoadoutUI(); }
@@ -4325,8 +4621,8 @@ document.querySelectorAll('.sndSfxBtn').forEach(b=> b.addEventListener('click', 
 document.querySelectorAll('.sndMusBtn').forEach(b=> b.addEventListener('click', toggleMusic));
 applySndToggles();
 document.getElementById('installBtn').addEventListener('click', tryInstallApp);
-// ablakméret-/orientációváltás: story-propok újrapozicionálása a canvas-átméretezés után
-window.addEventListener('resize', ()=>{ if(game && game.chapter) relayoutChapter(); });
+// (a sztori-pálya elemeinek újrapozicionálását maga a resize() végzi — így az
+//  orientációváltásnál és a visualViewport-eseménynél is lefut, nem csak resize-nál)
 applyLanguage();   // legvégén hívjuk — így minden, amire a fordítás-frissítés támaszkodik (SND, IS_COARSE stb.) már biztosan létezik
 </script>
 </body>
