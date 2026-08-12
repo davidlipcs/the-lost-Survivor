@@ -47,7 +47,10 @@
   #hpLabel{ font-size:calc(12px*var(--ui-scale)); letter-spacing:1px; color:var(--dim); margin-bottom:4px; }
   #hpBarBg{ width:100%; height:calc(13px*var(--ui-scale)); background:#1c2333; border-radius:7px; overflow:hidden; border:1px solid #2a3348; }
   #hpBarFill{ height:100%; width:100%; background: linear-gradient(90deg, var(--accent2), #ff8a9d); transition: width .15s; }
-  #xpWrap{ width:calc(210px*var(--ui-scale)); max-width:44vw; margin-top:calc(6px*var(--ui-scale)); }
+  /* Az XP-sáv a HP-panel BELSEJÉBEN van, ezért a panel belső szélességét kell kitöltenie.
+     Korábban a külső panel méretét ismételte (210px*scale), így pontosan a panel bal
+     oldali belméretével lógott ki a keretből — minden kijelzőméreten látszott. */
+  #xpWrap{ width:100%; margin-top:calc(6px*var(--ui-scale)); }
   #xpBarBg{ width:100%; height:calc(7px*var(--ui-scale)); background:#1c2333; border-radius:5px; overflow:hidden; border:1px solid #2a3348; }
   #xpBarFill{ height:100%; width:0%; background: linear-gradient(90deg, var(--gold), #ffe9a8); transition: width .15s; }
   #lvlLabel{ font-size:calc(11px*var(--ui-scale)); color:var(--gold); margin-top:4px; letter-spacing:1px;}
