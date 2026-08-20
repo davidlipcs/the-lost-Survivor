@@ -1,9 +1,10 @@
 // A Kilenc Pecsét — service worker
 // Célja: telepíthetőség (PWA) + alap offline működés. Nem szerver, csak a böngésző
 // saját cache-ét használja ezen az eszközön belül.
-const CACHE_NAME = 'kilencpecset-cache-v1';
+const CACHE_NAME = 'kilencpecset-cache-v3';
 const PRECACHE = [
   './',
+  './index.html',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
@@ -13,8 +14,6 @@ const PRECACHE = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      // az aktuális HTML-t is elmentjük, bármi is a fájlneve
-      cache.add(new Request(self.registration.scope, { cache: 'reload' })).catch(()=>{});
       return cache.addAll(PRECACHE.map(u => new Request(u, { cache: 'reload' }))).catch(()=>{});
     })
   );
@@ -30,17 +29,25 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Stratégia: hálózat előnyben (friss tartalom), ha nincs net, cache-ből szolgál ki —
-// így fejlesztés közben mindig a legfrissebbet látod, offline pedig még mindig működik.
+// Stratégia: MINDIG a hálózatot próbáljuk először, és kifejezetten a böngésző saját
+// HTTP-cache-ét is megkerüljük ('no-store') — így soha nem ragadhat be egy régi verzió.
+// Csak akkor szolgálunk ki a mentett másolatból, ha tényleg nincs internet.
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   event.respondWith(
-    fetch(event.request)
+    fetch(event.request, { cache: 'no-store' })
       .then((resp) => {
         const copy = resp.clone();
         caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy)).catch(()=>{});
         return resp;
       })
-      .catch(() => caches.match(event.request).then((r) => r || caches.match('./')))
+      .catch(async () => {
+        const cached = await caches.match(event.request);
+        if (cached) return cached;
+        if (event.request.mode === 'navigate') {
+          return (await caches.match('./index.html')) || (await caches.match('./')) || Response.error();
+        }
+        return Response.error();
+      })
   );
 });
