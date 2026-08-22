@@ -280,16 +280,16 @@
   <canvas id="game"></canvas>
   <div id="menuEmbers"></div>
 
-  <button id="pauseBtn" class="hidden" aria-label="Szünet">⏸</button>
+  <button id="pauseBtn" class="hidden" aria-label="Szünet" data-i18n-aria="pauseAria">⏸</button>
 
   <div id="hud" class="hidden">
     <div class="panel" id="hpWrap">
-      <div id="hpLabel">ÉLET</div>
+      <div id="hpLabel" data-i18n="hpLabel">ÉLET</div>
       <div id="hpBarBg"><div id="hpBarFill"></div></div>
       <div id="xpWrap"><div id="xpBarBg"><div id="xpBarFill"></div></div><div id="lvlLabel">SZINT 1</div></div>
     </div>
     <div class="panel" id="waveInfo">
-      <div id="waveTitle">HULLÁM</div>
+      <div id="waveTitle" data-i18n="waveLabel">HULLÁM</div>
       <div id="waveNum">1</div>
       <div id="enemyCount">0 ellenfél</div>
       <div id="modeTag"></div>
@@ -301,7 +301,7 @@
   <button id="ultBtn" class="hidden"><div class="ultFill"></div><span>💥</span></button>
 
   <div id="levelUpBanner" class="hidden">
-    <div class="lu1">SZINTLÉPÉS</div>
+    <div class="lu1" data-i18n="levelUpTitle">SZINTLÉPÉS</div>
     <div class="lu2" id="luText"></div>
     <div class="lu3" id="luSub"></div>
   </div>
@@ -348,9 +348,9 @@
 
       <canvas id="previewCanvas" width="110" height="110"></canvas>
       <div>
-        <input id="nameInput" type="text" placeholder="Karakter neve" maxlength="14" value="Hős">
+        <input id="nameInput" type="text" placeholder="Karakter neve" data-i18n-ph="nameInputPh" maxlength="14" value="Hős">
         <div style="display:flex; gap:6px; justify-content:center; align-items:center; margin-top:6px; flex-wrap:wrap;">
-          <button class="bigBtn ghost" id="pantryLoadBtn" style="padding:6px 12px; font-size:11px; margin:0;">✅ Ez a név használata</button>
+          <button class="bigBtn ghost" id="pantryLoadBtn" style="padding:6px 12px; font-size:11px; margin:0;" data-i18n="useNameBtn">✅ Ez a név használata</button>
           <span id="pantryStatus" style="font-size:10px; color:var(--dim);"></span>
         </div>
         <div class="colorRow" id="colorRow" style="margin-top:14px;"></div>
@@ -370,7 +370,7 @@
     </div>
     <div class="pickLabel" data-i18n="difficultyLabel">NEHÉZSÉGI SZINT</div>
     <div class="diffRow" id="diffRow"></div>
-    <button class="bigBtn gold" id="storyProceedBtn">📖 SZTORI KEZDÉSE</button>
+    <button class="bigBtn gold" id="storyProceedBtn" data-i18n="storyProceedBtn">📖 SZTORI KEZDÉSE</button>
     <button class="bigBtn ghost" id="heroSelectBackBtn" style="margin-top:10px;" data-i18n="backBtn">Vissza a főmenübe</button>
   </div>
 
@@ -396,11 +396,11 @@
   </div>
 
   <div id="pauseScreen" class="overlay hidden">
-    <h1 class="title">SZÜNET</h1>
-    <div class="storyBox">A játék meg van állítva. Vedd vissza a levegőt, aztán folytasd.</div>
-    <button class="bigBtn" id="resumeBtn">FOLYTATÁS</button>
-    <button class="bigBtn ghost" id="pauseRestartBtn">ÚJRAKEZDÉS</button>
-    <button class="bigBtn ghost" id="pauseMenuBtn">FŐMENÜ</button>
+    <h1 class="title" data-i18n="pauseTitle">SZÜNET</h1>
+    <div class="storyBox" data-i18n="pauseBody">A játék meg van állítva. Vedd vissza a levegőt, aztán folytasd.</div>
+    <button class="bigBtn" id="resumeBtn" data-i18n="resumeBtn">FOLYTATÁS</button>
+    <button class="bigBtn ghost" id="pauseRestartBtn" data-i18n="restartBtn">ÚJRAKEZDÉS</button>
+    <button class="bigBtn ghost" id="pauseMenuBtn" data-i18n="menuBtn">FŐMENÜ</button>
     <div style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center;">
       <button class="bigBtn ghost sndBtn sndSfxBtn"></button>
       <button class="bigBtn ghost sndBtn sndMusBtn"></button>
@@ -417,21 +417,21 @@
   <div id="bossIntro" class="overlay hidden">
     <h1 class="title" id="bossIntroTitle" style="color:var(--accent2); -webkit-text-fill-color:var(--accent2);">A GONOSZ ÁRNYÉK</h1>
     <div class="storyBox" id="bossIntroText"></div>
-    <button class="bigBtn red" id="bossStartBtn">HARC KEZDÉSE</button>
+    <button class="bigBtn red" id="bossStartBtn" data-i18n="bossFightBtn">HARC KEZDÉSE</button>
   </div>
 
   <div id="winScreen" class="overlay hidden">
-    <h1 class="title" style="color:var(--gold); -webkit-text-fill-color:var(--gold);">GYŐZELEM</h1>
+    <h1 class="title" style="color:var(--gold); -webkit-text-fill-color:var(--gold);" data-i18n="winTitle">GYŐZELEM</h1>
     <div class="storyBox" id="winText"></div>
-    <button class="bigBtn gold" id="endlessBtn">VÉGTELEN MÓD FOLYTATÁSA</button>
-    <button class="bigBtn" id="restartBtnWin">ÚJ JÁTÉK</button>
+    <button class="bigBtn gold" id="endlessBtn" data-i18n="endlessBtn">VÉGTELEN MÓD FOLYTATÁSA</button>
+    <button class="bigBtn" id="restartBtnWin" data-i18n="newGameBtn">ÚJ JÁTÉK</button>
   </div>
 
   <div id="deathScreen" class="overlay hidden">
-    <h1 class="title" style="color:var(--accent2); -webkit-text-fill-color:var(--accent2);">ELBUKTÁL</h1>
+    <h1 class="title" style="color:var(--accent2); -webkit-text-fill-color:var(--accent2);" data-i18n="deathTitle">ELBUKTÁL</h1>
     <div class="storyBox" id="deathText"></div>
-    <button class="bigBtn" id="restartBtnDeath">ÚJRAPRÓBÁLOM</button>
-    <button class="bigBtn ghost" id="deathMenuBtn">FŐMENÜ</button>
+    <button class="bigBtn" id="restartBtnDeath" data-i18n="retryBtn">ÚJRAPRÓBÁLOM</button>
+    <button class="bigBtn ghost" id="deathMenuBtn" data-i18n="menuBtn">FŐMENÜ</button>
   </div>
 </div>
 
@@ -709,10 +709,10 @@ async function pantryLoadIntoGame(username){
 }
 
 /* =========================================================
-   NYELVVÁLASZTÓ — a legfontosabb, mindig látható menü-szövegekre.
-   (A teljes játék — hősleírások, pecsét-leírások, sztori-szövegek —
-   ennél sokkal nagyobb, külön fordítási munka lenne; ez egyelőre a
-   fő navigációt és a leggyakoribb feliratokat fedi le.)
+   NYELVVÁLASZTÓ — a menü, a játék közbeni (PLAY) felület és a
+   hős/felszerelés (LOADOUT) képernyő minden felirata.
+   A sztori mód szövegei (fejezetcímek, párbeszédek, intrók) még
+   magyarul vannak — az külön, nagyobb fordítási munka.
    ========================================================= */
 const TRANSLATIONS = {
   en: {
@@ -728,6 +728,62 @@ const TRANSLATIONS = {
     controlsPad: `<br>Controller (Xbox/PS): left stick — move, right stick — aim+fire (RT/R2 also fires), A·B·X·Y·LB — seals, RB — ULT, Start — pause.<br>`+
       `In menus: d-pad / left stick — navigate, A — select, B — back.`,
     abilityHint: (n)=> `Equipped: <b>${n}/5</b> · Click a seal to equip/unequip it, click the key button to rebind it (tap the seal on touch to use it).`,
+
+    /* --- játék közben (PLAY) --- */
+    hpLabel: 'HEALTH', levelFmt: (n)=> `LEVEL ${n}`, waveLabel: 'WAVE',
+    bossLabel: 'BOSS', miniBossLabel: 'MINI-BOSS', endlessPrefix: 'ENDLESS · ',
+    chapterTag: (n, title)=> `CHAPTER ${n} · ${title}`,
+    bossHp: (hp, max)=> `${hp} / ${max} HP`,
+    enemiesThenBoss: (n)=> `${n} enemies · then BOSS`,
+    enemiesNextWave: (n, s)=> `${n} enemies · next wave in ${s}s`,
+    levelUpTitle: 'LEVEL UP', rankSub: (icon, label, rank)=> `${icon} ${label} → rank ${rank}`,
+    baseStatSub: 'Base damage and fire rate increased!',
+    pauseAria: 'Pause', pauseTitle: 'PAUSED',
+    pauseBody: 'The game is on hold. Catch your breath, then carry on.',
+    resumeBtn: 'RESUME', restartBtn: 'RESTART', menuBtn: 'MAIN MENU',
+    winTitle: 'VICTORY', winTitleStory: 'THE SEALS ARE SECURED',
+    endlessBtn: 'CONTINUE IN ENDLESS MODE', newGameBtn: 'NEW GAME', backToMapBtn: 'BACK TO THE MAP',
+    deathTitle: 'YOU FELL', retryBtn: 'TRY AGAIN',
+    rewardLine: (xp, coins)=> `<b>+${xp} profile XP</b> &nbsp;|&nbsp; <b>+${coins} 💰</b>`,
+    profileUpLine: (lvl)=> ` — you reached profile level <b>${lvl}</b>! New content unlocked.`,
+    winStoryText: (name)=> `${name} secured all three seals, and the Darkness withdrew into the deep.<br>`+
+      `But six seals are still unbroken — the war is not over.<br>`,
+    winText: (name)=> `${name} defeated the Evil Shadow, and all nine seals are free.<br>`,
+    deathStoryText: (title)=> `You fell at the seal of “${title}”. The Darkness was stronger this time.<br>`,
+    deathEndlessText: (n)=> `You made it to endless wave ${n}. The Shadow proved stronger... for now.<br>`,
+    deathText: (n)=> `You made it to wave ${n}. The Shadow proved stronger... for now.<br>`,
+
+    /* --- hős és felszerelés (LOADOUT) --- */
+    nameInputPh: 'Character name', storyProceedBtn: '📖 START STORY',
+    nerfTag: (pct)=> `▼ tuned down (popular): ${pct}%`,
+    buffTag: (pct)=> `▲ tuned up (rarely played): ${pct}%`,
+    sealedTag: '🔯 strongest forever — never weakened',
+    lockTag: (lvl)=> `🔒 Lv.${lvl}`,
+    speedSlow: 'Slow', speedMedium: 'Medium', speedFast: 'Fast', speedVeryFast: 'Very fast',
+    hdHp: '❤️ HP', hdDmg: '⚔️ Damage', hdSpeed: '💨 Speed', hdRange: '🎯 Range',
+    hdUpgrade: '🔧 Upgrade', hdTestTier: '🔧 Test tier',
+    hdTierNote: (t, pct)=> `— upgraded to tier ${t} (+${pct}%)`,
+    dmgPerSec: (dmg, dps)=> `${dmg} (${dps}/s)`,
+    tierTestTitle: (t)=> `Test: tier ${t}`, tierOwnedTitle: (t)=> `Tier ${t} (owned)`,
+    tierBuyTitle: (t, cost)=> `Tier ${t} — ${cost} 🔷`,
+    notEnoughShards: (cost, have)=> `Not enough crystals — you need ${cost} 🔷 and you have ${have}. Crystals come from the daily quests.`,
+    confirmHeroTier: (name, t, cost)=> `Upgrade “${name}” to tier ${t} for ${cost} 🔷?`,
+    epicTag: 'EPIC · max rank 10', legendaryTag: 'LEGENDARY · max rank 10',
+    tunedTitle: (pct)=> ` (tuned: ${pct}%)`, upgradedTitle: (pct)=> ` — upgraded: +${pct}%`,
+    nerfDotTitle: 'tuned down', upgBadgeTitle: 'Seal upgrade',
+    adminMaxAbility: 'Admin: this seal is already at the highest (test) tier.',
+    abilityMaxed: (name)=> `“${name}” is already at the highest (3rd) upgrade tier.`,
+    confirmAbilityUpg: (name, t, cost)=> `Upgrade “${name}” to tier ${t} for ${cost} 🔷? (+8% power per tier)`,
+    notEnoughCoinsSkin: (cost, have)=> `Not enough coins for this look — you need ${cost} 💰 and you have ${have}.`,
+    confirmSkin: (name, cost)=> `Buy this look — “${name}” — for ${cost} 💰?`,
+    skinLockedTitle: (name, price)=> `${name} — 🔒 ${price} 💰`,
+    ultChip: 'ULT',
+    bossFightBtn: 'START THE FIGHT', shadowBossName: 'THE EVIL SHADOW',
+    shadowBossIntro: `“So you are the one who broke all nine seals... Many have tried before you. Every one of them ended in the dark.”<br><br>`+
+      `The last wave is down — now or never. You will need everything you have.`,
+    defaultHeroName: 'Hero', nameNeeded: 'Type a name first.', nameSearching: 'Searching...',
+    nameFound: 'We found your save — you carry on where you left off!',
+    nameNew: 'This is a new name — from now on your progress saves here automatically, even after the very first match.',
   },
   hu: {
     subtitle: "A várost sötét szörnyhadsereg szállta meg. Törd fel a pecséteket — minél többet játszol, annál több harcos és képesség oldódik fel.",
@@ -742,8 +798,203 @@ const TRANSLATIONS = {
     controlsPad: `<br>Kontroller (Xbox/PS): bal kar — mozgás, jobb kar — célzás+lövés (RT/R2 is lő), A·B·X·Y·LB — képességek, RB — ULT, Start — szünet.<br>`+
       `Menüben: d-pad / bal kar — lépkedés, A — kiválasztás, B — vissza.`,
     abilityHint: (n)=> `Felszerelve: <b>${n}/5</b> · Kattints egy képességre a fel-/leszereléshez, a billentyű-gombra kattintva átállíthatod (érintőn a képességre bökve használod).`,
+
+    /* --- játék közben (PLAY) --- */
+    hpLabel: 'ÉLET', levelFmt: (n)=> `SZINT ${n}`, waveLabel: 'HULLÁM',
+    bossLabel: 'BOSS', miniBossLabel: 'MINI-BOSS', endlessPrefix: 'VÉGTELEN · ',
+    chapterTag: (n, title)=> `${n}. FEJEZET · ${title}`,
+    bossHp: (hp, max)=> `${hp} / ${max} HP`,
+    enemiesThenBoss: (n)=> `${n} ellenfél · utána BOSS`,
+    enemiesNextWave: (n, s)=> `${n} ellenfél · köv. hullám ${s}s`,
+    levelUpTitle: 'SZINTLÉPÉS', rankSub: (icon, label, rank)=> `${icon} ${label} → ${rank}. rang`,
+    baseStatSub: 'Alap-sebzés és tűzgyorsaság nő!',
+    pauseAria: 'Szünet', pauseTitle: 'SZÜNET',
+    pauseBody: 'A játék meg van állítva. Vedd vissza a levegőt, aztán folytasd.',
+    resumeBtn: 'FOLYTATÁS', restartBtn: 'ÚJRAKEZDÉS', menuBtn: 'FŐMENÜ',
+    winTitle: 'GYŐZELEM', winTitleStory: 'A PECSÉTEK MEGERŐSÍTVE',
+    endlessBtn: 'VÉGTELEN MÓD FOLYTATÁSA', newGameBtn: 'ÚJ JÁTÉK', backToMapBtn: 'VISSZA A TÉRKÉPRE',
+    deathTitle: 'ELBUKTÁL', retryBtn: 'ÚJRAPRÓBÁLOM',
+    rewardLine: (xp, coins)=> `<b>+${xp} profil-XP</b> &nbsp;|&nbsp; <b>+${coins} 💰</b>`,
+    profileUpLine: (lvl)=> ` — elérted a <b>${lvl}.</b> profilszintet! Új tartalom oldódott fel.`,
+    winStoryText: (name)=> `${name} mind a három pecsétet megerősítette, és a Sötétség visszahúzódott a mélybe.<br>`+
+      `Ám hat pecsét még feltöretlen — a háború nem ért véget.<br>`,
+    winText: (name)=> `${name} legyőzte a Gonosz Árnyékot, és mind a kilenc pecsét szabaddá vált.<br>`,
+    deathStoryText: (title)=> `Elbuktál a(z) „${title}” pecséténél. A Sötétség egyelőre erősebb volt.<br>`,
+    deathEndlessText: (n)=> `${n}. végtelen hullámig jutottál. Az Árnyék erősebbnek bizonyult... egyelőre.<br>`,
+    deathText: (n)=> `A ${n}. hullámig jutottál. Az Árnyék erősebbnek bizonyult... egyelőre.<br>`,
+
+    /* --- hős és felszerelés (LOADOUT) --- */
+    nameInputPh: 'Karakter neve', storyProceedBtn: '📖 SZTORI KEZDÉSE',
+    nerfTag: (pct)=> `▼ finomhangolva (népszerű): ${pct}%`,
+    buffTag: (pct)=> `▲ finomhangolva (ritkán játszott): ${pct}%`,
+    sealedTag: '🔯 örökre a legerősebb — sosem gyengül',
+    lockTag: (lvl)=> `🔒 Lv.${lvl}`,
+    speedSlow: 'Lassú', speedMedium: 'Közepes', speedFast: 'Gyors', speedVeryFast: 'Nagyon gyors',
+    hdHp: '❤️ HP', hdDmg: '⚔️ Sebzés', hdSpeed: '💨 Sebesség', hdRange: '🎯 Hatótáv',
+    hdUpgrade: '🔧 Fejlesztés', hdTestTier: '🔧 Teszt-szint',
+    hdTierNote: (t, pct)=> `— ${t}. szintre fejlesztve (+${pct}%)`,
+    dmgPerSec: (dmg, dps)=> `${dmg} (${dps}/mp)`,
+    tierTestTitle: (t)=> `Teszt: ${t}. szint`, tierOwnedTitle: (t)=> `${t}. szint (megvéve)`,
+    tierBuyTitle: (t, cost)=> `${t}. szint — ${cost} 🔷`,
+    notEnoughShards: (cost, have)=> `Nincs elég kristályod — ${cost} 🔷 kell, neked ${have} van. Kristályt a napi küldetésekből kapsz.`,
+    confirmHeroTier: (name, t, cost)=> `Fejleszted „${name}”-t a(z) ${t}. szintre ${cost} 🔷-ért?`,
+    epicTag: 'EPIKUS · max 10. rang', legendaryTag: 'LEGENDÁS · max 10. rang',
+    tunedTitle: (pct)=> ` (finomhangolva: ${pct}%)`, upgradedTitle: (pct)=> ` — fejlesztve: +${pct}%`,
+    nerfDotTitle: 'finomhangolva', upgBadgeTitle: 'Pecsét-fejlesztés',
+    adminMaxAbility: 'Admin: ez a pecsét már a legmagasabb (teszt) szinten van.',
+    abilityMaxed: (name)=> `„${name}” már a legmagasabb (3.) fejlesztési szinten van.`,
+    confirmAbilityUpg: (name, t, cost)=> `Fejleszted „${name}”-t a(z) ${t}. szintre ${cost} 🔷-ért? (+8% erő szintenként)`,
+    notEnoughCoinsSkin: (cost, have)=> `Nincs elég pénzed ehhez a kinézethez — ${cost} 💰 kell, neked ${have} van.`,
+    confirmSkin: (name, cost)=> `Megveszed ezt a kinézetet — „${name}” — ${cost} 💰-ért?`,
+    skinLockedTitle: (name, price)=> `${name} — 🔒 ${price} 💰`,
+    ultChip: 'ULT',
+    bossFightBtn: 'HARC KEZDÉSE', shadowBossName: 'A GONOSZ ÁRNYÉK',
+    shadowBossIntro: `„Szóval te vagy az, aki mind a kilenc pecsétet feltörte... Sokan próbálkoztak előtted. Mindannyian a sötétségben végezték.”<br><br>`+
+      `Az utolsó hullám leverve — most vagy soha. Minden erődre szükséged lesz.`,
+    defaultHeroName: 'Hős', nameNeeded: 'Előbb írj be egy nevet.', nameSearching: 'Keresés...',
+    nameFound: 'Megtaláltuk a mentésedet — folytatod onnan, ahol abbahagytad!',
+    nameNew: 'Ez egy új név — mostantól automatikusan ide mentődik a haladásod, akár az első meccs után is.',
   },
 };
+/* =========================================================
+   ANGOL JÁTÉK-SZÖVEGEK — a hősök, pecsétek, ultimate-ök, nehézségi
+   szintek és kinézetek nevei/leírásai. A magyar szöveg marad az
+   adat-táblákban (CLASSES / ABILITIES / ULTIMATES / DIFFICULTIES /
+   HERO_SKINS), ez csak ráfekszik, ha angolra váltasz.
+   ========================================================= */
+const GAME_TEXT_EN = {
+  classes: {
+    tank:{ label:'Tank', role:'BULWARK', strong:'Huge health pool and armor', weak:'Slow, low DPS' },
+    sniper:{ label:'Sniper', role:'MARKSMAN', strong:'Massive damage and range', weak:'Slow fire, fragile up close' },
+    berserker:{ label:'Berserker', role:'CHARGER', strong:'Brutal damage at low HP', weak:'No ranged advantage' },
+    mage:{ label:'Mage', role:'SPELLCASTER', strong:'Strong, fast-recharging abilities', weak:'Fragile' },
+    assassin:{ label:'Assassin', role:'ASSASSIN', strong:'Lightning-fast critical burst', weak:'Very fragile' },
+    support:{ label:'Support', role:'SUPPORT', strong:'Healing, turrets, endurance', weak:'Low personal damage' },
+    necromancer:{ label:'Necromancer', role:'SUMMONER', strong:'Skeleton minions fight for you', weak:'Weak alone, needs setup' },
+    hunter:{ label:'Hunter', role:'TRAPPER', strong:'Traps and a companion control the battlefield', weak:'Weak burst without setup' },
+    engineer:{ label:'Engineer', role:'BUILDER', strong:'Deployed structures hold the ground', weak:'Slow, stationary power' },
+    sealbearer:{ label:'Master', role:'LORD OF ALL NINE SEALS', strong:'Can use any seal of any hero', weak:'None of its powers is the strongest version of itself' },
+    grandmaster:{ label:'Master of Masters', role:'ABOVE EVERY MASTER', strong:'The ultimate cuts incoming damage by 70% and almost executes the strongest enemy', weak:'Without the ultimate he is "only" extremely strong, not invincible' },
+    godlike:{ label:'God', role:'ABOVE THE NINE SEALS', strong:'The ultimate wipes out a whole wave in one blow, the boss included', weak:'Until the ultimate charges he is just an extremely strong fighter' },
+  },
+  abilities: {
+    dash:{ label:'Dash', desc:'Quick evade with a brief moment of invulnerability.' },
+    shield:{ label:'Shield', desc:'Temporary invulnerability.' },
+    fireball:{ label:'Fireball', desc:'Spreading explosion, area damage.' },
+    ice:{ label:'Ice Burst', desc:'Freezes nearby enemies.' },
+    chain:{ label:'Chain Lightning', desc:'Hits several enemies.' },
+    heal:{ label:'Heal', desc:'Instantly restores health.' },
+    surge:{ label:'Surge', desc:'Faster movement and fire rate.' },
+    turret:{ label:'Turret', desc:'Automatic turret.' },
+    meteor:{ label:'Meteor', desc:'Impact on the aimed point.' },
+    shotgun:{ label:'Shotgun', desc:'Seven-pellet spread straight ahead.' },
+    grenade:{ label:'Grenade', desc:'Explosion at the aimed point.' },
+    blink:{ label:'Blink', desc:'Teleport in the direction you aim.' },
+    shockwave:{ label:'Shockwave', desc:'Knocks back and damages all around you.' },
+    lifesteal:{ label:'Lifesteal', desc:'For a while your damage heals you.' },
+    berserk:{ label:'Rage', desc:'More damage dealt, more damage taken.' },
+    multishot:{ label:'Volley', desc:'For a while you fire in three directions.' },
+    poison:{ label:'Poison Cloud', desc:'A cloud that keeps damaging.' },
+    cluster:{ label:'Cluster Bomb', desc:'Several small explosions around you.' },
+    railgun:{ label:'Railgun', desc:'Piercing energy beam in the direction you aim.' },
+    timewarp:{ label:'Time Warp', desc:'Slows every enemy for a short time.' },
+    drone:{ label:'Drone', desc:'An escort drone that shoots at enemies.' },
+    adrenaline:{ label:'Adrenaline', desc:'Recharges all your other abilities.' },
+    raise:{ label:'Raise Dead', desc:'Summons a skeleton minion that chases enemies and damages them in melee.' },
+    soulbomb:{ label:'Soul Bomb', desc:'Explosion at the aimed point.' },
+    boneward:{ label:'Bone Ward', desc:'Greatly reduces incoming damage for a while.' },
+    snaretrap:{ label:'Snare Trap', desc:'Places a trap on the aimed point — it roots and damages the first enemy that steps on it.' },
+    beast:{ label:'Beast', desc:'Summons a wild companion that chases and bites enemies.' },
+    piercingshot:{ label:'Piercing Arrow', desc:'Strong, piercing shot in the direction you aim.' },
+    minefield:{ label:'Minefield', desc:'Deploys three mines around you.' },
+    laserwall:{ label:'Laser Wall', desc:'A humming energy field on the aimed point — it damages everyone who steps into it.' },
+    repairdrone:{ label:'Repair Drone', desc:'Deploys a hovering drone that keeps healing you nearby.' },
+    strike:{ label:'Lightning Strike', desc:'Instant lightning strike on the aimed point.' },
+    healcloud:{ label:'Healing Cloud', desc:'Creates a healing cloud — you keep healing while you stand in it.' },
+    bloodmagic:{ label:'Blood Magic', desc:'Sacrifice part of your health for a huge explosion.' },
+    mirrorshield:{ label:'Mirror Shield', desc:'Brief invulnerability that detonates everything that touches you.' },
+    mortar:{ label:'Mortar', desc:'Rains three explosions on the aimed area.' },
+    apocalypse:{ label:'Apocalypse', desc:'A huge impact after a long charge. It grows dramatically with every rank — it only reaches its true power at the highest (10th) rank.' },
+    eternalshield:{ label:'Eternal Shield', desc:'Long invulnerability. The higher its rank, the longer it lasts — at rank 10 it makes you almost unstoppable.' },
+    doomarrow:{ label:'Arrow of Doom', desc:'A piercing projectile that stacks up more damage with every rank — at rank 10 it takes down almost anything in one hit.' },
+    judgment:{ label:'Judgment', desc:'A lightning strike of terrifying power even at rank 1, and it keeps growing with every rank.' },
+    deathcrown:{ label:"Death's Crown", desc:'An instant, heavy explosion around you — a serious blow even at rank 1, not only at the top.' },
+    immortal:{ label:'Immortality', desc:'Long invulnerability from the start, growing further with every rank.' },
+    allpiercer:{ label:'Allpiercer', desc:'A strong, piercing energy beam — it deals serious damage even at rank 1, not only at high ranks.' },
+    mistform:{ label:'Mist Form', desc:'You turn to mist — enemies lose your trail and charge your old position while you walk away. Lasts longer with every rank.' },
+  },
+  ultimates: {
+    fortress:{ label:'Fortress', desc:'Big shield, healing and a shockwave all around.' },
+    precision:{ label:'Precision Mode', desc:'Every shot pierces and crits for a while.' },
+    bloodrage:{ label:'Blood Rage', desc:'Huge damage, speed and lifesteal.' },
+    elemental:{ label:'Elemental Storm', desc:'Meteor shower and lightning across the whole arena.' },
+    shadowstep:{ label:'Shadow Step', desc:'Invisibility — enemies lose your trail.' },
+    lifeaura:{ label:'Life Aura', desc:'Full heal, every ability recharges, turrets.' },
+    undeadlegion:{ label:'Legion of the Dead', desc:'Summons a skeleton army around you that chases and damages enemies.' },
+    huntingground:{ label:'Hunting Ground', desc:'A large area that heavily damages every enemy inside it.' },
+    mechbarrage:{ label:'Mech Barrage', desc:'Deploys a heavy machine-gun war machine that fires fast and hard.' },
+    ninefold:{ label:'Power of the Nine Seals', desc:'A little from the power of all nine seals — healing, shield, damage and speed at once, at reduced strength.' },
+    divinejudgment:{ label:'Divine Judgment', desc:"A massive explosion around you — 300 radius, 430 damage (the same as Death's Crown at its highest rank, with a slightly wider reach). For 10 seconds it cuts incoming damage by 30%, and whatever that protection absorbs comes straight back to you as HP." },
+    masterstrike:{ label:'Judgment of the Masters', desc:'A massive explosion around you — 260 radius (like Judgment at its highest rank), 250 damage — that alone kills a tank-type enemy, and the boss takes the same damage (not an instant execution). Instantly heals +50% max HP, and briefly cuts incoming damage by 70%.' },
+  },
+  difficulties: {
+    easy:{ label:'Easy', desc:'a gentler start' },
+    normal:{ label:'Normal', desc:'balanced' },
+    hard:{ label:'Hard', desc:'smart enemies' },
+    nightmare:{ label:'Nightmare', desc:'merciless' },
+    hellish:{ label:'Hellish', desc:'only for the most determined' },
+    apocalyptic:{ label:'Apocalyptic', desc:'merciless to the bitter end' },
+  },
+  // kinézetek — a skin saját id-je alapján
+  skins: {
+    ironplate:'Iron Plate', axeguard:'Battleaxe Guard', crystalshield:'Crystal Shield', dragonscale:'Dragonscale',
+    rustyarmor:'Rusted Armor', mithrilgiant:'Mithril Giant',
+    forest:'Forest Hunter', nightshade:'Night Shade', desert:'Desert Raider', frost:'Frozen Shot',
+    camo:'Camouflage', starhunter:'Starlight Hunter',
+    tribal:'Tribal Warrior', bloodchill:'Bloodchiller', viking:'Viking Axe', lava:'Lavaslayer',
+    rustiron:'Rust Iron', bloodsun:'Lord of the Blood Sun',
+    fire:'Fire Wizard', ice:'Ice Wizard', shadow:'Shadow Mage', star:'Star Wizard',
+    apprentice:'Apprentice Robe', cosmicscribe:'Cosmic Scribe',
+    nightblade:'Nightblade', crimson:'Crimson Serpent', ghost:'Phantom Master', falcon:'Golden Falcon',
+    streetblade:'Street Knife', doomblade:'Blade of Doom',
+    light:'Light Priest', nature:'Nature Warden', starbless:'Star Blessing', alchemist:'Alchemist',
+    pilgrim:'Pilgrim', heavenlyherald:'Heavenly Herald',
+    bonemaster:'Bone Master', soulcollector:'Soul Collector', graverobber:'Grave Robber',
+    ravenking:'Raven King', gravedigger:'Gravedigger', lichking:'Lich King',
+    wildwalker:'Wilderness Walker', wolfblood:'Wolfblood', eagleeye:'Eagle Eye',
+    moonlight:'Moonlight Archer', trapper:'Trapper', starlightarcher:'Starlight Archer',
+    steam:'Steamfitter', electro:'Electrician', warmachine:'War Machine', nanotech:'Nanotech',
+    mechanic:'Mechanic', quantumengineer:'Quantum Engineer',
+    goldenseal:'Golden Seal', ninesparks:'Nine Sparks', eternalguard:'Eternal Guardian',
+    sealbreaker:'Sealbreaker', fadedseal:'Faded Seal', ultimateseal:'Final Seal',
+    silvergrandmaster:'Silver Grandmaster', purpleruler:'Crimson Ruler', steeldoom:'Steel Doom',
+    goldencrown:'Golden Crown', wornblade:'Worn Blade', eternalgrandmaster:'Eternal Grandmaster',
+    sungod:'Sun God', stargod:'Star God', firegod:'Fire God', icegod:'Ice God',
+    mortalguise:'Mortal Guise', infinitegod:'Infinite God',
+  },
+};
+
+// Egy menü-/játékszöveg a jelenlegi nyelven. Ha a kulcs függvény, a paramétereket megkapja.
+function T(key, ...args){
+  const dict = TRANSLATIONS[currentLang] || TRANSLATIONS.hu;
+  let v = dict[key];
+  if(v === undefined) v = TRANSLATIONS.hu[key];
+  return (typeof v === 'function') ? v(...args) : v;
+}
+// Adat-táblák egy-egy mezője a jelenlegi nyelven (magyarul mindig az eredeti).
+function gameTxt(group, id, field, fallback){
+  if(currentLang === 'en'){
+    const e = GAME_TEXT_EN[group] && GAME_TEXT_EN[group][id];
+    if(e && e[field]) return e[field];
+  }
+  return fallback;
+}
+function clsTxt(id, field){ return gameTxt('classes', id, field, CLASSES[id][field]); }
+function abTxt(id, field){ return gameTxt('abilities', id, field, ABILITIES[id][field]); }
+function ultTxt(id, field){ return gameTxt('ultimates', id, field, ULTIMATES[id][field]); }
+function diffTxt(key, field){ return gameTxt('difficulties', key, field, DIFFICULTIES[key][field]); }
+function skinTxt(sk){ return (currentLang === 'en' && GAME_TEXT_EN.skins[sk.id]) || sk.label; }
+
 let currentLang = localStorage.getItem('kilencpecset_lang') || 'hu';
 function applyLanguage(){
   const dict = TRANSLATIONS[currentLang] || TRANSLATIONS.hu;
@@ -751,12 +1002,28 @@ function applyLanguage(){
     const key = el.getAttribute('data-i18n');
     if(dict[key]) el.textContent = dict[key];
   });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{
+    const key = el.getAttribute('data-i18n-ph');
+    if(dict[key]) el.placeholder = dict[key];
+  });
+  const nameEl = document.getElementById('nameInput');
+  // csak az érintetlen alapértelmezett nevet írjuk át — amit a játékos beírt, azt sosem
+  if(nameEl && ['Hős','Hero'].includes(nameEl.value.trim())) nameEl.value = dict.defaultHeroName;
+  document.querySelectorAll('[data-i18n-aria]').forEach(el=>{
+    const key = el.getAttribute('data-i18n-aria');
+    if(dict[key]) el.setAttribute('aria-label', dict[key]);
+  });
   const ladderBtn = document.getElementById('ladderToggleBtnTL'); if(ladderBtn) ladderBtn.textContent = dict.ladderBtn;
   const langBtn = document.getElementById('langToggleBtn');
   if(langBtn) langBtn.textContent = currentLang==='hu' ? '🇬🇧 EN' : '🇭🇺 HU';
   if(typeof applySndToggles==='function') applySndToggles();
   if(typeof updateControlsHint==='function') updateControlsHint();
+  // a hős/felszerelés képernyő minden fordított része újraépül
   if(typeof buildLoadoutUI==='function') buildLoadoutUI();
+  if(typeof renderClassCards==='function') renderClassCards();
+  if(typeof renderHeroDetail==='function') renderHeroDetail();
+  if(typeof renderHeroLooks==='function') renderHeroLooks();
+  if(typeof renderDiffOptions==='function') renderDiffOptions();
   try{ localStorage.setItem('kilencpecset_lang', currentLang); }catch(e){}
 }
 document.getElementById('langToggleBtn').addEventListener('click', ()=>{
@@ -976,12 +1243,10 @@ document.getElementById('nameInput').addEventListener('input', ()=>{
   if(!PANTRY_READY){ btn.classList.add('hidden'); return; }
   btn.addEventListener('click', async ()=>{
     const username = document.getElementById('nameInput').value;
-    if(!pantryBasketName(username)){ status.textContent = 'Előbb írj be egy nevet.'; return; }
-    status.textContent = 'Keresés...';
+    if(!pantryBasketName(username)){ status.textContent = T('nameNeeded'); return; }
+    status.textContent = T('nameSearching');
     const ok = await pantryLoadIntoGame(username);
-    status.textContent = ok
-      ? 'Megtaláltuk a mentésedet — folytatod onnan, ahol abbahagytad!'
-      : 'Ez egy új név — mostantól automatikusan ide mentődik a haladásod, akár az első meccs után is.';
+    status.textContent = ok ? T('nameFound') : T('nameNew');
   });
 })();
 
@@ -2338,7 +2603,7 @@ function renderHeroLooks(){
       c.lineWidth=2; c.strokeStyle='rgba(255,255,255,0.85)'; c.stroke();
     });
     drawPlayerHead(c, cx, cy, R*0.72, -Math.PI/2, chosenHead, sk.col);
-    cv.title = sk.label + (unlocked?'':` — 🔒 ${sk.price} 💰`);
+    cv.title = unlocked ? skinTxt(sk) : T('skinLockedTitle', skinTxt(sk), sk.price);
     wrap.appendChild(cv);
     if(!unlocked){
       const tag = document.createElement('div'); tag.className='skinPriceTag'; tag.textContent='🔒 '+sk.price;
@@ -2350,10 +2615,10 @@ function renderHeroLooks(){
     wrap.addEventListener('click', ()=>{
       if(!isSkinUnlocked(chosenClass, i)){
         if((profile.coins||0) < sk.price){
-          alert(`Nincs elég pénzed ehhez a kinézethez — ${sk.price} 💰 kell, neked ${profile.coins||0} van.`);
+          alert(T('notEnoughCoinsSkin', sk.price, profile.coins||0));
           return;
         }
-        if(!confirm(`Megveszed ezt a kinézetet — "${sk.label}" — ${sk.price} 💰-ért?`)) return;
+        if(!confirm(T('confirmSkin', skinTxt(sk), sk.price))) return;
         buySkin(chosenClass, i);
         renderProfile();
       }
@@ -2373,7 +2638,7 @@ function renderDiffOptions(){
     const b = document.createElement('div');
     b.className = 'diffBtn' + (d.key===chosenDifficulty ? ' selected' : '');
     b.style.setProperty('--diffcol', d.col);
-    b.innerHTML = `${d.label}<small>${d.desc}</small>`;
+    b.innerHTML = `${diffTxt(d.key,'label')}<small>${diffTxt(d.key,'desc')}</small>`;
     b.addEventListener('click', ()=>{ chosenDifficulty=d.key; renderDiffOptions(); });
     diffRow.appendChild(b);
   });
@@ -2416,20 +2681,20 @@ function renderClassCards(){
     const unlocked = isClassUnlocked(id);
     const bal = heroBalanceMult(id);
     let balTag = '';
-    if(bal.hp<0.995 || bal.dmg<0.995) balTag = `<div class="cLine" style="color:#ff8a9d;">▼ finomhangolva (népszerű): ${Math.round((bal.hp+bal.dmg)/2*100)}%</div>`;
-    else if(bal.hp>1.005 || bal.dmg>1.005) balTag = `<div class="cLine" style="color:#7dffb0;">▲ finomhangolva (ritkán játszott): ${Math.round((bal.hp+bal.dmg)/2*100)}%</div>`;
-    const sealedTag = c.sealed ? `<div class="cLine" style="color:#ffd166;">🔯 örökre a legerősebb — sosem gyengül</div>` : '';
+    if(bal.hp<0.995 || bal.dmg<0.995) balTag = `<div class="cLine" style="color:#ff8a9d;">${T('nerfTag', Math.round((bal.hp+bal.dmg)/2*100))}</div>`;
+    else if(bal.hp>1.005 || bal.dmg>1.005) balTag = `<div class="cLine" style="color:#7dffb0;">${T('buffTag', Math.round((bal.hp+bal.dmg)/2*100))}</div>`;
+    const sealedTag = c.sealed ? `<div class="cLine" style="color:#ffd166;">${T('sealedTag')}</div>` : '';
     const card = document.createElement('div');
     card.className = 'classCard' + (id===chosenClass?' selected':'') + (unlocked?'':' locked') + (c.sealed?' sealedCard':'');
     card.style.setProperty('--ccol', c.col);
     card.innerHTML =
       `<canvas class="cPortrait" width="158" height="78"></canvas>` +
-      `<div class="cName">${c.icon} ${c.label}</div><div class="cRole">${c.role}</div>`+
-      `<div class="cLine"><span class="g">▲</span> ${c.strong}</div>`+
-      `<div class="cLine"><span class="b">▼</span> ${c.weak}</div>`+
-      `<div class="cUlt">${ULTIMATES[c.ult].icon} ${ULTIMATES[c.ult].label}</div>`+
+      `<div class="cName">${c.icon} ${clsTxt(id,'label')}</div><div class="cRole">${clsTxt(id,'role')}</div>`+
+      `<div class="cLine"><span class="g">▲</span> ${clsTxt(id,'strong')}</div>`+
+      `<div class="cLine"><span class="b">▼</span> ${clsTxt(id,'weak')}</div>`+
+      `<div class="cUlt">${ULTIMATES[c.ult].icon} ${ultTxt(c.ult,'label')}</div>`+
       sealedTag + balTag +
-      (unlocked?'':`<div class="lockTag">🔒 Lv.${c.req}</div>`);
+      (unlocked?'':`<div class="lockTag">${T('lockTag', c.req)}</div>`);
     // portré: a hős saját, felismerhető sziluettje a kártya tetején
     const pc = card.querySelector('.cPortrait').getContext('2d');
     const pcx=79, pcy=44, pR=26, pSkin = (id===chosenClass ? (heroSkinData(id,chosenSkin).skin) : heroSkinData(id,0).skin);
@@ -2450,10 +2715,10 @@ function renderClassCards(){
 
 // ---- Nagyított hős-részletnézet: számszerű statisztikákkal ----
 function speedLabel(spd){
-  if(spd<2.05) return 'Lassú';
-  if(spd<2.35) return 'Közepes';
-  if(spd<2.65) return 'Gyors';
-  return 'Nagyon gyors';
+  if(spd<2.05) return T('speedSlow');
+  if(spd<2.35) return T('speedMedium');
+  if(spd<2.65) return T('speedFast');
+  return T('speedVeryFast');
 }
 function renderHeroDetail(){
   const panel = document.getElementById('heroDetailPanel');
@@ -2471,24 +2736,24 @@ function renderHeroDetail(){
   const dps = Math.round(dmg / c.fireRate * 60);
   const range = Math.round(c.bulletSpeed * 75);   // lövedék sebessége × élettartama (75 képkocka) = tényleges hatótáv
   const hpValTxt = activeTier>0 ? `${baseHp} → <span style="color:#7dffb0;">${hp}</span> (+${hp-baseHp})` : `${hp}`;
-  const dmgValTxt = activeTier>0 ? `${baseDmg} → <span style="color:#ff8a5c;">${dmg}</span> (+${dmg-baseDmg})` : `${dmg} (${dps}/mp)`;
+  const dmgValTxt = activeTier>0 ? `${baseDmg} → <span style="color:#ff8a5c;">${dmg}</span> (+${dmg-baseDmg})` : T('dmgPerSec', dmg, dps);
   let dotsHtml = '';
   for(let t=1;t<=3;t++){
     const owned = admin ? true : ownedTier>=t;
     const isActive = admin && activeTier===t;
     const cost = HERO_TIER_COSTS[t-1];
     dotsHtml += `<span class="tierDot ${owned?'owned':''} ${isActive?'active':''}" data-tier="${t}"
-      title="${admin?('Teszt: '+t+'. szint'):(owned?(t+'. szint (megvéve)'):(t+'. szint — '+cost+' 🔷'))}">${owned?'★':t}</span>`;
+      title="${admin?T('tierTestTitle',t):(owned?T('tierOwnedTitle',t):T('tierBuyTitle',t,cost))}">${owned?'★':t}</span>`;
   }
   panel.style.setProperty('--hdcol', c.col);
   panel.innerHTML = `<canvas id="hdPortrait" width="96" height="96"></canvas>
     <div class="hdStats">
-      <div class="hdName">${c.icon} ${c.label} ${activeTier>0?`<span style="font-size:10px; color:var(--gold);">— ${activeTier}. szintre fejlesztve (+${activeTier*5}%)</span>`:''}</div>
-      <div class="hdRow"><span class="hdLabel">❤️ HP</span><div class="hdBarBg"><div class="hdBarFill" style="width:${clamp(hp/220*100,4,100)}%; background:#7dffb0;"></div></div><span class="hdVal" style="width:auto;">${hpValTxt}</span></div>
-      <div class="hdRow"><span class="hdLabel">⚔️ Sebzés</span><div class="hdBarBg"><div class="hdBarFill" style="width:${clamp(dmg/40*100,4,100)}%; background:#ff8a5c;"></div></div><span class="hdVal" style="width:auto;">${dmgValTxt}</span></div>
-      <div class="hdRow"><span class="hdLabel">💨 Sebesség</span><div class="hdBarBg"><div class="hdBarFill" style="width:${clamp((c.speed-1.7)/1.4*100,4,100)}%; background:#6ee7ff;"></div></div><span class="hdVal">${speedLabel(c.speed)} (${c.speed.toFixed(1)})</span></div>
-      <div class="hdRow"><span class="hdLabel">🎯 Hatótáv</span><div class="hdBarBg"><div class="hdBarFill" style="width:${clamp(range/1000*100,4,100)}%; background:#c9a6ff;"></div></div><span class="hdVal">${range} px</span></div>
-      <div class="hdRow" style="margin-top:6px;"><span class="hdLabel">🔧 ${admin?'Teszt-szint':'Fejlesztés'}</span><div style="display:flex; gap:6px;">${dotsHtml}</div></div>
+      <div class="hdName">${c.icon} ${clsTxt(id,'label')} ${activeTier>0?`<span style="font-size:10px; color:var(--gold);">${T('hdTierNote', activeTier, activeTier*5)}</span>`:''}</div>
+      <div class="hdRow"><span class="hdLabel">${T('hdHp')}</span><div class="hdBarBg"><div class="hdBarFill" style="width:${clamp(hp/220*100,4,100)}%; background:#7dffb0;"></div></div><span class="hdVal" style="width:auto;">${hpValTxt}</span></div>
+      <div class="hdRow"><span class="hdLabel">${T('hdDmg')}</span><div class="hdBarBg"><div class="hdBarFill" style="width:${clamp(dmg/40*100,4,100)}%; background:#ff8a5c;"></div></div><span class="hdVal" style="width:auto;">${dmgValTxt}</span></div>
+      <div class="hdRow"><span class="hdLabel">${T('hdSpeed')}</span><div class="hdBarBg"><div class="hdBarFill" style="width:${clamp((c.speed-1.7)/1.4*100,4,100)}%; background:#6ee7ff;"></div></div><span class="hdVal">${speedLabel(c.speed)} (${c.speed.toFixed(1)})</span></div>
+      <div class="hdRow"><span class="hdLabel">${T('hdRange')}</span><div class="hdBarBg"><div class="hdBarFill" style="width:${clamp(range/1000*100,4,100)}%; background:#c9a6ff;"></div></div><span class="hdVal">${range} px</span></div>
+      <div class="hdRow" style="margin-top:6px;"><span class="hdLabel">${admin?T('hdTestTier'):T('hdUpgrade')}</span><div style="display:flex; gap:6px;">${dotsHtml}</div></div>
     </div>`;
   const pc = document.getElementById('hdPortrait').getContext('2d');
   const { skin } = heroSkinData(id, chosenSkin);
@@ -2507,8 +2772,8 @@ function renderHeroDetail(){
       if(ownedTier>=t){ return; }   // már megvan
       if(t !== ownedTier+1){ return; }   // csak sorban lehet fejleszteni
       const cost = HERO_TIER_COSTS[t-1];
-      if((profile.shards||0) < cost){ alert(`Nincs elég kristályod — ${cost} 🔷 kell, neked ${profile.shards||0} van. Kristályt a napi küldetésekből kapsz.`); return; }
-      if(!confirm(`Fejleszted "${c.label}"-t a(z) ${t}. szintre ${cost} 🔷-ért?`)) return;
+      if((profile.shards||0) < cost){ alert(T('notEnoughShards', cost, profile.shards||0)); return; }
+      if(!confirm(T('confirmHeroTier', clsTxt(id,'label'), t, cost))) return;
       buyHeroTier(id);
       renderHeroDetail(); renderProfile();
     });
@@ -2597,12 +2862,12 @@ function buildLoadoutUI(){
     const upgTier = abilityUpgradeTier(id);
     const cell = document.createElement('div');
     cell.className = 'abCell' + (idx>=0?' equipped':'') + (unlocked?'':' locked') + (ab.epic?' epicCell':'') + (ab.legendary?' legendaryCell':'');
-    cell.title = ab.label + ' — ' + ab.desc + (abal<0.995?` (finomhangolva: ${Math.round(abal*100)}%)`:'') + (upgTier>0?` — fejlesztve: +${upgTier*8}%`:'');
-    cell.innerHTML = (ab.epic?`<div class="epicTag">EPIKUS · max 10. rang</div>`:'') +
-      (ab.legendary?`<div class="epicTag legendaryTag">LEGENDÁS · max 10. rang</div>`:'') +
-      (abal<0.995?`<div class="nerfDot" title="finomhangolva">▼</div>`:'') +
-      (unlocked?`<div class="upgBadge ${upgTier>0?'hasLvl':''}" title="Pecsét-fejlesztés">⬆${upgTier}/3</div>`:'') +
-      `<div class="ic">${ab.icon}</div><div class="nm">${ab.label}</div>`+
+    cell.title = abTxt(id,'label') + ' — ' + abTxt(id,'desc') + (abal<0.995?T('tunedTitle', Math.round(abal*100)):'') + (upgTier>0?T('upgradedTitle', upgTier*8):'');
+    cell.innerHTML = (ab.epic?`<div class="epicTag">${T('epicTag')}</div>`:'') +
+      (ab.legendary?`<div class="epicTag legendaryTag">${T('legendaryTag')}</div>`:'') +
+      (abal<0.995?`<div class="nerfDot" title="${T('nerfDotTitle')}">▼</div>`:'') +
+      (unlocked?`<div class="upgBadge ${upgTier>0?'hasLvl':''}" title="${T('upgBadgeTitle')}">⬆${upgTier}/3</div>`:'') +
+      `<div class="ic">${ab.icon}</div><div class="nm">${abTxt(id,'label')}</div>`+
       (idx>=0?`<div class="slotNum">${idx+1}</div>`:'') + (unlocked?'':`<div class="lk">🔒${ab.req}</div>`);
     if(unlocked) cell.addEventListener('click', ()=>{
       cell.classList.remove('flashing'); void cell.offsetWidth; cell.classList.add('flashing');
@@ -2613,11 +2878,11 @@ function buildLoadoutUI(){
       upgEl.addEventListener('click', (ev)=>{
         ev.stopPropagation();
         const cur = profile.abilityUpgrades[id]||0;
-        if(isAdminUser()){ alert('Admin: ez a pecsét már a legmagasabb (teszt) szinten van.'); return; }
-        if(cur>=3){ alert(`"${ab.label}" már a legmagasabb (3.) fejlesztési szinten van.`); return; }
+        if(isAdminUser()){ alert(T('adminMaxAbility')); return; }
+        if(cur>=3){ alert(T('abilityMaxed', abTxt(id,'label'))); return; }
         const cost = ABILITY_UPGRADE_COSTS[cur];
-        if((profile.shards||0) < cost){ alert(`Nincs elég kristályod — ${cost} 🔷 kell, neked ${profile.shards||0} van. Kristályt a napi küldetésekből kapsz.`); return; }
-        if(!confirm(`Fejleszted "${ab.label}"-t a(z) ${cur+1}. szintre ${cost} 🔷-ért? (+8% erő szintenként)`)) return;
+        if((profile.shards||0) < cost){ alert(T('notEnoughShards', cost, profile.shards||0)); return; }
+        if(!confirm(T('confirmAbilityUpg', abTxt(id,'label'), cur+1, cost))) return;
         buyAbilityUpgrade(id);
         buildLoadoutUI(); renderProfile();
       });
@@ -2629,6 +2894,7 @@ function buildLoadoutUI(){
     const id = equipped[i];
     const chip = document.createElement('div'); chip.className='slotChip';
     chip.innerHTML = `<span>${i+1}. ${id?ABILITIES[id].icon:'—'}</span>`;
+    if(id) chip.title = abTxt(id,'label') + ' — ' + abTxt(id,'desc');
     if(id){
       const kb = document.createElement('div');
       kb.className = 'keyBtn' + (listeningSlot===id?' listening':'') + (abilityKeys[id]?'':' unbound');
@@ -2639,16 +2905,16 @@ function buildLoadoutUI(){
     slotRow.appendChild(chip);
   }
   const ult = ULTIMATES[CLASSES[chosenClass].ult];
+  const uchipTitle = ultTxt(CLASSES[chosenClass].ult,'label') + ' — ' + ultTxt(CLASSES[chosenClass].ult,'desc');
   const uchip = document.createElement('div'); uchip.className='slotChip ult';
-  uchip.innerHTML = `<span>ULT ${ult.icon}</span>`;
+  uchip.innerHTML = `<span>${T('ultChip')} ${ult.icon}</span>`;
   const ukb = document.createElement('div');
   ukb.className = 'keyBtn' + (listeningSlot==='ult'?' listening':'') + (ultKey?'':' unbound');
   ukb.textContent = listeningSlot==='ult' ? '…' : (displayKey(ultKey) || '—');
   ukb.addEventListener('click', ()=>{ listeningSlot='ult'; buildLoadoutUI(); });
+  uchip.title = uchipTitle;
   uchip.appendChild(ukb); slotRow.appendChild(uchip);
-  document.getElementById('abilityHint').innerHTML =
-    ((typeof TRANSLATIONS!=='undefined' && TRANSLATIONS[currentLang]) ? TRANSLATIONS[currentLang].abilityHint(equipped.length)
-      : `Felszerelve: <b>${equipped.length}/5</b> · Kattints egy képességre a fel-/leszereléshez, a billentyű-gombra kattintva átállíthatod (érintőn a képességre bökve használod).`);
+  document.getElementById('abilityHint').innerHTML = T('abilityHint', equipped.length);
 }
 function refreshMenu(){ renderProfile(); renderClassCards(); buildLoadoutUI(); renderHeroDetail(); renderRewardLadder(); }
 
@@ -3094,13 +3360,13 @@ function levelUp(){
   if(upg.length){
     const ab = upg[p.level % upg.length];
     ab.rank++;
-    sub = ABILITIES[ab.id].icon + ' ' + ABILITIES[ab.id].label + ' → ' + ab.rank + '. rang';
+    sub = T('rankSub', ABILITIES[ab.id].icon, abTxt(ab.id,'label'), ab.rank);
   } else {
     p.fireRate = Math.max(8, p.fireRate-1); p.bulletDmg += 2;
-    sub = 'Alap-sebzés és tűzgyorsaság nő!';
+    sub = T('baseStatSub');
   }
   SFX.levelup();
-  document.getElementById('luText').textContent = 'SZINT ' + p.level;
+  document.getElementById('luText').textContent = T('levelFmt', p.level);
   document.getElementById('luSub').textContent = sub;
   const banner = document.getElementById('levelUpBanner');
   banner.classList.remove('hidden'); banner.style.opacity = 1;
@@ -3702,11 +3968,9 @@ function triggerBossIntro(){
     titleEl.style.color = bd.col; titleEl.style.webkitTextFillColor = bd.col;
     document.getElementById('bossIntroText').innerHTML = bd.intro || 'Az utolsó hullám leverve — most vagy soha.';
   } else {
-    titleEl.textContent = 'A GONOSZ ÁRNYÉK';
+    titleEl.textContent = T('shadowBossName');
     titleEl.style.color = 'var(--accent2)'; titleEl.style.webkitTextFillColor = 'var(--accent2)';
-    document.getElementById('bossIntroText').innerHTML =
-      `"Szóval te vagy az, aki mind a kilenc pecsétet feltörte... Sokan próbálkoztak előtted. Mindannyian a sötétségben végezték."<br><br>` +
-      `Az utolsó hullám leverve — most vagy soha. Minden erődre szükséged lesz.`;
+    document.getElementById('bossIntroText').innerHTML = T('shadowBossIntro');
   }
   document.getElementById('bossIntro').classList.remove('hidden');
 }
@@ -3829,19 +4093,18 @@ function winGame(){
   const winTitle = document.querySelector('#winScreen .title');
   if(story){
     endlessBtnEl.classList.add('hidden');
-    if(winTitle) winTitle.textContent = 'A PECSÉTEK MEGERŐSÍTVE';
+    if(winTitle) winTitle.textContent = T('winTitleStory');
     document.getElementById('winText').innerHTML =
-      `${game.player.name} mind a három pecsétet megerősítette, és a Sötétség visszahúzódott a mélybe.<br>`+
-      `Ám hat pecsét még feltöretlen — a háború nem ért véget.<br>`+
-      `<b>+${r.earned} profil-XP</b> &nbsp;|&nbsp; <b>+${r.coins} 💰</b>` + (r.up?` — elérted a <b>${r.up}.</b> profilszintet! Új tartalom oldódott fel.`:'');
-    document.getElementById('restartBtnWin').textContent = 'VISSZA A TÉRKÉPRE';
+      T('winStoryText', game.player.name) +
+      T('rewardLine', r.earned, r.coins) + (r.up?T('profileUpLine', r.up):'');
+    document.getElementById('restartBtnWin').textContent = T('backToMapBtn');
   } else {
     endlessBtnEl.classList.remove('hidden');
-    if(winTitle) winTitle.textContent = 'GYŐZELEM';
+    if(winTitle) winTitle.textContent = T('winTitle');
     document.getElementById('winText').innerHTML =
-      `${game.player.name} legyőzte a Gonosz Árnyékot, és mind a kilenc pecsét szabaddá vált.<br>`+
-      `<b>+${r.earned} profil-XP</b> &nbsp;|&nbsp; <b>+${r.coins} 💰</b>` + (r.up?` — elérted a <b>${r.up}.</b> profilszintet! Új tartalom oldódott fel.`:'');
-    document.getElementById('restartBtnWin').textContent = 'ÚJ JÁTÉK';
+      T('winText', game.player.name) +
+      T('rewardLine', r.earned, r.coins) + (r.up?T('profileUpLine', r.up):'');
+    document.getElementById('restartBtnWin').textContent = T('newGameBtn');
   }
   document.getElementById('winScreen').classList.remove('hidden');
   hideCombatUI();
@@ -3851,14 +4114,14 @@ function deathGame(){
   const r = matchXp(0);
   let msg;
   if(game.mode==='story' && game.chapter){
-    msg = `Elbuktál a(z) „${game.chapter.title}" pecséténél. A Sötétség egyelőre erősebb volt.<br>`;
+    msg = T('deathStoryText', game.chapter.title);
   } else if(game.endless){
-    msg = `${game.wave-MAX_WAVES}. végtelen hullámig jutottál. Az Árnyék erősebbnek bizonyult... egyelőre.<br>`;
+    msg = T('deathEndlessText', game.wave-MAX_WAVES);
   } else {
-    msg = `A ${game.wave}. hullámig jutottál. Az Árnyék erősebbnek bizonyult... egyelőre.<br>`;
+    msg = T('deathText', game.wave);
   }
   document.getElementById('deathText').innerHTML = msg +
-    `<b>+${r.earned} profil-XP</b> &nbsp;|&nbsp; <b>+${r.coins} 💰</b>` + (r.up?` — elérted a <b>${r.up}.</b> profilszintet! Új tartalom oldódott fel.`:'');
+    T('rewardLine', r.earned, r.coins) + (r.up?T('profileUpLine', r.up):'');
   document.getElementById('deathScreen').classList.remove('hidden');
   hideCombatUI();
 }
@@ -3878,22 +4141,23 @@ function updateHud(){
   const p = game.player;
   document.getElementById('hpBarFill').style.width = Math.max(0,(p.hp/p.maxHp*100))+'%';
   document.getElementById('xpBarFill').style.width = (p.xp/p.xpNext*100)+'%';
-  document.getElementById('lvlLabel').textContent = 'SZINT '+p.level;
+  document.getElementById('hpLabel').textContent = T('hpLabel');
+  document.getElementById('lvlLabel').textContent = T('levelFmt', p.level);
+  const bossTag = game.boss ? (game.boss.isMini?T('miniBossLabel'):T('bossLabel')) : null;
+  document.getElementById('waveTitle').textContent = T('waveLabel');
   if(game.chapter){
-    document.getElementById('waveTitle').textContent = 'HULLÁM';
-    document.getElementById('waveNum').textContent = game.boss ? (game.boss.isMini?'MINI-BOSS':'BOSS') : (game.chapterWave+'/'+game.chapter.waveCount);
-    document.getElementById('modeTag').textContent = (game.chapterIndex+1)+'. FEJEZET · '+game.chapter.title.toUpperCase();
+    document.getElementById('waveNum').textContent = bossTag || (game.chapterWave+'/'+game.chapter.waveCount);
+    document.getElementById('modeTag').textContent = T('chapterTag', game.chapterIndex+1, game.chapter.title.toUpperCase());
   } else {
-    document.getElementById('waveTitle').textContent = 'HULLÁM';
-    document.getElementById('waveNum').textContent = game.boss ? (game.boss.isMini?'MINI-BOSS':'BOSS') : game.wave;
-    document.getElementById('modeTag').textContent = (game.endless?'VÉGTELEN · ':'') + game.diff.label.toUpperCase();
+    document.getElementById('waveNum').textContent = bossTag || game.wave;
+    document.getElementById('modeTag').textContent = (game.endless?T('endlessPrefix'):'') + diffTxt(game.diff.key,'label').toUpperCase();
   }
   const alive = game.enemies.length + game.pendingSpawns.length;
   document.getElementById('enemyCount').textContent = game.boss
-    ? Math.max(0,Math.ceil(game.boss.hp))+' / '+game.boss.maxHp+' HP'
+    ? T('bossHp', Math.max(0,Math.ceil(game.boss.hp)), game.boss.maxHp)
     : (isFinalWaveOut()
-        ? alive+' ellenfél · utána BOSS'
-        : alive+' ellenfél · köv. hullám '+Math.max(0,Math.ceil(game.waveTimer/60))+'s');
+        ? T('enemiesThenBoss', alive)
+        : T('enemiesNextWave', alive, Math.max(0,Math.ceil(game.waveTimer/60))));
 }
 
 /* =========================================================
