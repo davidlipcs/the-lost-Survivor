@@ -332,7 +332,7 @@
     <div style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center; margin-top:10px;">
       <button class="bigBtn ghost sndBtn sndSfxBtn"></button>
       <button class="bigBtn ghost sndBtn sndMusBtn"></button>
-      <button class="bigBtn ghost hidden" id="installBtn">📲 TELEPÍTÉS</button>
+      <button class="bigBtn ghost hidden" id="installBtn" data-i18n="installBtn">📲 TELEPÍTÉS</button>
     </div>
     <div class="controlsHint" id="controlsHint"></div>
   </div>
@@ -376,15 +376,15 @@
 
   <div id="mapScreen" class="overlay hidden">
     <h1 class="title">THE LOST SURVIVOR</h1>
-    <div class="subtitle">Válaszd ki a fejezetet. Minden pecsét külön pálya és boss — a legyőzött pecsét feloldja a következőt. A kaszt- és képesség-beállításod a HŐS-VÁLASZTÓ képernyőn állítható.</div>
+    <div class="subtitle" data-i18n="mapSubtitle">Válaszd ki a fejezetet. Minden pecsét külön pálya és boss — a legyőzött pecsét feloldja a következőt. A kaszt- és képesség-beállításod a HŐS-VÁLASZTÓ képernyőn állítható.</div>
     <div class="classRow" id="mapRow"></div>
-    <button class="bigBtn ghost" id="mapBackBtn">VISSZA</button>
+    <button class="bigBtn ghost" id="mapBackBtn" data-i18n="backShort">VISSZA</button>
   </div>
 
   <div id="storyIntro" class="overlay hidden">
     <h1 class="title" id="storyTitle"></h1>
     <div class="storyBox" id="storyText"></div>
-    <button class="bigBtn" id="storyStartBtn">HARC KEZDÉSE</button>
+    <button class="bigBtn" id="storyStartBtn" data-i18n="bossFightBtn">HARC KEZDÉSE</button>
   </div>
 
   <div id="dialogueBox" class="hidden" style="position:absolute; inset:0; z-index:30; pointer-events:all;
@@ -408,10 +408,10 @@
   </div>
 
   <div id="ladderScreen" class="overlay hidden">
-    <h1 class="title" style="font-size:30px;">JUTALOM-LÉTRA</h1>
-    <div class="subtitle">Napi küldetések és a 60 szintes profil-létra jutalmai — mindig itt látod, mit kaptál és mit kapsz még.</div>
+    <h1 class="title" style="font-size:30px;" data-i18n="ladderTitle">JUTALOM-LÉTRA</h1>
+    <div class="subtitle" data-i18n="ladderSubtitle">Napi küldetések és a 60 szintes profil-létra jutalmai — mindig itt látod, mit kaptál és mit kapsz még.</div>
     <div id="ladderContent" style="width:100%; max-width:520px; text-align:left;"></div>
-    <button class="bigBtn ghost" id="ladderBackBtn" style="margin-top:14px;">Vissza</button>
+    <button class="bigBtn ghost" id="ladderBackBtn" style="margin-top:14px;" data-i18n="backPlain">Vissza</button>
   </div>
 
   <div id="bossIntro" class="overlay hidden">
@@ -709,10 +709,10 @@ async function pantryLoadIntoGame(username){
 }
 
 /* =========================================================
-   NYELVVÁLASZTÓ — a menü, a játék közbeni (PLAY) felület és a
-   hős/felszerelés (LOADOUT) képernyő minden felirata.
-   A sztori mód szövegei (fejezetcímek, párbeszédek, intrók) még
-   magyarul vannak — az külön, nagyobb fordítási munka.
+   NYELVVÁLASZTÓ — a játék teljes felülete: menü, játék közbeni
+   (PLAY) HUD, hős/felszerelés (LOADOUT), jutalom-létra és a sztori
+   mód (fejezetek, párbeszédek, bossok). Új nyelvhez elég egy új
+   kulcs a TRANSLATIONS-be és egy blokk a GAME_TEXT_EN mintájára.
    ========================================================= */
 const TRANSLATIONS = {
   en: {
@@ -784,6 +784,42 @@ const TRANSLATIONS = {
     defaultHeroName: 'Hero', nameNeeded: 'Type a name first.', nameSearching: 'Searching...',
     nameFound: 'We found your save — you carry on where you left off!',
     nameNew: 'This is a new name — from now on your progress saves here automatically, even after the very first match.',
+
+    /* --- sztori mód --- */
+    installBtn: '📲 INSTALL', backShort: 'BACK', backPlain: 'Back',
+    mapSubtitle: 'Pick a chapter. Every seal is its own stage and boss — beating a seal unlocks the next one. Your class and seal setup is on the HERO screen.',
+    mapCleared: '✓ Cleared',
+    prologueTitle: 'PROLOGUE', storyStartLabel: 'THE STORY BEGINS',
+    firstStageNote: (title)=> `— stage 1: ${title} —`,
+    dlgNext: 'Continue', dlgStart: 'Set off', dlgReady: 'Are you ready?', dlgAccept: '“I accept.”',
+    kingSpeaker: 'The King', princessSpeaker: 'The Princess',
+    kingWise: '“A wise choice. Call the princess!”',
+    princessMeet: '“...So you are the stranger who defeated my father\u2019s army? Well... I am glad to meet you.”',
+    kingEnough: '“Enough! ...Enough. I admit it, I am beaten.”',
+    kingOffer: '“Spare my life, and I give you my daughter, and we put an end to this fight.”',
+    bossIntroFallback: 'The last wave is down — now or never.',
+    prologue: [
+      'PROLOGUE',
+      'On a dangerous mission you lost your way and ended up very far from home.',
+      'You have no idea how to get back.',
+      'You walk alone at the edge of a vast pine forest — you do not know what waits inside, but you have no choice except to go on.',
+    ],
+
+    /* --- jutalom-létra --- */
+    ladderTitle: 'REWARD LADDER',
+    ladderSubtitle: 'Daily quests and the rewards of the 60-level profile ladder — you can always see what you got and what is still ahead.',
+    questsToday: '📋 Today\u2019s quests', ladderHeading: '📜 Reward ladder (60 levels)',
+    ladderLevel: (n)=> `Level ${n}`,
+    stickMove: 'MOVE', stickAim: 'AIM + FIRE',
+    strangerSpeaker: 'Stranger', dlgOk: 'All right',
+    companionScene: [
+      'Leaving the farm behind, the two of you head on into the unknown.',
+      'One day, as you rest by a collapsed bridge, you hear a faint groan from the bushes.',
+      'You find a lone, wounded soldier — lost as well, alone, just the way you once were.',
+    ],
+    companionLine: '“Hey... hello there. Are you taking all this on alone? Not any more — I am coming with you, if you do not mind.”',
+    companionOutro: 'From now on you are not alone on this road.',
+    headCommando: 'Commando', headGasmask: 'Gas mask', headCyber: 'Cyber', headNinja: 'Shadow', headSpartan: 'Spartan',
   },
   hu: {
     subtitle: "A várost sötét szörnyhadsereg szállta meg. Törd fel a pecséteket — minél többet játszol, annál több harcos és képesség oldódik fel.",
@@ -854,6 +890,42 @@ const TRANSLATIONS = {
     defaultHeroName: 'Hős', nameNeeded: 'Előbb írj be egy nevet.', nameSearching: 'Keresés...',
     nameFound: 'Megtaláltuk a mentésedet — folytatod onnan, ahol abbahagytad!',
     nameNew: 'Ez egy új név — mostantól automatikusan ide mentődik a haladásod, akár az első meccs után is.',
+
+    /* --- sztori mód --- */
+    installBtn: '📲 TELEPÍTÉS', backShort: 'VISSZA', backPlain: 'Vissza',
+    mapSubtitle: 'Válaszd ki a fejezetet. Minden pecsét külön pálya és boss — a legyőzött pecsét feloldja a következőt. A kaszt- és képesség-beállításod a HŐS-VÁLASZTÓ képernyőn állítható.',
+    mapCleared: '✓ Teljesítve',
+    prologueTitle: 'BEVEZETŐ', storyStartLabel: 'A TÖRTÉNET KEZDETE',
+    firstStageNote: (title)=> `— 1. pálya: ${title} —`,
+    dlgNext: 'Tovább', dlgStart: 'Indulás', dlgReady: 'Készen állsz?', dlgAccept: '„Elfogadom.”',
+    kingSpeaker: 'A Király', princessSpeaker: 'A Hercegnő',
+    kingWise: '„Bölcs döntés. Hívjátok a hercegnőt!”',
+    princessMeet: '„...Szóval te vagy az idegen, aki legyőzte apám seregét? Nos... örülök, hogy megismerhetlek.”',
+    kingEnough: '„Elég! ...Elég. Belátom, alulmaradtam.”',
+    kingOffer: '„Hagyj életben, és neked adom a lányomat, és véget vetünk ennek a harcnak.”',
+    bossIntroFallback: 'Az utolsó hullám leverve — most vagy soha.',
+    prologue: [
+      'BEVEZETŐ',
+      'Egy veszélyes küldetés közben eltévedtél, és nagyon messzire kerültél otthonodtól.',
+      'Nem tudod, hogyan juss haza.',
+      'Egyedül sétálsz egy hatalmas fenyves szélén — nem tudod, mi vár rád odabent, de nincs más választásod, mint továbbmenni.',
+    ],
+
+    /* --- jutalom-létra --- */
+    ladderTitle: 'JUTALOM-LÉTRA',
+    ladderSubtitle: 'Napi küldetések és a 60 szintes profil-létra jutalmai — mindig itt látod, mit kaptál és mit kapsz még.',
+    questsToday: '📋 Mai küldetések', ladderHeading: '📜 Jutalom-létra (60 szint)',
+    ladderLevel: (n)=> `Szint ${n}`,
+    stickMove: 'MOZGÁS', stickAim: 'CÉLZÁS + LÖVÉS',
+    strangerSpeaker: 'Idegen', dlgOk: 'Rendben',
+    companionScene: [
+      'A farmot magatok mögött hagyva tovább vágtok neki az ismeretlennek.',
+      'Egy nap, ahogy egy leomlott hídnál pihentek, halk nyögést hallotok a bozótból.',
+      'Egy magányos, sebesült katonára bukkantok — ő is eltévedt, egyedül, ugyanúgy, ahogy egykor te.',
+    ],
+    companionLine: '„Hé... szevasz. Egyedül vágsz neki ennek az egésznek? Na, azt már nem — tartok veled, ha nem bánod.”',
+    companionOutro: 'Mostantól nem vagytok egyedül ezen az úton.',
+    headCommando: 'Kommandós', headGasmask: 'Gázmaszk', headCyber: 'Kiber', headNinja: 'Árnyék', headSpartan: 'Spártai',
   },
 };
 /* =========================================================
@@ -945,6 +1017,30 @@ const GAME_TEXT_EN = {
     hellish:{ label:'Hellish', desc:'only for the most determined' },
     apocalyptic:{ label:'Apocalyptic', desc:'merciless to the bitter end' },
   },
+  chapters: {
+    forest:{ title:'The Pine Woods',
+      intro:'On a dangerous mission you lost your way and ended up very far from home. '+
+            'You have no idea how to get back. You walk alone at the edge of a vast pine forest — you do not know what waits inside, '+
+            'but you have no choice except to go on.',
+      goal:'Survive 8 waves in the pine woods.' },
+    farm:{ title:'The Farm',
+      intro:'The trees start to thin out and you come across a farm that looks abandoned. As you look around, a lone figure '+
+            'steps out from behind one of the barns — wary of you at first, but then offering their help after all. '+
+            'From now on you are not alone on this road.',
+      goal:'Survive 10 waves on the farm, now with your friend at your side.' },
+    kingdom:{ title:'The Kingdom',
+      intro:'Beyond the farm you finally find traces of people — a great kingdom receives you. '+
+            'The gate guard does not trust strangers, though, and calls the defenders to arms. You have to prove '+
+            'that you are no threat — and then the King himself steps out to face you.',
+      goal:'Survive 12 waves in the open field, then face the King.',
+      bossName:'The King',
+      bossIntro:'An old but commanding ruler steps before you, a crown on his head — the King himself stands up to defend his kingdom.'+
+            '<br><br>“If you want to cross my lands, first you must prove your strength, stranger!”' },
+  },
+  quests: {
+    kills:'Kill 40 enemies', wave:'Reach wave 6 in a single match', matches:'Finish 2 matches',
+    abilities:'Trigger 25 seals', win:'Win 1 match',
+  },
   // kinézetek — a skin saját id-je alapján
   skins: {
     ironplate:'Iron Plate', axeguard:'Battleaxe Guard', crystalshield:'Crystal Shield', dragonscale:'Dragonscale',
@@ -994,6 +1090,9 @@ function abTxt(id, field){ return gameTxt('abilities', id, field, ABILITIES[id][
 function ultTxt(id, field){ return gameTxt('ultimates', id, field, ULTIMATES[id][field]); }
 function diffTxt(key, field){ return gameTxt('difficulties', key, field, DIFFICULTIES[key][field]); }
 function skinTxt(sk){ return (currentLang === 'en' && GAME_TEXT_EN.skins[sk.id]) || sk.label; }
+function chTxt(ch, field){ return gameTxt('chapters', ch.id, field, ch[field]); }
+function chBossTxt(ch, field, fallback){ return gameTxt('chapters', ch.id, 'boss'+field, fallback); }
+function questTxt(q){ return (currentLang === 'en' && GAME_TEXT_EN.quests[q.id]) || q.label; }
 
 let currentLang = localStorage.getItem('kilencpecset_lang') || 'hu';
 function applyLanguage(){
@@ -1024,6 +1123,9 @@ function applyLanguage(){
   if(typeof renderHeroDetail==='function') renderHeroDetail();
   if(typeof renderHeroLooks==='function') renderHeroLooks();
   if(typeof renderDiffOptions==='function') renderDiffOptions();
+  if(typeof renderHeadOptions==='function') renderHeadOptions();
+  if(typeof renderMapCards==='function') renderMapCards();
+  if(typeof renderRewardLadder==='function') renderRewardLadder();
   try{ localStorage.setItem('kilencpecset_lang', currentLang); }catch(e){}
 }
 document.getElementById('langToggleBtn').addEventListener('click', ()=>{
@@ -1066,11 +1168,11 @@ const COLORS = ['#6ee7ff', '#ff5c7c', '#ffd166', '#8b5cf6', '#4ade80', '#f97316'
 let chosenColor = COLORS[0];
 
 const PLAYER_HEADS = [
-  { id:'commando', label:'Kommandós' },
-  { id:'gasmask',  label:'Gázmaszk'  },
-  { id:'cyber',    label:'Kiber'     },
-  { id:'ninja',    label:'Árnyék'    },
-  { id:'spartan',  label:'Spártai'   },
+  { id:'commando', label:'Kommandós', key:'headCommando' },
+  { id:'gasmask',  label:'Gázmaszk',   key:'headGasmask'  },
+  { id:'cyber',    label:'Kiber',      key:'headCyber'    },
+  { id:'ninja',    label:'Árnyék',     key:'headNinja'    },
+  { id:'spartan',  label:'Spártai',    key:'headSpartan'  },
 ];
 let chosenHead = 'commando';
 
@@ -1639,7 +1741,7 @@ const ABILITIES = {
     run(p,r){ p.buffs.boneward=Math.max(p.buffs.boneward,150+r*30); } },
 
   // ---- Vadász kizárólagos pecsétjei ----
-  snaretrap:{ label:'Csapda', icon:'🪤', req:1, cdMax:240, maxRank:3, desc:'Csapdát rakysz a célzott pontra — az első ráérő ellenfelet gyökeret ereszti és sebzi.', cls:'hunter',
+  snaretrap:{ label:'Csapda', icon:'🪤', req:1, cdMax:240, maxRank:3, desc:'Csapdát raksz a célzott pontra — az első ráérő ellenfelet gyökeret ereszti és sebzi.', cls:'hunter',
     run(p,r){ game.traps.push({x:input.aimX,y:input.aimY,r:34,dmg:20+r*8,root:70+r*15,armed:true}); } },
   beast:{ label:'Vadállat', icon:'🐺', req:1, cdMax:360, maxRank:3, desc:'Vad társat idézel, aki üldözi és harapja az ellenfeleket.', cls:'hunter',
     run(p,r){ game.turrets.push({x:p.x,y:p.y-20,life:300+r*80,fireCd:0,dmg:8+r*3,mobile:true,beast:true}); } },
@@ -2573,7 +2675,7 @@ function renderHeadOptions(){
     const c = cv.getContext('2d');
     c.clearRect(0,0,62,62);
     drawPlayerHead(c, 31, 33, 23, -Math.PI/2, h.id, chosenColor);
-    cv.title = h.label;
+    cv.title = T(h.key) || h.label;
     cv.addEventListener('click', ()=>{ chosenHead=h.id; renderHeadOptions(); drawPreview(); });
     headRow.appendChild(cv);
   });
@@ -2799,24 +2901,19 @@ function renderMapCards(){
     card.className = 'classCard' + (i===selectedChapter?' selected':'') + (unlocked?'':' locked');
     card.style.setProperty('--ccol', ch.boss ? ch.boss.col : '#6ee7ff');
     card.innerHTML =
-      `<div class="cName">${i+1}. ${ch.title}</div>`+
+      `<div class="cName">${i+1}. ${chTxt(ch,'title')}</div>`+
       (ch.seal ? `<div class="cRole">${ch.seal}</div>` : '')+
-      `<div class="cLine">${ch.goal}</div>`+
-      (cleared?`<div class="cUlt">✓ Teljesítve</div>`:'')+
+      `<div class="cLine">${chTxt(ch,'goal')}</div>`+
+      (cleared?`<div class="cUlt">${T('mapCleared')}</div>`:'')+
       (unlocked?'':`<div class="lockTag">🔒</div>`);
     if(unlocked) card.addEventListener('click', ()=>{
       selectedChapter=i; renderMapCards();
       if(i===0){
         // az 1. pálya kiválasztásakor a "Bevezető" önálló, lépésenkénti jelenetként pereg le,
         // csak utána jön a szokásos "1. A Fenyves" felkészülő képernyő a HARC KEZDÉSE gombbal
-        playDialogueSequence([
-          { speaker:'', text:'BEVEZETŐ' },
-          { speaker:'', text:'Egy veszélyes küldetés közben eltévedtél, és nagyon messzire kerültél otthonodtól.' },
-          { speaker:'', text:'Nem tudod, hogyan juss haza.' },
-          { speaker:'', text:'Egyedül sétálsz egy hatalmas fenyves szélén — nem tudod, mi vár rád odabent, de nincs más választásod, mint továbbmenni.' },
-        ], {
-          speaker:'', text:'Készen állsz?',
-          choices:[ { label:'Indulás', action: ()=>{ showScreen('storyIntro'); renderStoryIntro(); } } ]
+        playDialogueSequence(T('prologue').map(text=>({ speaker:'', text })), {
+          speaker:'', text:T('dlgReady'),
+          choices:[ { label:T('dlgStart'), action: ()=>{ showScreen('storyIntro'); renderStoryIntro(); } } ]
         });
       } else {
         showScreen('storyIntro'); renderStoryIntro();
@@ -2828,13 +2925,13 @@ function renderMapCards(){
 function renderStoryIntro(){
   const ch = CHAPTERS[selectedChapter]; if(!ch) return;
   const isVeryFirst = (selectedChapter===0);   // az első fejezetnél ez a történet BEVEZETŐJE is egyben
-  document.getElementById('storyTitle').textContent = isVeryFirst ? 'BEVEZETŐ' : ch.title;
+  document.getElementById('storyTitle').textContent = isVeryFirst ? T('prologueTitle') : chTxt(ch,'title');
   document.getElementById('storyText').innerHTML =
-    (isVeryFirst ? `<div style="color:var(--gold);letter-spacing:2px;font-size:12px;margin-bottom:8px;">A TÖRTÉNET KEZDETE</div>` : '') +
+    (isVeryFirst ? `<div style="color:var(--gold);letter-spacing:2px;font-size:12px;margin-bottom:8px;">${T('storyStartLabel')}</div>` : '') +
     (ch.seal ? `<div style="color:var(--gold);letter-spacing:2px;font-size:12px;margin-bottom:8px;">${ch.seal.toUpperCase()}</div>` : '')+
-    ch.intro +
-    (isVeryFirst ? `<div style="margin-top:10px; color:var(--dim); font-size:12px;">— 1. pálya: ${ch.title} —</div>` : '') +
-    `<div style="margin-top:12px;color:var(--accent);">🎯 ${ch.goal}</div>`;
+    chTxt(ch,'intro') +
+    (isVeryFirst ? `<div style="margin-top:10px; color:var(--dim); font-size:12px;">${T('firstStageNote', chTxt(ch,'title'))}</div>` : '') +
+    `<div style="margin-top:12px;color:var(--accent);">🎯 ${chTxt(ch,'goal')}</div>`;
 }
 
 // ---- Loadout (képességrács + slotok + billentyűk) ----
@@ -2924,13 +3021,13 @@ function renderRewardLadder(){
   if(!panel) return;
   ensureDailyQuests();
   const curLevel = profileLevel();
-  let html = `<div style="font-weight:bold; color:var(--gold); margin-bottom:6px; font-size:14px;">📋 Mai küldetések</div>`;
+  let html = `<div style="font-weight:bold; color:var(--gold); margin-bottom:6px; font-size:14px;">${T('questsToday')}</div>`;
   profile.quests.list.forEach(q=>{
     const def = QUEST_POOL.find(p=>p.id===q.id);
     html += `<div style="font-size:12.5px; margin-bottom:6px; ${q.done?'color:#7dffb0;':''}">
-      ${q.done?'✅':'⬜'} ${def.label} — ${q.progress}/${def.target} (${def.reward} 🔷)</div>`;
+      ${q.done?'✅':'⬜'} ${questTxt(def)} — ${q.progress}/${def.target} (${def.reward} 🔷)</div>`;
   });
-  html += `<div style="font-weight:bold; color:var(--gold); margin:14px 0 6px; font-size:14px;">📜 Jutalom-létra (60 szint)</div>`;
+  html += `<div style="font-weight:bold; color:var(--gold); margin:14px 0 6px; font-size:14px;">${T('ladderHeading')}</div>`;
   for(let lvl=2; lvl<=REWARD_LADDER_MAX; lvl++){
     const isMilestone = REWARD_MILESTONES.includes(lvl);
     const coins = levelCoinReward(lvl) + (isMilestone?MILESTONE_BONUS:0);
@@ -2938,7 +3035,7 @@ function renderRewardLadder(){
     const reached = curLevel>=lvl;
     html += `<div style="display:flex; justify-content:space-between; font-size:12px; padding:4px 2px; border-bottom:1px solid #1c2333;
       ${reached?'color:#7dffb0;':'color:var(--dim);'} ${isMilestone?'font-weight:bold; color:var(--gold);':''}">
-      <span>${reached?'✓':''} Szint ${lvl}${isMilestone?' ⭐':''}</span>
+      <span>${reached?'✓':''} ${T('ladderLevel', lvl)}${isMilestone?' ⭐':''}</span>
       <span>💰 ${coins} ${heroesHere}</span></div>`;
   }
   panel.innerHTML = html;
@@ -3086,7 +3183,7 @@ function makePlayer(name, color, head){
 }
 
 function resetGame(){
-  const name = document.getElementById('nameInput').value.trim() || 'Hős';
+  const name = document.getElementById('nameInput').value.trim() || T('defaultHeroName');
   const story = (startMode==='story');
   recordHeroPlay(chosenClass);
   // 1. fázis: ha még nincs kiválasztva barát-hős (nincs UI hozzá), válaszd az első lehetséges párost automatikusan
@@ -3289,7 +3386,7 @@ function spawnBoss(isMini){
     isMini: !!isMini,
     type: bd ? (bd.type||'shadow') : 'shadow',
     col:  bd ? (bd.col||'#ff5c7c') : (isMini ? '#ff8ab0' : '#ff5c7c'),
-    name: bd ? bd.name : 'A Gonosz Árnyék',
+    name: bd ? chBossTxt(game.chapter, 'Name', bd.name) : T('shadowBossName'),
     patterns: bd ? (bd.patterns||['spread','aimed']) : ['spread','aimed'],
     fireRate: bd ? (bd.fireRate||1) : 1,
     x: canvas.width/2, y: 140, r: bd ? (bd.r||46) : (isMini? 34:46),
@@ -3917,7 +4014,7 @@ function showDialogue(speaker, text, choices){
   document.getElementById('dlgSpeaker').textContent = speaker;
   document.getElementById('dlgText').innerHTML = text;
   const box = document.getElementById('dlgChoices'); box.innerHTML='';
-  (choices||[{label:'Tovább', action:hideDialogue}]).forEach(c=>{
+  (choices||[{label:T('dlgNext'), action:hideDialogue}]).forEach(c=>{
     const btn = document.createElement('button');
     btn.className='bigBtn'; btn.textContent=c.label;
     btn.addEventListener('click', ()=>{ hideDialogue(); if(c.action) c.action(); });
@@ -3935,23 +4032,23 @@ function playDialogueSequence(lines, finalChoices){
   function next(){
     if(i>=lines.length){ if(finalChoices) showDialogue(finalChoices.speaker||'', finalChoices.text||'', finalChoices.choices); return; }
     const line = lines[i]; i++;
-    showDialogue(line.speaker, line.text, [{label:'Tovább', action: next}]);
+    showDialogue(line.speaker, line.text, [{label:T('dlgNext'), action: next}]);
   }
   next();
 }
 
 /* --- A Király megadja magát — 1. nagy sztori-fordulat --- */
 function onKingAccepted(){
-  showDialogue('A Király', '"Bölcs döntés. Hívjátok a hercegnőt!"', [{label:'Tovább', action: ()=>{
-    showDialogue('A Hercegnő', '"...Szóval te vagy az idegen, aki legyőzte apám seregét? Nos... örülök, hogy megismerhetlek."', [{label:'Tovább', action: ()=>{
+  showDialogue(T('kingSpeaker'), T('kingWise'), [{label:T('dlgNext'), action: ()=>{
+    showDialogue(T('princessSpeaker'), T('princessMeet'), [{label:T('dlgNext'), action: ()=>{
       if(game && game.chapter) nextChapter();
     }}]);
   }}]);
 }
 function onKingSurrender(){
-  showDialogue('A Király', '"Elég! ...Elég. Belátom, alulmaradtam."', [{label:'Tovább', action: ()=>{
-    showDialogue('A Király', '"Hagyj életben, és neked adom a lányomat, és véget vetünk ennek a harcnak."', [
-      { label:'"Elfogadom."', action: onKingAccepted },
+  showDialogue(T('kingSpeaker'), T('kingEnough'), [{label:T('dlgNext'), action: ()=>{
+    showDialogue(T('kingSpeaker'), T('kingOffer'), [
+      { label:T('dlgAccept'), action: onKingAccepted },
     ]);
   }}]);
 }
@@ -3964,9 +4061,9 @@ function triggerBossIntro(){
   const bd = game.chapter && game.chapter.boss;
   const titleEl = document.getElementById('bossIntroTitle');
   if(bd){
-    titleEl.textContent = bd.name;
+    titleEl.textContent = chBossTxt(game.chapter, 'Name', bd.name);
     titleEl.style.color = bd.col; titleEl.style.webkitTextFillColor = bd.col;
-    document.getElementById('bossIntroText').innerHTML = bd.intro || 'Az utolsó hullám leverve — most vagy soha.';
+    document.getElementById('bossIntroText').innerHTML = chBossTxt(game.chapter, 'Intro', bd.intro) || T('bossIntroFallback');
   } else {
     titleEl.textContent = T('shadowBossName');
     titleEl.style.color = 'var(--accent2)'; titleEl.style.webkitTextFillColor = 'var(--accent2)';
@@ -4012,16 +4109,14 @@ function nextChapter(){
   startMusic(game.chapter.id);   // fejezet-téma váltás (a loop megy tovább)
   if(ni===2 && !game.companion && chosenCompanionClass){
     // a barát-megismerés önálló, lépésenkénti (OK-gombos) jelenet, mielőtt a Királyság bevezetője jönne
-    const compLabel = (CLASSES[chosenCompanionClass]||{}).label || 'Idegen';
+    const compLabel = (CLASSES[chosenCompanionClass] ? clsTxt(chosenCompanionClass,'label') : null) || T('strangerSpeaker');
     game.state = 'dialogue';
     playDialogueSequence([
-      { speaker:'', text:'A farmot magatok mögött hagyva tovább vágtok neki az ismeretlennek.' },
-      { speaker:'', text:'Egy nap, ahogy egy leomlott hídnál pihentek, halk nyögést hallotok a bozótból.' },
-      { speaker:'', text:'Egy magányos, sebesült katonára bukkantok — ő is eltévedt, egyedül, ugyanúgy, ahogy egykor te.' },
-      { speaker: compLabel, text:'"Hé... szevasz. Egyedül vágsz neki ennek az egésznek? Na, azt már nem — tartok veled, ha nem bánod."' },
+      ...T('companionScene').map(text=>({ speaker:'', text })),
+      { speaker: compLabel, text:T('companionLine') },
     ], {
-      speaker:'', text:'Mostantól nem vagytok egyedül ezen az úton.',
-      choices:[ { label:'Rendben', action: ()=>{
+      speaker:'', text:T('companionOutro'),
+      choices:[ { label:T('dlgOk'), action: ()=>{
         game.companion = makeCompanion(chosenCompanionClass);
         const pl = game.player; game.companion.x = pl.x-46; game.companion.y = pl.y+46;
         showChapterIntro(game.chapter);
@@ -4437,9 +4532,9 @@ function draw(){
   // ---- érintős botkormányok ----
   if(input.touchMode){
     if(input.left.active) drawStick(ctx, input.left, '#6ee7ff');
-    else drawStickHint(ctx, 96, h-110, '#6ee7ff', 'MOZGÁS');
+    else drawStickHint(ctx, 96, h-110, '#6ee7ff', T('stickMove'));
     if(input.right.active) drawStick(ctx, input.right, '#ff5c7c');
-    else drawStickHint(ctx, w-96, h-110, '#ff5c7c', 'CÉLZÁS + LÖVÉS');
+    else drawStickHint(ctx, w-96, h-110, '#ff5c7c', T('stickAim'));
   }
 
   updateAbilityBar();
