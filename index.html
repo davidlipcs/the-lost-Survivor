@@ -354,6 +354,7 @@
     <div class="subtitle" data-i18n="subtitle">
       A várost sötét szörnyhadsereg szállta meg. Törd fel a pecséteket — minél többet játszol, annál több harcos és képesség oldódik fel.
     </div>
+    <div id="resumeRunInfo" style="font-size:11px; color:var(--gold); margin-top:-2px;"></div>
     <div id="profileBarMini">
       <span><span data-i18n="profileLabel">Profil</span> <b id="profLvl">1</b><span style="color:var(--dim); font-size:10px;">/60</span></span>
       <span><b id="profCoins">0</b> 💰</span>
@@ -361,6 +362,7 @@
       <span><span data-i18n="bestWaveLabel">🏆 Legjobb hullám:</span> <b id="bestWaveTxt">0</b></span>
     </div>
     <div style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center; margin-top:10px;">
+      <button class="bigBtn gold hidden" id="resumeRunBtn" data-i18n="resumeRunBtn">▶️ FUTAM FOLYTATÁSA</button>
       <button class="bigBtn" id="startBtn" data-i18n="playBtn">JÁTÉK</button>
       <button class="bigBtn gold" id="storyModeBtn" data-i18n="storyBtn">SZTORI MÓD</button>
     </div>
@@ -405,6 +407,9 @@
       <div class="slotRow" id="slotRow"></div>
       <div id="abilityHint"></div>
     </div>
+    <div class="pickLabel" data-i18n="companionLabel">A TÁRSAD — AKI A SZTORIBAN MELLÉD SZEGŐDIK</div>
+    <div class="diffRow" id="companionRow"></div>
+    <div id="companionHint" style="font-size:11px; color:var(--dim); margin:-8px 0 14px;"></div>
     <div class="pickLabel" data-i18n="difficultyLabel">NEHÉZSÉGI SZINT</div>
     <div class="diffRow" id="diffRow"></div>
     <button class="bigBtn gold" id="storyProceedBtn" data-i18n="storyProceedBtn">📖 SZTORI KEZDÉSE</button>
@@ -878,6 +883,13 @@ const TRANSLATIONS = {
     skinLockedTitle: (name, price)=> `${name} — 🔒 ${price} 💰`,
     ultChip: 'ULT',
     bossFightBtn: 'START THE FIGHT', shadowBossName: 'THE EVIL SHADOW',
+    bossShadow: 'THE EVIL SHADOW', bossFrost: 'THE FROZEN WARDEN', bossFlame: 'THE EMBER TYRANT',
+    bossShadowIntro: `“So you are the one who broke all nine seals... Many have tried before you. Every one of them ended in the dark.”<br><br>`+
+      `The last wave is down — now or never. You will need everything you have.`,
+    bossFrostIntro: `“The cold outlasts everything. It outlasted them, and it will outlast you.”<br><br>`+
+      `A warden of ice steps out of the frost — slower, but tougher, and its shots close in from every side.`,
+    bossFlameIntro: `“Everything burns. You are only the next thing to catch.”<br><br>`+
+      `A tyrant of embers charges out of the smoke — thinner-skinned, but fast, and it fires far more often.`,
     shadowBossIntro: `“So you are the one who broke all nine seals... Many have tried before you. Every one of them ended in the dark.”<br><br>`+
       `The last wave is down — now or never. You will need everything you have.`,
     defaultHeroName: 'Hero', nameNeeded: 'Type a name first.', nameSearching: 'Searching...',
@@ -941,6 +953,26 @@ const TRANSLATIONS = {
     bestWaveHero: (n)=> `🏆 Your best: wave ${n}`,
     statsTitle: '📊 Your records', statRuns: 'Matches played', statKills: 'Enemies killed',
     statBestWave: 'Best wave', statHeroes: 'Heroes unlocked',
+
+    /* --- társ-választó --- */
+    companionLabel: 'YOUR COMPANION — WHO JOINS YOU IN THE STORY',
+    companionNone: 'Alone', companionNoneHint: 'No companion',
+    companionPickHint: 'The companion joins at the Farm and fights alongside you.',
+
+    /* --- félbehagyott futam --- */
+    resumeRunBtn: '▶️ CONTINUE YOUR RUN',
+    resumeRunInfo: (hero, wave)=> `${hero} · wave ${wave}`,
+    resumeRunDiscard: 'Start a new match? Your unfinished run is dropped.',
+    historyTitle: '🗒️ Last runs', historyEmpty: 'No finished runs yet.',
+    historyRow: (hero, wave, diff)=> `${hero} · wave ${wave} · ${diff}`,
+    firstRunTitle: 'HOW IT WORKS',
+    firstRunBody: [
+      'Enemies come in waves. Survive them, and after the twelfth a boss shows up.',
+      'Every level-up makes one of your equipped seals stronger, so what you bring matters.',
+      'Seals are your abilities — up to five at a time, each on its own key or button. The big one on the right is your ultimate: it charges as you deal damage.',
+      'Matches earn profile XP and coins even when you lose. Coins buy looks, crystals from daily quests upgrade heroes and seals.',
+    ],
+    firstRunOk: 'Got it',
   },
   hu: {
     subtitle: "A várost sötét szörnyhadsereg szállta meg. Törd fel a pecséteket — minél többet játszol, annál több harcos és képesség oldódik fel.",
@@ -1006,6 +1038,13 @@ const TRANSLATIONS = {
     skinLockedTitle: (name, price)=> `${name} — 🔒 ${price} 💰`,
     ultChip: 'ULT',
     bossFightBtn: 'HARC KEZDÉSE', shadowBossName: 'A GONOSZ ÁRNYÉK',
+    bossShadow: 'A GONOSZ ÁRNYÉK', bossFrost: 'A FAGYOTT ŐRZŐ', bossFlame: 'A PARÁZS ZSARNOKA',
+    bossShadowIntro: `„Szóval te vagy az, aki mind a kilenc pecsétet feltörte... Sokan próbálkoztak előtted. Mindannyian a sötétségben végezték.”<br><br>`+
+      `Az utolsó hullám leverve — most vagy soha. Minden erődre szükséged lesz.`,
+    bossFrostIntro: `„A hideg mindent túlél. Túlélte őket, és túl fog élni téged is.”<br><br>`+
+      `A jég őrzője lép elő a dérből — lassabb, de szívósabb, és a lövései minden irányból záródnak rád.`,
+    bossFlameIntro: `„Minden porrá ég. Te vagy a következő, ami lángra kap.”<br><br>`+
+      `A parázs zsarnoka ront ki a füstből — vékonyabb bőrű, de gyors, és sokkal sűrűbben tüzel.`,
     shadowBossIntro: `„Szóval te vagy az, aki mind a kilenc pecsétet feltörte... Sokan próbálkoztak előtted. Mindannyian a sötétségben végezték.”<br><br>`+
       `Az utolsó hullám leverve — most vagy soha. Minden erődre szükséged lesz.`,
     defaultHeroName: 'Hős', nameNeeded: 'Előbb írj be egy nevet.', nameSearching: 'Keresés...',
@@ -1069,6 +1108,26 @@ const TRANSLATIONS = {
     bestWaveHero: (n)=> `🏆 Legjobbad: ${n}. hullám`,
     statsTitle: '📊 A rekordjaid', statRuns: 'Lejátszott meccs', statKills: 'Legyőzött ellenfél',
     statBestWave: 'Legjobb hullám', statHeroes: 'Feloldott hős',
+
+    /* --- társ-választó --- */
+    companionLabel: 'A TÁRSAD — AKI A SZTORIBAN MELLÉD SZEGŐDIK',
+    companionNone: 'Egyedül', companionNoneHint: 'Nincs társ',
+    companionPickHint: 'A társ a Farmnál csatlakozik, és onnantól veled harcol.',
+
+    /* --- félbehagyott futam --- */
+    resumeRunBtn: '▶️ FUTAM FOLYTATÁSA',
+    resumeRunInfo: (hero, wave)=> `${hero} · ${wave}. hullám`,
+    resumeRunDiscard: 'Új meccset kezdesz? A félbehagyott futamod elveszik.',
+    historyTitle: '🗒️ Utolsó futamok', historyEmpty: 'Még nincs befejezett futamod.',
+    historyRow: (hero, wave, diff)=> `${hero} · ${wave}. hullám · ${diff}`,
+    firstRunTitle: 'HOGYAN MŰKÖDIK',
+    firstRunBody: [
+      'Az ellenfelek hullámokban jönnek. Éld túl őket — a tizenkettedik után boss következik.',
+      'Minden szintlépés egy felszerelt pecsétedet erősíti, szóval nem mindegy, mit viszel magaddal.',
+      'A pecsétek a képességeid — egyszerre öt, mindegyik saját billentyűn vagy gombon. A jobb oldali nagy gomb az ultimate: sebzéssel töltöd fel.',
+      'A meccsek vesztésnél is hoznak profil-XP-t és pénzt. A pénz kinézetekre megy, a napi küldetésekből járó kristály hősöket és pecséteket fejleszt.',
+    ],
+    firstRunOk: 'Értem',
   },
 };
 /* =========================================================
@@ -1267,10 +1326,12 @@ function applyLanguage(){
   if(typeof renderHeroDetail==='function') renderHeroDetail();
   if(typeof renderHeroLooks==='function') renderHeroLooks();
   if(typeof renderDiffOptions==='function') renderDiffOptions();
+  if(typeof renderCompanionOptions==='function') renderCompanionOptions();
   if(typeof renderHeadOptions==='function') renderHeadOptions();
   if(typeof renderMapCards==='function') renderMapCards();
   if(typeof renderRewardLadder==='function') renderRewardLadder();
   if(typeof renderSettings==='function') renderSettings();
+  if(typeof refreshResumeBtn==='function') refreshResumeBtn();
   try{ localStorage.setItem('kilencpecset_lang', currentLang); }catch(e){}
 }
 document.getElementById('langToggleBtn').addEventListener('click', ()=>{
@@ -2050,6 +2111,29 @@ const ULTIMATES = {
 };
 
 /* ---------- Loadout (menü) állapot ---------- */
+const COMPANION_PAIRS = {
+  assassin: ['support','tank'],
+  support: ['assassin','tank'],
+  tank: ['assassin','support'],
+  hunter: ['engineer'],
+  engineer: ['hunter'],
+  necromancer: ['mage'],
+  mage: ['necromancer'],
+  berserker: ['sniper'],
+  sniper: ['berserker'],
+};
+const NORMAL_HERO_IDS = ['tank','sniper','berserker','mage','assassin','support','necromancer','hunter','engineer'];
+function companionOptions(playerCls){
+  // a három "nagy" hősnél bármelyik normál hőst választhatod a barátnak
+  if(CLASSES[playerCls] && CLASSES[playerCls].sealed) return NORMAL_HERO_IDS.slice();
+  return COMPANION_PAIRS[playerCls] || NORMAL_HERO_IDS.slice();
+}
+
+/* A társ választása megmarad a profilban; `null` = nincs társ ('none' a mentésben).
+   Ha a játékos még sosem választott, marad a régi viselkedés: az első lehetséges
+   párost vesszük automatikusan — nem veszünk el tőle társat egy frissítéssel. */
+let companionAutoPick = (profile.companion === undefined);
+let chosenCompanionClass = (profile.companion === 'none') ? null : (profile.companion || null);
 let chosenClass = 'tank';
 let equipped = [];           // felszerelt képesség-id-k, max 5
 let abilityKeys = {};        // képesség-id -> billentyű (nem slot-pozícióhoz kötve)
@@ -2687,9 +2771,10 @@ function drawPlayer(g, p){
 }
 
 // --- 9 megkülönböztethető ellenfél-fej ---
-function drawEnemyFace(g, en, face){
-  const R = en.r;
-  withRot(g, en.x, en.y, face, ()=>{
+/* Az arc az origó körül, forgatás nélkül — így egy sprite-ba is előrajzolható.
+   A rajz maga változatlan, csak a translate/rotate burkoló került ki alóla. */
+function drawEnemyFaceAt0(g, en, R){
+  {
     if(en.type==='grunt'){
       g.beginPath(); g.arc(0,0,R*0.8,0,PI2); g.fillStyle='#39404e'; g.fill();
       g.lineWidth=R*0.12; g.strokeStyle='#20242e'; g.stroke();
@@ -2754,24 +2839,12 @@ function drawEnemyFace(g, en, face){
     } else {
       g.beginPath(); g.arc(0,0,R*0.8,0,PI2); g.fillStyle='#39404e'; g.fill();
     }
-  });
+  }
 }
 
 // --- típusonként ELTÉRŐ test-sziluett: alakról egy pillantás alatt felismerhető ---
-function drawEnemyBody(g, en, face){
-  const R = en.r;
-  const fill = en.frozen>0 ? '#bfe9ff' : (en.hitFlash>0 ? '#fff' : en.color);
-  // lüktető, típus-színű aura minden ellenfél mögött — élőbbé teszi őket, és távolról is
-  // azonnal jelzi a típust a színén keresztül, mielőtt a részletek kivehetők lennének
-  const pulse = 0.55 + 0.25*Math.sin(Date.now()/260 + en.x*0.05);
-  g.save();
-  g.globalAlpha = pulse*0.5;
-  g.beginPath(); g.arc(en.x,en.y,R*1.55,0,PI2);
-  g.fillStyle = en.color; g.shadowColor = en.color; g.shadowBlur = R*0.9;
-  g.fill();
-  g.restore();
-  g.save();
-  g.translate(en.x, en.y); g.rotate(face);
+/* A törzs sziluettje az origó körül, forgatás nélkül — sprite-ba rajzolható. */
+function drawEnemyShapeAt0(g, en, R, fill){
   g.fillStyle = fill; g.lineWidth = R>20 ? 4 : 2; g.strokeStyle = 'rgba(0,0,0,0.35)';
   if(en.type==='scout'){          // keskeny nyíl-ék: a gyors bekerítő
     g.beginPath(); g.moveTo(R*1.25,0); g.lineTo(-R*0.85,R*0.9); g.lineTo(-R*0.45,0); g.lineTo(-R*0.85,-R*0.9); g.closePath();
@@ -2801,7 +2874,6 @@ function drawEnemyBody(g, en, face){
     g.beginPath(); g.arc(0,0,R,0,PI2);
   }
   g.fill(); g.stroke();
-  g.restore();
 }
 
 // --- boss fej: démoni ---
@@ -2931,6 +3003,36 @@ renderHeroLooks();
 // kezdéskor is essen egybe az alapértelmezett harcos (tank) első kinézetével
 renderHeadOptions(); renderHeroLooks(); renderHeroDetail();
 
+/* A társ-választó: eddig a kód automatikusan az első lehetséges párost vette,
+   mert "nincs UI hozzá". Most van — és a választás a profilba mentődik. */
+const companionRow = document.getElementById('companionRow');
+function renderCompanionOptions(){
+  if(!companionRow) return;
+  companionRow.innerHTML = '';
+  const opts = companionOptions(chosenClass);
+  if(companionAutoPick && !chosenCompanionClass) chosenCompanionClass = opts[0] || null;
+  // ha az eddigi választás ehhez a hőshöz nem érvényes, essen vissza az elsőre
+  if(chosenCompanionClass && !opts.includes(chosenCompanionClass)) chosenCompanionClass = opts[0] || null;
+  const entries = [{ id:null, label:T('companionNone'), desc:T('companionNoneHint'), col:'#7d8aa3', icon:'—' }]
+    .concat(opts.map(id=>({ id, label:clsTxt(id,'label'), desc:clsTxt(id,'role'), col:CLASSES[id].col, icon:CLASSES[id].icon })));
+  entries.forEach(e=>{
+    const btn = document.createElement('div');
+    btn.className = 'diffBtn' + (e.id===chosenCompanionClass ? ' selected' : '');
+    btn.style.setProperty('--diffcol', e.col);
+    btn.innerHTML = `${e.icon} ${e.label}<small>${e.desc}</small>`;
+    btn.addEventListener('click', ()=>{
+      chosenCompanionClass = e.id;
+      companionAutoPick = false;
+      profile.companion = e.id || 'none';
+      saveProfile();
+      renderCompanionOptions();
+    });
+    companionRow.appendChild(btn);
+  });
+  const hint = document.getElementById('companionHint');
+  if(hint) hint.textContent = T('companionPickHint');
+}
+
 const diffRow = document.getElementById('diffRow');
 function renderDiffOptions(){
   diffRow.innerHTML='';
@@ -2944,6 +3046,7 @@ function renderDiffOptions(){
   });
 }
 renderDiffOptions();
+renderCompanionOptions();
 
 const pv = document.getElementById('previewCanvas');
 const pvCtx = pv.getContext('2d');
@@ -2972,6 +3075,7 @@ function renderProfile(){
 const classRow = document.getElementById('classRow');
 function setClass(id){
   chosenClass=id; equipDefaults(); renderClassCards(); buildLoadoutUI();
+  if(typeof renderCompanionOptions==='function') renderCompanionOptions();
   chosenSkin = 0;
   renderHeadOptions(); renderHeroLooks(); drawPreview(); renderHeroDetail();
 }
@@ -3277,8 +3381,19 @@ function renderStatsBlock(){
     [T('statBestWave'), profile.bestWaveCampaign||0],
     [T('statHeroes'), unlockedHeroes+' / '+Object.keys(CLASSES).length],
   ];
+  const hist = (profile.history||[]).slice(0, 10);
+  const histHtml = hist.length
+    ? hist.map(h=>{
+        const d = new Date(h.at||0);
+        const when = isNaN(d) ? '' : `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+        const label = T('historyRow', clsTxt(h.cls,'label'), h.wave, diffTxt(DIFFICULTIES[h.diff]?h.diff:'normal','label'));
+        return `<div class="statRow"><span>${label}</span><b style="color:var(--dim); font-weight:normal;">${when}</b></div>`;
+      }).join('')
+    : `<div class="statRow" style="color:var(--dim); border:0;">${T('historyEmpty')}</div>`;
   el.innerHTML = `<div style="font-weight:bold; color:var(--gold); margin-bottom:6px; font-size:13px;">${T('statsTitle')}</div>` +
-    rows.map(([k,v])=>`<div class="statRow"><span>${k}</span><b>${v}</b></div>`).join('');
+    rows.map(([k,v])=>`<div class="statRow"><span>${k}</span><b>${v}</b></div>`).join('') +
+    `<div style="font-weight:bold; color:var(--gold); margin:14px 0 6px; font-size:13px;">${T('historyTitle')}</div>` +
+    histHtml;
 }
 function bindSettingsUi(){
   const on = (id, ev, fn)=>{ const el=document.getElementById(id); if(el) el.addEventListener(ev, fn); };
@@ -3476,24 +3591,6 @@ let startMode = 'campaign';  // 'campaign' | 'story' — a resetGame ezt olvassa
    van (a te specifikációd szerint), de a választó FELÜLET, a
    pecét-beállítás és az intelligens döntéshozatal külön lépésben jön.
    ========================================================= */
-const COMPANION_PAIRS = {
-  assassin: ['support','tank'],
-  support: ['assassin','tank'],
-  tank: ['assassin','support'],
-  hunter: ['engineer'],
-  engineer: ['hunter'],
-  necromancer: ['mage'],
-  mage: ['necromancer'],
-  berserker: ['sniper'],
-  sniper: ['berserker'],
-};
-const NORMAL_HERO_IDS = ['tank','sniper','berserker','mage','assassin','support','necromancer','hunter','engineer'];
-function companionOptions(playerCls){
-  // a három "nagy" hősnél bármelyik normál hőst választhatod a barátnak
-  if(CLASSES[playerCls] && CLASSES[playerCls].sealed) return NORMAL_HERO_IDS.slice();
-  return COMPANION_PAIRS[playerCls] || NORMAL_HERO_IDS.slice();
-}
-let chosenCompanionClass = null;   // ha null, nincs barát a meccsben
 function makeCompanion(cls){
   const c = CLASSES[cls] || CLASSES.tank;
   const bal = c.sealed ? {hp:1,dmg:1} : heroBalanceMult(cls);
@@ -3531,7 +3628,11 @@ function resetGame(){
   const story = (startMode==='story');
   recordHeroPlay(chosenClass);
   // 1. fázis: ha még nincs kiválasztva barát-hős (nincs UI hozzá), válaszd az első lehetséges párost automatikusan
-  if(!chosenCompanionClass || !companionOptions(chosenClass).includes(chosenCompanionClass)){
+  // csak akkor nyúlunk hozzá, ha a mentett választás ehhez a hőshöz érvénytelen;
+  // a szándékos "Egyedül" (companionAutoPick=false + null) megmarad
+  if(companionAutoPick && !chosenCompanionClass){
+    chosenCompanionClass = companionOptions(chosenClass)[0] || null;
+  } else if(chosenCompanionClass && !companionOptions(chosenClass).includes(chosenCompanionClass)){
     chosenCompanionClass = companionOptions(chosenClass)[0] || null;
   }
   game = {
@@ -3670,6 +3771,7 @@ function isFinalWaveOut(){
 }
 
 function spawnWave(){
+  if(typeof saveRun==='function') saveRun();   // minden hullám elején rögzítjük a futamot
   SFX.wave();
   const ch = game.chapter;
   const pool = ch ? ch.enemyPool : poolForWave(game.wave);
@@ -3722,20 +3824,34 @@ function spawnEnemyType(type, forcedX, forcedY, hpMult=1, rMult=1){
   });
 }
 
+/* A kampány/végtelen bossai eddig mind ugyanaz a "Gonosz Árnyék" volt, pedig a
+   rajzoló már ismer jég- és láng-változatot is. Most a hullámszám dönti el,
+   melyikkel találkozol — más szín, más lövés-minta, más statisztika. */
+const BOSS_VARIANTS = [
+  { type:'shadow', key:'bossShadow', col:'#ff5c7c', patterns:['spread','aimed'],     hpMult:1.00, speed:1.20, fireRate:1.00, r:46 },
+  { type:'frost',  key:'bossFrost',  col:'#8fd0ff', patterns:['spiral','spread'],    hpMult:1.15, speed:1.05, fireRate:1.15, r:48 },
+  { type:'flame',  key:'bossFlame',  col:'#ff9d4d', patterns:['aimed','spiral'],     hpMult:0.92, speed:1.45, fireRate:0.80, r:44 },
+];
+function bossVariantFor(wave){
+  // 12. hullám: Árnyék, utána váltakozva Jég és Láng
+  const cycle = Math.max(0, Math.floor((wave - MAX_WAVES) / MINIBOSS_EVERY));
+  return BOSS_VARIANTS[cycle % BOSS_VARIANTS.length];
+}
 function spawnBoss(isMini){
   const dm = game.diff.hp;
   const bd = (!isMini && game.chapter) ? game.chapter.boss : null;   // fejezet-boss adat
   const lvl = game.player.level;
+  const va = bd ? null : bossVariantFor(game.wave);   // változat csak a nem-fejezet bossokra
   game.boss = {
     isMini: !!isMini,
-    type: bd ? (bd.type||'shadow') : 'shadow',
-    col:  bd ? (bd.col||'#ff5c7c') : (isMini ? '#ff8ab0' : '#ff5c7c'),
-    name: bd ? chBossTxt(game.chapter, 'Name', bd.name) : T('shadowBossName'),
-    patterns: bd ? (bd.patterns||['spread','aimed']) : ['spread','aimed'],
-    fireRate: bd ? (bd.fireRate||1) : 1,
-    x: canvas.width/2, y: 140, r: bd ? (bd.r||46) : (isMini? 34:46),
-    hp: Math.round((bd ? (bd.hp + lvl*16) : (isMini ? (220+game.wave*14) : (480+lvl*20))) * dm),
-    maxHp: 0, speed: (bd ? bd.speed : (isMini?1.4:1.2))*game.diff.speed, attackTimer:0, hitFlash:0, frozen:0,
+    type: bd ? (bd.type||'shadow') : (isMini ? 'shadow' : va.type),
+    col:  bd ? (bd.col||'#ff5c7c') : (isMini ? '#ff8ab0' : va.col),
+    name: bd ? chBossTxt(game.chapter, 'Name', bd.name) : (isMini ? T('shadowBossName') : T(va.key)),
+    patterns: bd ? (bd.patterns||['spread','aimed']) : (isMini ? ['spread','aimed'] : va.patterns),
+    fireRate: bd ? (bd.fireRate||1) : (isMini ? 1 : va.fireRate),
+    x: canvas.width/2, y: 140, r: bd ? (bd.r||46) : (isMini? 34 : va.r),
+    hp: Math.round((bd ? (bd.hp + lvl*16) : (isMini ? (220+game.wave*14) : (480+lvl*20)*va.hpMult)) * dm),
+    maxHp: 0, speed: (bd ? bd.speed : (isMini?1.4:va.speed))*game.diff.speed, attackTimer:0, hitFlash:0, frozen:0,
     spiralAng:0,
   };
   game.boss.maxHp = game.boss.hp;
@@ -4382,6 +4498,84 @@ function addParticles(x,y,color,n=8){
   }
 }
 /* =========================================================
+   FÉLBEHAGYOTT FUTAM MENTÉSE
+   Eddig, ha a 30. hullámnál bezártad a fület, az egész meccs elveszett.
+   Most minden hullám elején (és szünetnél) elmentjük a futam vázát —
+   hős, szint, hullám, felszerelés, nehézség —, és a főmenüből egy
+   gombbal folytatható. Az ellenfeleket nem mentjük: a hullám elejéről
+   indulsz újra, nem a pontos képkockából.
+   ========================================================= */
+const RUN_KEY = 'lostsurvivor_run_v1';
+function saveRun(){
+  if(!game || !game.player) return;
+  if(game.state!=='playing' && game.state!=='paused') return;
+  if(game.boss) return;                  // boss-harc közepét nincs értelme félbe menteni
+  const p = game.player;
+  try{
+    localStorage.setItem(RUN_KEY, JSON.stringify({
+      v:1, savedAt: Date.now(),
+      mode: game.mode, endless: !!game.endless,
+      chapterIndex: game.chapterIndex, chapterWave: game.chapterWave,
+      wave: game.wave, diff: game.diff.key,
+      killsThisRun: game.killsThisRun||0,
+      hero: { cls:p.cls, name:p.name, color:p.color, head:p.head, skin:p.skin,
+              level:p.level, xp:p.xp, xpNext:p.xpNext, hp:p.hp, maxHp:p.maxHp,
+              fireRate:p.fireRate, bulletDmg:p.bulletDmg },
+      abilities: p.abilities.map(a=>({ id:a.id, key:a.key, rank:a.rank })),
+      ultKey: p.ult.key, ultCharge: p.ult.charge,
+      companion: chosenCompanionClass || 'none',
+    }));
+  }catch(e){ warnStorageOnce(); }
+}
+function loadRunMeta(){
+  try{
+    const raw = localStorage.getItem(RUN_KEY); if(!raw) return null;
+    const d = JSON.parse(raw);
+    if(!d || d.v!==1 || !d.hero || !CLASSES[d.hero.cls]) return null;
+    return d;
+  }catch(e){ return null; }
+}
+function clearRun(){ try{ localStorage.removeItem(RUN_KEY); }catch(e){} refreshResumeBtn(); }
+function refreshResumeBtn(){
+  const btn = document.getElementById('resumeRunBtn');
+  const info = document.getElementById('resumeRunInfo');
+  if(!btn) return;
+  const d = loadRunMeta();
+  btn.classList.toggle('hidden', !d);
+  if(info) info.textContent = d ? T('resumeRunInfo', clsTxt(d.hero.cls,'label'), d.wave) : '';
+}
+function resumeRun(){
+  const d = loadRunMeta(); if(!d) return;
+  // a mentett futam beállításai szerint állítjuk össze a menüt, aztán indítunk
+  chosenClass = d.hero.cls;
+  chosenColor = d.hero.color; chosenHead = d.hero.head; chosenSkin = d.hero.skin||0;
+  chosenDifficulty = DIFFICULTIES[d.diff] ? d.diff : 'normal';
+  chosenCompanionClass = (d.companion==='none') ? null : d.companion;
+  companionAutoPick = false;
+  equipped = d.abilities.map(a=>a.id).filter(id=>ABILITIES[id]).slice(0,MAX_SLOTS);
+  d.abilities.forEach(a=>{ if(ABILITIES[a.id] && a.key) abilityKeys[a.id]=a.key; });
+  if(d.ultKey) ultKey = d.ultKey;
+  const nameEl = document.getElementById('nameInput'); if(nameEl && d.hero.name) nameEl.value = d.hero.name;
+  startMode = d.mode || 'campaign';
+  selectedChapter = d.chapterIndex||0;
+  showScreen(); showCombatUI();
+  resetGame();
+  // a futam állapotát a friss játékra ültetjük vissza
+  const p = game.player;
+  p.level=d.hero.level; p.xp=d.hero.xp; p.xpNext=d.hero.xpNext;
+  p.maxHp=d.hero.maxHp; p.hp=Math.max(1, d.hero.hp);
+  p.fireRate=d.hero.fireRate; p.bulletDmg=d.hero.bulletDmg;
+  p.abilities.forEach(ab=>{ const src=d.abilities.find(a=>a.id===ab.id); if(src) ab.rank=src.rank; });
+  p.ult.charge = Math.min(p.ult.chargeMax, d.ultCharge||0);
+  game.wave = d.wave; game.chapterWave = d.chapterWave||1;
+  game.endless = !!d.endless;
+  game.killsThisRun = d.killsThisRun||0;
+  game.enemies.length = 0; game.pendingSpawns.length = 0;
+  spawnWave(); game.waveTimer = waveInterval();
+  updateHud();
+}
+
+/* =========================================================
    ÁLLAPOTÁTMENETEK
    ========================================================= */
 /* =========================================================
@@ -4446,9 +4640,10 @@ function triggerBossIntro(){
     titleEl.style.color = bd.col; titleEl.style.webkitTextFillColor = bd.col;
     document.getElementById('bossIntroText').innerHTML = chBossTxt(game.chapter, 'Intro', bd.intro) || T('bossIntroFallback');
   } else {
-    titleEl.textContent = T('shadowBossName');
-    titleEl.style.color = 'var(--accent2)'; titleEl.style.webkitTextFillColor = 'var(--accent2)';
-    document.getElementById('bossIntroText').innerHTML = T('shadowBossIntro');
+    const va = bossVariantFor(game.wave);
+    titleEl.textContent = T(va.key);
+    titleEl.style.color = va.col; titleEl.style.webkitTextFillColor = va.col;
+    document.getElementById('bossIntroText').innerHTML = T(va.key + 'Intro');
   }
   document.getElementById('bossIntro').classList.remove('hidden');
 }
@@ -4525,6 +4720,7 @@ function goMenu(){
   hideCombatUI();
   stopMusic();
   game = null;
+  refreshResumeBtn();
   if(story){ showScreen('mapScreen'); renderMapCards(); }
   else { showScreen('startScreen'); refreshMenu(); }
 }
@@ -4551,6 +4747,15 @@ function matchXp(bonus){
   if(g.mode!=='story' && (g.wave||0) > (profile.bestWaveCampaign||0)){
     profile.bestWaveCampaign = g.wave;
   }
+  /* Utolsó futamok listája — a puszta "legjobb hullám" szám mellett látod,
+     hogy alakultak a legutóbbi meccsek, és mivel játszottad őket. */
+  profile.history = profile.history || [];
+  profile.history.unshift({
+    cls: (g.player && g.player.cls) || chosenClass,
+    wave: g.wave||1, diff: (g.diff && g.diff.key) || 'normal',
+    mode: g.mode || 'campaign', at: Date.now(),
+  });
+  if(profile.history.length > 10) profile.history.length = 10;
   // hősönkénti csúcs — a hőskártyán is megjelenik, van mit megdönteni
   if(g.mode!=='story'){
     const hid = (g.player && g.player.cls) || chosenClass;
@@ -4570,6 +4775,7 @@ function hideCombatUI(){
   document.getElementById('menuEmbers').classList.remove('hidden');
 }
 function winGame(){
+  clearRun();
   game.state='win'; resetSticks(); stopMusic(); SFX.win();
   const story = game.mode==='story';
   if(story) markChapterCleared(game.chapterIndex);
@@ -4596,6 +4802,7 @@ function winGame(){
   hideCombatUI();
 }
 function deathGame(){
+  clearRun();
   game.state='dead'; resetSticks(); stopMusic(); SFX.death();
   const r = matchXp(0);
   let msg;
@@ -4614,7 +4821,7 @@ function deathGame(){
 function togglePause(){
   if(!game) return;
   if(game.state==='playing'){
-    game.state='paused'; resetSticks();
+    game.state='paused'; resetSticks(); saveRun();
     if(SND.musGain) SND.musGain.gain.value = SND.musVol*0.25;   // szünetben halkabb zene
     document.getElementById('pauseScreen').classList.remove('hidden');
   } else if(game.state==='paused'){
@@ -4841,21 +5048,51 @@ function draw(){
   });
 
   // ellenfelek
+  const nowT = Date.now();
+  const lightFx = !!SETTINGS.lowFx;   // kímélő látvány: elmosások nélkül rajzolunk
   game.enemies.forEach(en=>{
+    // a képernyőn kívül lévőket meg se rajzoljuk — a hullámok jó része kívülről sétál be
+    const margin = en.r*3 + 20;
+    if(en.x < -margin || en.x > w+margin || en.y < -margin || en.y > h+margin) return;
+    const R = en.r;
     const face = Math.atan2(p.y-en.y, p.x-en.x);
     // rohamozó figyelmeztetés / töltés-nyom
-    if(en.telegraph>0){ ctx.beginPath(); ctx.arc(en.x,en.y,en.r+8,0,PI2);
+    if(en.telegraph>0){ ctx.beginPath(); ctx.arc(en.x,en.y,R+8,0,PI2);
       ctx.strokeStyle='rgba(255,80,80,0.8)'; ctx.lineWidth=3; ctx.setLineDash([4,4]); ctx.stroke(); ctx.setLineDash([]); }
     // talaj-árnyék — mélységet ad, elválasztja az alaptalajtól
-    ctx.beginPath(); ctx.ellipse(en.x, en.y+en.r*0.55, en.r*0.85, en.r*0.32, 0, 0, PI2);
+    ctx.beginPath(); ctx.ellipse(en.x, en.y+R*0.55, R*0.85, R*0.32, 0, 0, PI2);
     ctx.fillStyle='rgba(0,0,0,0.4)'; ctx.fill();
-    // típus-színű glow-perem, hogy messziről is felismerhető legyen
-    ctx.save(); ctx.shadowColor = en.color; ctx.shadowBlur = en.hitFlash>0 ? 4 : 12;
-    // törzs: típusonként eltérő sziluett
-    drawEnemyBody(ctx, en, face);
+
+    /* Lüktető, típus-színű aura a törzs mögött. Kímélő látvány módban elmosás
+       nélkül, egy nagyobb halvány körrel — hasonló hatás, töredék annyi munka. */
+    const pulse = 0.55 + 0.25*Math.sin(nowT/260 + en.x*0.05);
+    if(lightFx){
+      ctx.globalAlpha = pulse*0.28;
+      ctx.beginPath(); ctx.arc(en.x, en.y, R*1.8, 0, PI2);
+      ctx.fillStyle = en.color; ctx.fill();
+      ctx.globalAlpha = 1;
+    } else {
+      ctx.save();
+      ctx.globalAlpha = pulse*0.5;
+      ctx.beginPath(); ctx.arc(en.x, en.y, R*1.55, 0, PI2);
+      ctx.fillStyle = en.color; ctx.shadowColor = en.color; ctx.shadowBlur = R*0.9;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    /* Törzs + arc EGY transzformáció alatt. Korábban a törzs és az arc külön-külön
+       állította be a translate/rotate-et, és egy harmadik save/restore hordozta a
+       glow-t: ellenfelenként négy save/restore pár futott. Ez volt a rajzolás
+       legdrágább része nagy hullámoknál. */
+    const fill = en.frozen>0 ? '#bfe9ff' : (en.hitFlash>0 ? '#fff' : en.color);
+    ctx.save();
+    ctx.translate(en.x, en.y); ctx.rotate(face);
+    if(!lightFx){ ctx.shadowColor = en.color; ctx.shadowBlur = en.hitFlash>0 ? 4 : 12; }
+    drawEnemyShapeAt0(ctx, en, R, fill);
+    ctx.shadowBlur = 0;
+    drawEnemyFaceAt0(ctx, en, R);
     ctx.restore();
-    // megkülönböztető fej — mindig látszik; a találat/fagyás csak felül csillan
-    drawEnemyFace(ctx, en, face);
+
     if(en.hitFlash>0){ ctx.beginPath(); ctx.arc(en.x,en.y,en.r,0,PI2); ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.fill(); }
     if(en.frozen>0){ ctx.beginPath(); ctx.arc(en.x,en.y,en.r,0,PI2); ctx.fillStyle='rgba(140,210,255,0.45)'; ctx.fill(); }
     // hp sáv
@@ -5067,7 +5304,32 @@ function startPlay(){
   showScreen(); showCombatUI();
   resetGame();
 }
-document.getElementById('startBtn').addEventListener('click', startPlay);
+/* Az első meccs előtt egyszer elmagyarázzuk az alapokat. Eddig csak az
+   irányítás-súgó volt kint; a hullám/pecsét/ultimate rendszerről semmi. */
+function showFirstRunGuide(after){
+  const lines = T('firstRunBody');
+  // az utolsó mondat hordozza az "Értem" gombot — ne legyen üres záró képernyő
+  const head = [{ speaker:'', text:T('firstRunTitle') }]
+    .concat(lines.slice(0,-1).map(text=>({ speaker:'', text })));
+  playDialogueSequence(head, {
+    speaker:'', text: lines[lines.length-1],
+    choices:[ { label:T('firstRunOk'), action: after } ]
+  });
+}
+document.getElementById('startBtn').addEventListener('click', ()=>{
+  if(loadRunMeta() && !confirm(T('resumeRunDiscard'))) return;
+  clearRun();
+  // csak tényleg új játékosnak: akinek már van haladása, ne akadjon bele
+  const brandNew = !profile.seenGuide && !(profile.totalRuns||0) && !(profile.xp||0);
+  if(brandNew){
+    profile.seenGuide = true; saveProfile();
+    showFirstRunGuide(startPlay);
+    return;
+  }
+  if(!profile.seenGuide){ profile.seenGuide = true; saveProfile(); }
+  startPlay();
+});
+document.getElementById('resumeRunBtn').addEventListener('click', resumeRun);
 document.getElementById('storyModeBtn').addEventListener('click', ()=>{
   if(listeningSlot!==null){ listeningSlot=null; buildLoadoutUI(); }
   startMode='story';
@@ -5133,6 +5395,7 @@ document.getElementById('installBtn').addEventListener('click', tryInstallApp);
 window.addEventListener('resize', ()=>{ if(game && game.chapter) relayoutChapter(); });
 bindSettingsUi();
 applyUiBoost();
+refreshResumeBtn();
 applyLanguage();   // legvégén hívjuk — így minden, amire a fordítás-frissítés támaszkodik (SND, IS_COARSE stb.) már biztosan létezik
 </script>
 </body>
