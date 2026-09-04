@@ -2687,9 +2687,10 @@ function drawPlayer(g, p){
 }
 
 // --- 9 megkülönböztethető ellenfél-fej ---
-function drawEnemyFace(g, en, face){
-  const R = en.r;
-  withRot(g, en.x, en.y, face, ()=>{
+/* Az arc az origó körül, forgatás nélkül — így egy sprite-ba is előrajzolható.
+   A rajz maga változatlan, csak a translate/rotate burkoló került ki alóla. */
+function drawEnemyFaceAt0(g, en, R){
+  {
     if(en.type==='grunt'){
       g.beginPath(); g.arc(0,0,R*0.8,0,PI2); g.fillStyle='#39404e'; g.fill();
       g.lineWidth=R*0.12; g.strokeStyle='#20242e'; g.stroke();
@@ -2754,24 +2755,12 @@ function drawEnemyFace(g, en, face){
     } else {
       g.beginPath(); g.arc(0,0,R*0.8,0,PI2); g.fillStyle='#39404e'; g.fill();
     }
-  });
+  }
 }
 
 // --- típusonként ELTÉRŐ test-sziluett: alakról egy pillantás alatt felismerhető ---
-function drawEnemyBody(g, en, face){
-  const R = en.r;
-  const fill = en.frozen>0 ? '#bfe9ff' : (en.hitFlash>0 ? '#fff' : en.color);
-  // lüktető, típus-színű aura minden ellenfél mögött — élőbbé teszi őket, és távolról is
-  // azonnal jelzi a típust a színén keresztül, mielőtt a részletek kivehetők lennének
-  const pulse = 0.55 + 0.25*Math.sin(Date.now()/260 + en.x*0.05);
-  g.save();
-  g.globalAlpha = pulse*0.5;
-  g.beginPath(); g.arc(en.x,en.y,R*1.55,0,PI2);
-  g.fillStyle = en.color; g.shadowColor = en.color; g.shadowBlur = R*0.9;
-  g.fill();
-  g.restore();
-  g.save();
-  g.translate(en.x, en.y); g.rotate(face);
+/* A törzs sziluettje az origó körül, forgatás nélkül — sprite-ba rajzolható. */
+function drawEnemyShapeAt0(g, en, R, fill){
   g.fillStyle = fill; g.lineWidth = R>20 ? 4 : 2; g.strokeStyle = 'rgba(0,0,0,0.35)';
   if(en.type==='scout'){          // keskeny nyíl-ék: a gyors bekerítő
     g.beginPath(); g.moveTo(R*1.25,0); g.lineTo(-R*0.85,R*0.9); g.lineTo(-R*0.45,0); g.lineTo(-R*0.85,-R*0.9); g.closePath();
@@ -2801,7 +2790,6 @@ function drawEnemyBody(g, en, face){
     g.beginPath(); g.arc(0,0,R,0,PI2);
   }
   g.fill(); g.stroke();
-  g.restore();
 }
 
 // --- boss fej: démoni ---
@@ -4841,21 +4829,51 @@ function draw(){
   });
 
   // ellenfelek
+  const nowT = Date.now();
+  const lightFx = !!SETTINGS.lowFx;   // kímélő látvány: elmosások nélkül rajzolunk
   game.enemies.forEach(en=>{
+    // a képernyőn kívül lévőket meg se rajzoljuk — a hullámok jó része kívülről sétál be
+    const margin = en.r*3 + 20;
+    if(en.x < -margin || en.x > w+margin || en.y < -margin || en.y > h+margin) return;
+    const R = en.r;
     const face = Math.atan2(p.y-en.y, p.x-en.x);
     // rohamozó figyelmeztetés / töltés-nyom
-    if(en.telegraph>0){ ctx.beginPath(); ctx.arc(en.x,en.y,en.r+8,0,PI2);
+    if(en.telegraph>0){ ctx.beginPath(); ctx.arc(en.x,en.y,R+8,0,PI2);
       ctx.strokeStyle='rgba(255,80,80,0.8)'; ctx.lineWidth=3; ctx.setLineDash([4,4]); ctx.stroke(); ctx.setLineDash([]); }
     // talaj-árnyék — mélységet ad, elválasztja az alaptalajtól
-    ctx.beginPath(); ctx.ellipse(en.x, en.y+en.r*0.55, en.r*0.85, en.r*0.32, 0, 0, PI2);
+    ctx.beginPath(); ctx.ellipse(en.x, en.y+R*0.55, R*0.85, R*0.32, 0, 0, PI2);
     ctx.fillStyle='rgba(0,0,0,0.4)'; ctx.fill();
-    // típus-színű glow-perem, hogy messziről is felismerhető legyen
-    ctx.save(); ctx.shadowColor = en.color; ctx.shadowBlur = en.hitFlash>0 ? 4 : 12;
-    // törzs: típusonként eltérő sziluett
-    drawEnemyBody(ctx, en, face);
+
+    /* Lüktető, típus-színű aura a törzs mögött. Kímélő látvány módban elmosás
+       nélkül, egy nagyobb halvány körrel — hasonló hatás, töredék annyi munka. */
+    const pulse = 0.55 + 0.25*Math.sin(nowT/260 + en.x*0.05);
+    if(lightFx){
+      ctx.globalAlpha = pulse*0.28;
+      ctx.beginPath(); ctx.arc(en.x, en.y, R*1.8, 0, PI2);
+      ctx.fillStyle = en.color; ctx.fill();
+      ctx.globalAlpha = 1;
+    } else {
+      ctx.save();
+      ctx.globalAlpha = pulse*0.5;
+      ctx.beginPath(); ctx.arc(en.x, en.y, R*1.55, 0, PI2);
+      ctx.fillStyle = en.color; ctx.shadowColor = en.color; ctx.shadowBlur = R*0.9;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    /* Törzs + arc EGY transzformáció alatt. Korábban a törzs és az arc külön-külön
+       állította be a translate/rotate-et, és egy harmadik save/restore hordozta a
+       glow-t: ellenfelenként négy save/restore pár futott. Ez volt a rajzolás
+       legdrágább része nagy hullámoknál. */
+    const fill = en.frozen>0 ? '#bfe9ff' : (en.hitFlash>0 ? '#fff' : en.color);
+    ctx.save();
+    ctx.translate(en.x, en.y); ctx.rotate(face);
+    if(!lightFx){ ctx.shadowColor = en.color; ctx.shadowBlur = en.hitFlash>0 ? 4 : 12; }
+    drawEnemyShapeAt0(ctx, en, R, fill);
+    ctx.shadowBlur = 0;
+    drawEnemyFaceAt0(ctx, en, R);
     ctx.restore();
-    // megkülönböztető fej — mindig látszik; a találat/fagyás csak felül csillan
-    drawEnemyFace(ctx, en, face);
+
     if(en.hitFlash>0){ ctx.beginPath(); ctx.arc(en.x,en.y,en.r,0,PI2); ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.fill(); }
     if(en.frozen>0){ ctx.beginPath(); ctx.arc(en.x,en.y,en.r,0,PI2); ctx.fillStyle='rgba(140,210,255,0.45)'; ctx.fill(); }
     // hp sáv
