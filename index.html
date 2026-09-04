@@ -4127,11 +4127,18 @@ function spawnEnemyType(type, forcedX, forcedY, hpMult=1, rMult=1){
     }
   }
   const dw = difficultyWave();
-  const scale = (1 + dw*0.06) * (game.chapter ? (game.chapter.enemyScale||1) : 1);
+  /* Az ellenfél-élet lineáris skálázása azt eredményezte, hogy a kampány a 3.
+     fejezetnél volt a legnehezebb, a 9.-nél pedig a legkönnyebb: a hős gyorsabban
+     erősödik (szint, pecsét-rangok, fejlesztések), mint egy lineáris szorzó.
+     Ezért a görbe most gyorsuló — az eleje változatlan, a vége meredek.
+     A SEBZÉS viszont szándékosan lineáris marad: a hosszabb harc tesz feszültté
+     egy pályát, nem az, hogy két találatból meghalsz. */
+  const hpRamp = 1 + dw*0.05 + Math.pow(dw/50, 2)*3;
+  const scale = hpRamp * (game.chapter ? (game.chapter.enemyScale||1) : 1);
   game.enemies.push({
     type, x, y, r: def.r*rMult,
     hp: Math.round(def.hp*scale*hpMult*dif.hp), maxHp: Math.round(def.hp*scale*hpMult*dif.hp),
-    dmg: Math.round(def.dmg*(1+dw*0.03)*dif.dmg),
+    dmg: Math.round(def.dmg*(1+dw*0.028)*dif.dmg),
     speed: def.speed*dif.speed, kind: def.kind, color: def.color,
     range: def.range||0, splits: !!def.splits, isChild: !!(hpMult<1),
     hitFlash:0, atkTimer: Math.random()*60, chargeState:0, chargeAng:0, telegraph:0,
@@ -4165,7 +4172,10 @@ function spawnBoss(isMini){
     patterns: bd ? (bd.patterns||['spread','aimed']) : (isMini ? ['spread','aimed'] : va.patterns),
     fireRate: bd ? (bd.fireRate||1) : (isMini ? 1 : va.fireRate),
     x: canvas.width/2, y: 140, r: bd ? (bd.r||46) : (isMini? 34 : va.r),
-    hp: Math.round((bd ? (bd.hp + lvl*16) : (isMini ? (220+game.wave*14) : (480+lvl*20)*va.hpMult)) * dm),
+    /* A boss élete eddig +16-tal nőtt szintenként — 40. szinten ez +640, miközben
+       a hős sebzése addigra sokszorosára nő. A mérés szerint minden fejezet-boss
+       úgy fogyott 0-ra, hogy a hős 96-100% életen maradt. Most szorzóval nő. */
+    hp: Math.round((bd ? bd.hp*(1 + lvl*0.055) : (isMini ? (220+game.wave*14) : (480+lvl*20)*va.hpMult)) * dm),
     maxHp: 0, speed: (bd ? bd.speed : (isMini?1.4:va.speed))*game.diff.speed, attackTimer:0, hitFlash:0, frozen:0,
     spiralAng:0,
   };
@@ -4680,20 +4690,23 @@ function update(){
       if(b.attackTimer > 80*dif.fireRate*(b.fireRate||1)){
         b.attackTimer=0; SFX.bossShoot();
         const bcol = b.col || '#ff5c7c';
+        /* A boss lövedék-sebzése fix 8 volt, akármelyik fejezetben — a 9. fejezetben
+           egy 560 életű hősnek ez semmi. Most a nehézségi hullámmal együtt nő. */
+        const bdmg = Math.round(8 * (1 + difficultyWave()*0.05) * dif.dmg);
         const pats = b.patterns || ['spread','aimed'];
         const pattern = pats[Math.floor(Math.random()*pats.length)];
         if(pattern==='spread'){
           for(let i=0;i<10;i++){ const ang2=(PI2/10)*i;
-            game.enemyBullets.push({ x:b.x,y:b.y, vx:Math.cos(ang2)*4, vy:Math.sin(ang2)*4, r:7, life:130, dmg:Math.round(8*dif.dmg), col:bcol }); }
+            game.enemyBullets.push({ x:b.x,y:b.y, vx:Math.cos(ang2)*4, vy:Math.sin(ang2)*4, r:7, life:130, dmg:bdmg, col:bcol }); }
         } else if(pattern==='spiral'){
           b.spiralAng = (b.spiralAng||0) + 0.5;
           for(let i=0;i<6;i++){ const a2=b.spiralAng + (PI2/6)*i;
-            game.enemyBullets.push({ x:b.x,y:b.y, vx:Math.cos(a2)*4.5, vy:Math.sin(a2)*4.5, r:7, life:150, dmg:Math.round(8*dif.dmg), col:bcol }); }
+            game.enemyBullets.push({ x:b.x,y:b.y, vx:Math.cos(a2)*4.5, vy:Math.sin(a2)*4.5, r:7, life:150, dmg:bdmg, col:bcol }); }
         } else {
           const t2 = d/5.6; const ax=p.x+p.vx*t2*ai, ay=p.y+p.vy*t2*ai;
           const ang2 = Math.atan2(ay-b.y, ax-b.x);
           for(let i=-2;i<=2;i++){ const a2=ang2+i*0.14;
-            game.enemyBullets.push({ x:b.x,y:b.y, vx:Math.cos(a2)*5.6, vy:Math.sin(a2)*5.6, r:7, life:130, dmg:Math.round(8*dif.dmg), col:bcol }); }
+            game.enemyBullets.push({ x:b.x,y:b.y, vx:Math.cos(a2)*5.6, vy:Math.sin(a2)*5.6, r:7, life:130, dmg:bdmg, col:bcol }); }
         }
       }
     }
