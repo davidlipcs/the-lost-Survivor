@@ -676,6 +676,77 @@ function generateGroundTexture(w, h){
       tx.beginPath(); tx.arc(x,y,r,0,Math.PI*2);
       tx.fillStyle = 'rgba(255,255,255,0.035)'; tx.fill();
     }
+  } else if(theme==='cave'){
+    // elárasztott bánya: nyirkos, kékesfekete kő, tócsákkal és csillámló érccel
+    const grad = tx.createRadialGradient(w/2, h*0.35, 0, w/2, h*0.35, Math.max(w,h)*0.78);
+    grad.addColorStop(0, '#1b2733'); grad.addColorStop(0.55, '#121a24'); grad.addColorStop(1, '#080c12');
+    tx.fillStyle = grad; tx.fillRect(0,0,w,h);
+    const poolCount = Math.round((w*h)/26000);
+    for(let i=0;i<poolCount;i++){
+      const x=Math.random()*w, y=Math.random()*h, r=18+Math.random()*46;
+      tx.beginPath(); tx.ellipse(x,y,r,r*0.45,Math.random()*Math.PI,0,Math.PI*2);
+      tx.fillStyle='rgba(70,130,170,0.13)'; tx.fill();
+      tx.lineWidth=1.2; tx.strokeStyle='rgba(120,190,230,0.14)'; tx.stroke();
+    }
+    const oreCount = Math.round((w*h)/6000);
+    for(let i=0;i<oreCount;i++){
+      const x=Math.random()*w, y=Math.random()*h, r=0.9+Math.random()*1.8;
+      tx.beginPath(); tx.arc(x,y,r,0,Math.PI*2);
+      tx.fillStyle = Math.random()<0.4?'rgba(140,220,255,0.30)':'rgba(255,255,255,0.05)'; tx.fill();
+    }
+  } else if(theme==='ash'){
+    // hamvas pusztaság: szürkésbarna hamu, parázs-pöttyökkel és széljárta csíkokkal
+    const grad = tx.createRadialGradient(w/2, h*0.35, 0, w/2, h*0.35, Math.max(w,h)*0.78);
+    grad.addColorStop(0, '#3a2f2a'); grad.addColorStop(0.55, '#2a2220'); grad.addColorStop(1, '#161112');
+    tx.fillStyle = grad; tx.fillRect(0,0,w,h);
+    tx.strokeStyle='rgba(0,0,0,0.22)'; tx.lineWidth=3;
+    for(let y=14; y<h; y+=30){
+      tx.beginPath(); tx.moveTo(0,y);
+      for(let x=0;x<=w;x+=42){ tx.lineTo(x, y+Math.sin(x*0.03+y*0.4)*5); }
+      tx.stroke();
+    }
+    const emberCount = Math.round((w*h)/7000);
+    for(let i=0;i<emberCount;i++){
+      const x=Math.random()*w, y=Math.random()*h, r=1+Math.random()*2.2;
+      tx.beginPath(); tx.arc(x,y,r,0,Math.PI*2);
+      tx.fillStyle = Math.random()<0.35?'rgba(255,140,50,0.30)':'rgba(180,170,160,0.10)'; tx.fill();
+    }
+  } else if(theme==='frost'){
+    // fagyott szentély: kékesfehér jégpadló, repedésekkel és dérrel
+    const grad = tx.createRadialGradient(w/2, h*0.35, 0, w/2, h*0.35, Math.max(w,h)*0.78);
+    grad.addColorStop(0, '#2b3d4d'); grad.addColorStop(0.55, '#1e2c39'); grad.addColorStop(1, '#101820');
+    tx.fillStyle = grad; tx.fillRect(0,0,w,h);
+    tx.strokeStyle='rgba(190,235,255,0.16)'; tx.lineWidth=1.4;
+    const crackCount = Math.round((w*h)/22000);
+    for(let i=0;i<crackCount;i++){
+      let x=Math.random()*w, y=Math.random()*h, ang=Math.random()*Math.PI*2;
+      tx.beginPath(); tx.moveTo(x,y);
+      for(let sg=0; sg<4; sg++){ ang += (Math.random()-0.5)*1.6; const len=16+Math.random()*30;
+        x+=Math.cos(ang)*len; y+=Math.sin(ang)*len; tx.lineTo(x,y); }
+      tx.stroke();
+    }
+    const frostCount = Math.round((w*h)/5200);
+    for(let i=0;i<frostCount;i++){
+      const x=Math.random()*w, y=Math.random()*h, r=0.8+Math.random()*1.9;
+      tx.beginPath(); tx.arc(x,y,r,0,Math.PI*2); tx.fillStyle='rgba(225,245,255,0.13)'; tx.fill();
+    }
+  } else if(theme==='void'){
+    // a Sötétség kapuja: majdnem fekete, lassan örvénylő ibolya gyűrűkkel
+    const grad = tx.createRadialGradient(w/2, h*0.42, 0, w/2, h*0.42, Math.max(w,h)*0.8);
+    grad.addColorStop(0, '#241833'); grad.addColorStop(0.5, '#140e1e'); grad.addColorStop(1, '#05040a');
+    tx.fillStyle = grad; tx.fillRect(0,0,w,h);
+    tx.lineWidth=1.6;
+    for(let i=1;i<=9;i++){
+      const r = Math.min(w,h)*0.07*i;
+      tx.beginPath(); tx.arc(w/2, h*0.42, r, 0, Math.PI*2);
+      tx.strokeStyle = `rgba(150,90,255,${0.10 - i*0.008})`; tx.stroke();
+    }
+    const starCount = Math.round((w*h)/5000);
+    for(let i=0;i<starCount;i++){
+      const x=Math.random()*w, y=Math.random()*h, r=0.7+Math.random()*1.6;
+      tx.beginPath(); tx.arc(x,y,r,0,Math.PI*2);
+      tx.fillStyle = Math.random()<0.3?'rgba(201,166,255,0.30)':'rgba(255,255,255,0.06)'; tx.fill();
+    }
   } else {
     // eredeti "romos/városi" alap-textúra (kampány + a régi kilenc-pecsétes sztori-hangulat)
     const grad = tx.createRadialGradient(w/2, h*0.35, 0, w/2, h*0.35, Math.max(w,h)*0.78);
@@ -850,8 +921,9 @@ const TRANSLATIONS = {
     deathTitle: 'YOU FELL', retryBtn: 'TRY AGAIN',
     rewardLine: (xp, coins)=> `<b>+${xp} profile XP</b> &nbsp;|&nbsp; <b>+${coins} 💰</b>`,
     profileUpLine: (lvl)=> ` — you reached profile level <b>${lvl}</b>! New content unlocked.`,
-    winStoryText: (name)=> `${name} secured all three seals, and the Darkness withdrew into the deep.<br>`+
-      `But six seals are still unbroken — the war is not over.<br>`,
+    winStoryText: (name)=> `${name} set all nine seals back in their place. The gate closed, and the Darkness was shut outside — `+
+      `with the road home on this side of it.<br>`+
+      `The way back is long, and the world behind is not what it was. But it is standing.<br>`,
     winText: (name)=> `${name} defeated the Evil Shadow, and all nine seals are free.<br>`,
     deathStoryText: (title)=> `You fell at the seal of “${title}”. The Darkness was stronger this time.<br>`,
     deathEndlessText: (n)=> `You made it to endless wave ${n}. The Shadow proved stronger... for now.<br>`,
@@ -973,6 +1045,48 @@ const TRANSLATIONS = {
       'Matches earn profile XP and coins even when you lose. Coins buy looks, crystals from daily quests upgrade heroes and seals.',
     ],
     firstRunOk: 'Got it',
+
+    /* --- fejezetek közti jelenetek --- */
+    sceneWatchtower: [
+      'The King hands you a map, and the princess insists on riding with you to the edge of the realm.',
+      '“My father thinks he is letting a stranger go. I know he is letting go of the world’s last chance.”',
+      'The road leads to a watchtower that no longer guards anything.',
+    ],
+    sceneMine: [
+      'The watchtower’s seal clicks back into place, and the ground shifts under you.',
+      'A mine shaft opens in the mountainside — one that was not there before.',
+      'Whatever is down there does not want you to come down. That is reason enough.',
+    ],
+    sceneAshen: [
+      'Out of the mine the air turns hot, and grey flakes drift down: ash.',
+      'The princess stops. “This is the Ashen Waste. We are taught not to come here.”',
+      'You already know this is exactly where you have to go.',
+    ],
+    sceneSanctum: [
+      'The ash runs out and snow takes over. The world changes between two steps.',
+      'A sanctum stands before you, sealed head to foot in ice — and everything inside it is still.',
+      'What stopped in here did not die. It is only waiting.',
+    ],
+    sceneBridge: [
+      'The sanctum’s ice cracks behind you, and the water finally starts moving again.',
+      'Ahead lies a chasm, and over it a bridge that ends halfway across.',
+      'From the far side you can already see where all of this is coming from.',
+    ],
+    sceneGate: [
+      'The Knight’s armour rattles empty onto the stone, and the bridge knits itself together under his feet.',
+      'Eight seals burn behind you. One is left.',
+      'The princess comes no further. “This far. The rest is yours.”',
+    ],
+
+    /* --- az Árnyék alkuja a kilencedik pecsétnél --- */
+    shadowSpeaker: 'The Evil Shadow',
+    shadowOfferLine: '“One gap. One seal you leave open. In return you sleep in your own bed tonight, '+
+      'in your own house, as if you had never set foot outside it.”',
+    shadowRefuse: '“No.”', shadowAccept: '“...And what happens to everyone else?”',
+    shadowRefusedLine: '“No?” — the voice is not friendly any more. “Then you stay here too. Like everyone else who said no.”',
+    shadowAcceptedLine: '“Everyone else? Oh, they all go home as well. Everyone goes home. There simply will not be one.”',
+    shadowBetrayalLine: 'For a moment you really do see your home. The kitchen door, the light in the window.<br><br>'+
+      'Then the edges of it blacken, and you understand: it does not mean to take you home. It means to take you where the other pictures went.',
   },
   hu: {
     subtitle: "A várost sötét szörnyhadsereg szállta meg. Törd fel a pecséteket — minél többet játszol, annál több harcos és képesség oldódik fel.",
@@ -1005,8 +1119,9 @@ const TRANSLATIONS = {
     deathTitle: 'ELBUKTÁL', retryBtn: 'ÚJRAPRÓBÁLOM',
     rewardLine: (xp, coins)=> `<b>+${xp} profil-XP</b> &nbsp;|&nbsp; <b>+${coins} 💰</b>`,
     profileUpLine: (lvl)=> ` — elérted a <b>${lvl}.</b> profilszintet! Új tartalom oldódott fel.`,
-    winStoryText: (name)=> `${name} mind a három pecsétet megerősítette, és a Sötétség visszahúzódott a mélybe.<br>`+
-      `Ám hat pecsét még feltöretlen — a háború nem ért véget.<br>`,
+    winStoryText: (name)=> `${name} mind a kilenc pecsétet a helyére tette. A kapu bezárult, és a Sötétség kívül rekedt — `+
+      `az út hazafelé pedig ezen az oldalon maradt.<br>`+
+      `Hosszú még a visszaút, és a világ mögötted nem ugyanaz, mint volt. De áll.<br>`,
     winText: (name)=> `${name} legyőzte a Gonosz Árnyékot, és mind a kilenc pecsét szabaddá vált.<br>`,
     deathStoryText: (title)=> `Elbuktál a(z) „${title}” pecséténél. A Sötétség egyelőre erősebb volt.<br>`,
     deathEndlessText: (n)=> `${n}. végtelen hullámig jutottál. Az Árnyék erősebbnek bizonyult... egyelőre.<br>`,
@@ -1128,6 +1243,48 @@ const TRANSLATIONS = {
       'A meccsek vesztésnél is hoznak profil-XP-t és pénzt. A pénz kinézetekre megy, a napi küldetésekből járó kristály hősöket és pecséteket fejleszt.',
     ],
     firstRunOk: 'Értem',
+
+    /* --- fejezetek közti jelenetek --- */
+    sceneWatchtower: [
+      'A Király térképet ad, és a hercegnő ragaszkodik hozzá, hogy elkísérjen a birodalom pereméig.',
+      '„Apám azt hiszi, egy idegent enged el. Én tudom, hogy a világ utolsó esélyét.”',
+      'Az út egy őrtoronyhoz vezet, ami már nem őriz semmit.',
+    ],
+    sceneMine: [
+      'Az Őrtorony pecsétje a helyére kattan, és a föld megrezdül alattatok.',
+      'A hegy oldalán egy tárna szája nyílik ki, ami eddig nem volt ott.',
+      'Ami odalent van, nem akarja, hogy lemenj. Ez épp elég ok rá.',
+    ],
+    sceneAshen: [
+      'A bányából kiérve a levegő forró, és szürke pihe száll: hamu.',
+      'A hercegnő megáll. „Ez a Hamvas Pusztaság. Nálunk azt tanítják, hogy ide nem megyünk.”',
+      'Te már tudod, hogy pontosan ide kell menned.',
+    ],
+    sceneSanctum: [
+      'A hamu elfogy, és helyette hó jön. Két lépés között vált át a világ.',
+      'Egy szentély áll előtted, tetőtől talpig jégbe zárva — és minden mozdulatlan benne.',
+      'Ami idebent megállt, az nem halt meg. Csak vár.',
+    ],
+    sceneBridge: [
+      'A szentély jege megreped mögötted, és a víz végre újra folyni kezd.',
+      'Előtted egy szakadék, fölötte egy híd, ami a közepén véget ér.',
+      'A túloldalon már látszik, ahonnan mindez jön.',
+    ],
+    sceneGate: [
+      'A Lovag páncélja üresen zördül a kövön, és a híd összeáll a lába alatt.',
+      'Nyolc pecsét ragyog mögötted. Egy maradt.',
+      'A hercegnő nem jön tovább. „Idáig. A többi a tiéd.”',
+    ],
+
+    /* --- az Árnyék alkuja a kilencedik pecsétnél --- */
+    shadowSpeaker: 'A Gonosz Árnyék',
+    shadowOfferLine: '„Egyetlen rés. Egyetlen pecsét, amit nyitva hagysz. Cserébe ma este az ágyadban alszol, '+
+      'a saját házadban, mintha ki se tetted volna a lábad.”',
+    shadowRefuse: '„Nem.”', shadowAccept: '„...És mi lesz a többiekkel?”',
+    shadowRefusedLine: '„Nem?” — A hang már nem barátságos. „Akkor te is itt maradsz. Mint a többi, aki nemet mondott.”',
+    shadowAcceptedLine: '„A többiekkel? Ó, ők is hazamennek. Mindenki hazamegy. Csak nem lesz hova.”',
+    shadowBetrayalLine: 'Egy pillanatra tényleg látod az otthonodat. A konyhaajtót, a fényt az ablakban.<br><br>'+
+      'Aztán a kép széle megfeketedik, és rájössz: nem hazavinni akar. Odavinni akar oda, ahol a többi kép van.',
   },
 };
 /* =========================================================
@@ -1238,6 +1395,58 @@ const GAME_TEXT_EN = {
       bossName:'The King',
       bossIntro:'An old but commanding ruler steps before you, a crown on his head — the King himself stands up to defend his kingdom.'+
             '<br><br>“If you want to cross my lands, first you must prove your strength, stranger!”' },
+    watchtower:{ title:'Ruins of the Watchtower', seal:'THE FOURTH SEAL',
+      intro:'The King’s map leads to a watchtower at the edge of the realm. What stands there is only the tower’s skeleton — '+
+            'and at its foot a circle cut into stone with its middle missing. This was a seal. Someone broke it.<br><br>'+
+            'The first three seals fell long ago; that is the gap the Darkness pours through. Six are left. If you want to get home, '+
+            'you have to set these back first — because the road home runs through them.',
+      goal:'Survive 12 waves in the ruins, then beat the Warden of the Tower.',
+      bossName:'The Warden of the Tower',
+      bossIntro:'Blocks of stone rise out of the rubble and fit themselves into a single shape: the tower’s old warden, '+
+            'bound to the seal, and broken along with it.<br><br>“Everyone who got this far wanted to take it away. '+
+            'What do you want with it?”' },
+    mine:{ title:'The Drowned Mine', seal:'THE FIFTH SEAL',
+      intro:'An old mine in the belly of the mountain, half underwater. The seal here is cut into the wall of the deepest shaft — '+
+            'and the stone around it is black as soot.<br><br>This is where you understand what you are up against: the Darkness does not '+
+            'break in through the seals. It feeds on them. Every broken seal is a mouthful.',
+      goal:'Survive 13 waves in the shafts, then beat the Mother of the Deep.',
+      bossName:'The Mother of the Deep',
+      bossIntro:'The water boils, and something enormous rises out of it — not one creature but many thousands, '+
+            'stuck together into a single shape.<br><br>“We were here first. The stone, the water, the dark. You only pass through.”' },
+    ashen:{ title:'The Ashen Waste', seal:'THE SIXTH SEAL',
+      intro:'Past the mine there is no forest and no field — only ash, knee deep. Now and then the wind uncovers a doorpost, '+
+            'a well rim, a child’s shoe.<br><br>You stop in the middle of a burnt village. The way the houses are laid out is familiar. '+
+            'Far too familiar. And you do not dare say aloud what it reminds you of.',
+      goal:'Survive 14 waves in the ash, then beat the Prophet of Ash.',
+      bossName:'The Prophet of Ash',
+      bossIntro:'A figure steps out of the ash with no face, only embers where one should be.<br><br>'+
+            '“I wanted to get home too. Then I worked it out: if everything burns to dust, then everywhere is home.”' },
+    sanctum:{ title:'The Frozen Sanctum', seal:'THE SEVENTH SEAL',
+      intro:'Above the ash, suddenly, snow. A sanctum covered head to foot in ice — and inside it nothing moves: '+
+            'the flames on the torches, the water in the well, the monks in the pews.<br><br>Nothing was destroyed here. Everything '+
+            'stopped. And you are starting to understand that this is no better.',
+      goal:'Survive 15 waves in the sanctum, then beat the Priestess of Ice.',
+      bossName:'The Priestess of Ice',
+      bossIntro:'One figure stands among the pews that the ice never took — because she is the one who made it.<br><br>'+
+            '“I can stop the Darkness. Forever. I only have to stop everything else with it. The road home included. '+
+            'Decide how badly you want to get back.”' },
+    bridge:{ title:'The Shattered Bridge', seal:'THE EIGHTH SEAL',
+      intro:'A bridge over the chasm that ends halfway across. On the far side you can already see the gate the Darkness comes from.<br><br>'+
+            'On the broken stump of the bridge stands a suit of armour, leaning on its sword. It is not empty. And it is not really alive either.',
+      goal:'Survive 16 waves on the bridge, then beat the Broken Knight.',
+      bossName:'The Broken Knight',
+      bossIntro:'The armour lifts its head. The voice is tired, not cruel.<br><br>“I came before you. I wanted to go home too. '+
+            'Then I had to choose: cross, or hold the bridge. I held the bridge. Now I am the bridge.<br><br>'+
+            'If you want to pass, first you have to let me go.”' },
+    gate:{ title:'The Gate of Darkness', seal:'THE NINTH SEAL',
+      intro:'The gate is not a building. It is a hole in the world, turning slowly, pulling everything towards itself — '+
+            'the ash, the ice, the light.<br><br>The eight restored seals burn behind you. This is the last one. Set it, and the Darkness '+
+            'stays outside.<br><br>And you inside. Or outside. You do not know yet.',
+      goal:'Survive 18 waves at the gate, then close the ninth seal.',
+      bossName:'The Evil Shadow',
+      bossIntro:'What lives behind the gate steps out of it. It has no shape — it takes yours, then spoils it.<br><br>'+
+            '“Nine seals, and out of all of them you were the one still standing. I do not even want to hurt you.<br><br>'+
+            'Leave it open. One seal, one gap. And I will take you home. Tonight.”' },
   },
   quests: {
     kills:'Kill 40 enemies', wave:'Reach wave 6 in a single match', matches:'Finish 2 matches',
@@ -3206,7 +3415,7 @@ function renderMapCards(){
     card.style.setProperty('--ccol', ch.boss ? ch.boss.col : '#6ee7ff');
     card.innerHTML =
       `<div class="cName">${i+1}. ${chTxt(ch,'title')}</div>`+
-      (ch.seal ? `<div class="cRole">${ch.seal}</div>` : '')+
+      (ch.seal ? `<div class="cRole">${chTxt(ch,'seal')}</div>` : '')+
       `<div class="cLine">${chTxt(ch,'goal')}</div>`+
       (cleared?`<div class="cUlt">${T('mapCleared')}</div>`:'')+
       (unlocked?'':`<div class="lockTag">🔒</div>`);
@@ -3232,7 +3441,7 @@ function renderStoryIntro(){
   document.getElementById('storyTitle').textContent = isVeryFirst ? T('prologueTitle') : chTxt(ch,'title');
   document.getElementById('storyText').innerHTML =
     (isVeryFirst ? `<div style="color:var(--gold);letter-spacing:2px;font-size:12px;margin-bottom:8px;">${T('storyStartLabel')}</div>` : '') +
-    (ch.seal ? `<div style="color:var(--gold);letter-spacing:2px;font-size:12px;margin-bottom:8px;">${ch.seal.toUpperCase()}</div>` : '')+
+    (ch.seal ? `<div style="color:var(--gold);letter-spacing:2px;font-size:12px;margin-bottom:8px;">${chTxt(ch,'seal').toUpperCase()}</div>` : '')+
     chTxt(ch,'intro') +
     (isVeryFirst ? `<div style="margin-top:10px; color:var(--dim); font-size:12px;">${T('firstStageNote', chTxt(ch,'title'))}</div>` : '') +
     `<div style="margin-top:12px;color:var(--accent);">🎯 ${chTxt(ch,'goal')}</div>`;
@@ -3578,6 +3787,95 @@ const CHAPTERS = [
       intro:'Egy idős, ám tekintélyt parancsoló uralkodó lép eléd, fején koronával — a Király személyesen áll ki, hogy megvédje királyságát.'+
             '<br><br>"Ha át akarsz kelni a földjeimen, előbb bizonyítanod kell az erődet, idegen!"' },
   },
+  {
+    id:'watchtower', music:'city', title:'Az Őrtorony Romjai', seal:'A NEGYEDIK PECSÉT',
+    intro:'A Király térképe egy őrtoronyhoz vezet a birodalom peremén. Ami ott áll, már csak a torony csontváza — '+
+          'és a tövében egy kőbe vésett kör, amiből hiányzik a közepe. Ez egy pecsét volt. Valaki feltörte.<br><br>'+
+          'Az első három pecsét réges-rég elesett; azon a résen ömlik be a Sötétség. Hat maradt. Ha haza akarsz jutni, '+
+          'előbb ezeket kell megerősítened — mert az út hazafelé rajtuk keresztül vezet.',
+    goal:'Élj túl 12 hullámot a romok között, majd győzd le a Torony Őrét.',
+    waveCount:12, enemyPool:['grunt','scout','charger','tank','sniper','bomber'],
+    groundTheme:'ruins', obstacleKinds:['wall','barrel'], obstacleCount:12, obstacleR:[20,30],
+    obstacles:[], covers:[], barrels:[], hazards:[],
+    crates:[ {nx:0.5,ny:0.2,loot:'heal'}, {nx:0.2,ny:0.75,loot:'ult'} ],
+    boss:{ name:'A Torony Őre', type:'shadow', hp:1050, r:50, speed:1.0, col:'#9aa6bd', fireRate:1.0, patterns:['spread','aimed'],
+      intro:'A romok közül kőtömbök emelkednek a magasba, és egyetlen alakká állnak össze: a torony régi őre, akit '+
+            'a pecséthez kötöttek, és aki a pecséttel együtt tört meg.<br><br>„Aki eddig eljött, mind el akarta vinni. '+
+            'Te mit akarsz tőle?”' },
+  },
+  {
+    id:'mine', music:'frost', title:'Az Elárasztott Bánya', seal:'AZ ÖTÖDIK PECSÉT',
+    intro:'A hegy gyomrában egy régi bánya, félig víz alatt. A pecsét itt a legmélyebb tárna falába van vésve — '+
+          'és körülötte a kő fekete, mint a korom.<br><br>Itt érted meg, mivel állsz szemben: a Sötétség nem betör '+
+          'a pecséteken. Táplálkozik belőlük. Minden feltört pecsét egy falat.',
+    goal:'Élj túl 13 hullámot a tárnákban, majd győzd le a Mélység Anyját.',
+    waveCount:13, enemyPool:['grunt','swarmling','scout','bomber','charger','medic'],
+    groundTheme:'cave', obstacleKinds:['wall'], obstacleCount:16, obstacleR:[18,28],
+    obstacles:[], covers:[], barrels:[], hazards:[],
+    crates:[ {nx:0.75,ny:0.3,loot:'heal'} ],
+    boss:{ name:'A Mélység Anyja', type:'frost', hp:1200, r:52, speed:1.15, col:'#5fb0d8', fireRate:0.9, patterns:['spiral','spread'],
+      intro:'A víz felforr, és valami hatalmas emelkedik ki belőle — nem egy szörny, hanem sok ezer, egyetlen '+
+            'alakba tapadva.<br><br>„Mi voltunk itt előbb. A kő, a víz, a sötét. Ti csak átjártok.”' },
+  },
+  {
+    id:'ashen', music:'flame', title:'A Hamvas Pusztaság', seal:'A HATODIK PECSÉT',
+    intro:'A bánya túloldalán nincs se erdő, se mező — csak hamu, térdig. A szél időnként kifúj a hamuból egy '+
+          'kapufélfát, egy kútkávát, egy gyerekcipőt.<br><br>Egy leégett falu közepén állsz meg. A házak elrendezése '+
+          'ismerős. Túlságosan is. És nem mered kimondani, mire emlékeztet.',
+    goal:'Élj túl 14 hullámot a hamuban, majd győzd le a Hamu Prófétáját.',
+    waveCount:14, enemyPool:['grunt','charger','bomber','sniper','tank','turret'],
+    groundTheme:'ash', obstacleKinds:['wall','barrel'], obstacleCount:10, obstacleR:[20,32],
+    obstacles:[], covers:[], barrels:[], hazards:[],
+    crates:[ {nx:0.5,ny:0.5,loot:'ult'}, {nx:0.85,ny:0.8,loot:'heal'} ],
+    boss:{ name:'A Hamu Prófétája', type:'flame', hp:1320, r:48, speed:1.35, col:'#ff9d4d', fireRate:0.78, patterns:['aimed','spiral'],
+      intro:'A hamuból egy alak lép elő, akinek nincs arca, csak parázs ott, ahol lennie kellene.<br><br>'+
+            '„Én is haza akartam jutni. Aztán rájöttem: ha minden porrá ég, akkor mindenhol otthon vagyok.”' },
+  },
+  {
+    id:'sanctum', music:'frost', title:'A Fagyott Szentély', seal:'A HETEDIK PECSÉT',
+    intro:'A hamu fölött egyszer csak hó. Egy szentély, amit tetőtől talpig jég borít — és benne minden mozdulatlan: '+
+          'a lángok a fáklyákon, a víz a kútban, a szerzetesek a padsorban.<br><br>Itt semmi nem pusztult el. Itt minden '+
+          'megállt. És kezded megérteni, hogy az sem jobb.',
+    goal:'Élj túl 15 hullámot a szentélyben, majd győzd le a Jég Papnőjét.',
+    waveCount:15, enemyPool:['scout','sniper','tank','medic','turret','swarmling'],
+    groundTheme:'frost', obstacleKinds:['wall'], obstacleCount:14, obstacleR:[20,30],
+    obstacles:[], covers:[], barrels:[], hazards:[],
+    crates:[ {nx:0.5,ny:0.15,loot:'heal'} ],
+    boss:{ name:'A Jég Papnője', type:'frost', hp:1450, r:50, speed:1.0, col:'#bfe9ff', fireRate:1.05, patterns:['spiral','spread'],
+      intro:'A padsorok között egyetlen alak áll, akit nem fogott meg a jég — mert ő csinálta.<br><br>'+
+            '„Megállíthatom a Sötétséget. Örökre. Csak mindent meg kell állítani vele együtt. Az utat is, ami hazavisz. '+
+            'Döntsd el, mennyire akarsz hazajutni.”' },
+  },
+  {
+    id:'bridge', music:'city', title:'A Széttört Híd', seal:'A NYOLCADIK PECSÉT',
+    intro:'A szakadék fölött egy híd, ami a közepén véget ér. A túloldalon már látszik a kapu, ahonnan a Sötétség jön.<br><br>'+
+          'A híd csonkján egy páncél áll, kardra támaszkodva. Nem üres. És nem is él igazán.',
+    goal:'Élj túl 16 hullámot a hídon, majd győzd le a Kettétört Lovagot.',
+    waveCount:16, enemyPool:['charger','tank','sniper','bomber','turret','grunt'],
+    groundTheme:'ruins', obstacleKinds:['wall','barrel'], obstacleCount:8, obstacleR:[22,32],
+    obstacles:[], covers:[], barrels:[], hazards:[],
+    crates:[ {nx:0.3,ny:0.5,loot:'ult'}, {nx:0.7,ny:0.5,loot:'heal'} ],
+    boss:{ name:'A Kettétört Lovag', type:'shadow', hp:1600, r:52, speed:1.25, col:'#c9a6ff', fireRate:0.9, patterns:['aimed','spread','spiral'],
+      intro:'A páncél felemeli a fejét. A hangja fáradt, nem gonosz.<br><br>„Előtted én jöttem. Én is haza akartam menni. '+
+            'Aztán választanom kellett: átkelek, vagy tartom a hidat. A hidat tartottam. Most már én vagyok a híd.<br><br>'+
+            'Ha át akarsz jutni, előbb el kell engedned engem.”' },
+  },
+  {
+    id:'gate', music:'default', title:'A Sötétség Kapuja', seal:'A KILENCEDIK PECSÉT',
+    intro:'A kapu nem épület. Egy lyuk a világon, ami lassan forog, és mindent maga felé húz — a hamut, a jeget, a fényt.<br><br>'+
+          'A nyolc megerősített pecsét ragyog mögötted. Ez az utolsó. Ha ez is a helyére kerül, a Sötétség kint reked.<br><br>'+
+          'És te bent. Vagy kint. Ezt még nem tudod.',
+    goal:'Élj túl 18 hullámot a kapunál, majd zárd le a kilencedik pecsétet.',
+    waveCount:18, enemyPool:['grunt','scout','charger','tank','sniper','bomber','medic','turret','swarmling'],
+    groundTheme:'void', obstacleKinds:[], obstacleCount:0,
+    obstacles:[], covers:[], barrels:[], hazards:[],
+    crates:[ {nx:0.5,ny:0.25,loot:'heal'}, {nx:0.5,ny:0.8,loot:'ult'} ],
+    boss:{ name:'A Gonosz Árnyék', type:'shadow', hp:2000, r:56, speed:1.3, col:'#ff5c7c', fireRate:0.82, patterns:['spread','aimed','spiral'],
+      surrenderAt:0.12, onSurrender:onShadowOffer,
+      intro:'A kapuból kilép, ami mögötte lakik. Nincs alakja — felveszi a tiédet, aztán elrontja.<br><br>'+
+            '„Kilenc pecsét, és mind között te álltál meg utoljára. Nem is akarlak bántani.<br><br>'+
+            'Hagyd nyitva. Egyetlen pecsétet, egyetlen rést. És én hazaviszlek. Ma este.”' },
+  },
 ];
 let selectedChapter = 0;     // épp kiválasztott/aktív fejezet indexe
 let startMode = 'campaign';  // 'campaign' | 'story' — a resetGame ezt olvassa
@@ -3660,7 +3958,7 @@ function resetGame(){
   else{ generateObstacles(); generateGroundTexture(canvas.width, canvas.height); }
   spawnWave();
   game.waveTimer = waveInterval();
-  startMusic(game.chapter ? game.chapter.id : 'default');
+  startMusic(game.chapter ? (game.chapter.music || game.chapter.id) : 'default');
 }
 
 /* Fejezet pálya-elrendezésének betöltése (akadály/fedezék/hordó/veszély/láda) */
@@ -3781,12 +4079,28 @@ function spawnWave(){
   const cmul = (ch && ch.countMul) ? ch.countMul : 1;
   // kicsit kevesebb ellenfél hullámonként, mert az időzített hullámok átfedhetnek
   // — admin-tesztelésnél (sztori módban) egyetlen ellenfél is elég hullámonként, hogy gyorsan végig lehessen nézni a történetet
-  const count = (isAdminUser() && game.mode==='story') ? 1 : Math.max(3, Math.round((5 + wn*2.2) * game.diff.count * cmul));
+  /* Hullám-létszám. Korábban 5 + hullám*2,2 volt, és a beérkezés hullámonként
+     fix 36 képkockára volt szétkenve — a késői hullámok üresnek hatottak, mert
+     mire az utolsó ellenfél megérkezett, az elsőket rég leszedted. Most nagyobb
+     a létszám, és sűrűbben is érkeznek, ahogy nő a hullámszám. */
+  const count = (isAdminUser() && game.mode==='story') ? 1 : Math.max(4, Math.round((6 + wn*3.4) * game.diff.count * cmul));
+  const gap = Math.max(9, Math.round(34 - wn*1.1));   // egyre sűrűbb beérkezés
   for(let i=0;i<count;i++){
-    game.pendingSpawns.push({ type: pool[Math.floor(Math.random()*pool.length)], timer: 8 + i*36 });
+    game.pendingSpawns.push({ type: pool[Math.floor(Math.random()*pool.length)], timer: 8 + i*gap });
   }
 }
 
+/* Az ellenfél-statisztikák skálázásához használt "hullámszám".
+   Kampányban/végtelenben ez maga a hullámszámláló. Sztori módban viszont a
+   game.wave végig monoton nő a kilenc fejezeten át (a 9. fejezet végére 126),
+   amiből 8,6-szoros ellenfél-élet jött volna ki — a hős növekedése ehhez képest
+   nagyjából lineáris, szóval az nem nehézségi görbe lett volna, hanem fal.
+   Sztoriban ezért a fejezet sorszámából és a fejezeten belüli hullámból
+   számolunk: tervezett görbe, a végén ~4x élet és ~2,5x sebzés. */
+function difficultyWave(){
+  if(game && game.chapter) return game.chapterIndex*4 + game.chapterWave;
+  return game ? game.wave : 1;
+}
 function spawnEnemyType(type, forcedX, forcedY, hpMult=1, rMult=1){
   const def = ENEMY_DEFS[type];
   const dif = game.diff;
@@ -3812,11 +4126,12 @@ function spawnEnemyType(type, forcedX, forcedY, hpMult=1, rMult=1){
       else { x=Math.random()*w; y=h+30; }
     }
   }
-  const scale = (1 + game.wave*0.06) * (game.chapter ? (game.chapter.enemyScale||1) : 1);
+  const dw = difficultyWave();
+  const scale = (1 + dw*0.06) * (game.chapter ? (game.chapter.enemyScale||1) : 1);
   game.enemies.push({
     type, x, y, r: def.r*rMult,
     hp: Math.round(def.hp*scale*hpMult*dif.hp), maxHp: Math.round(def.hp*scale*hpMult*dif.hp),
-    dmg: Math.round(def.dmg*(1+game.wave*0.03)*dif.dmg),
+    dmg: Math.round(def.dmg*(1+dw*0.03)*dif.dmg),
     speed: def.speed*dif.speed, kind: def.kind, color: def.color,
     range: def.range||0, splits: !!def.splits, isChild: !!(hpMult<1),
     hitFlash:0, atkTimer: Math.random()*60, chargeState:0, chargeAng:0, telegraph:0,
@@ -4620,6 +4935,27 @@ function onKingAccepted(){
     }}]);
   }}]);
 }
+/* A kilencedik pecsétnél az Árnyék alkut kínál: hagyd nyitva a rést, és hazavisz.
+   Mindkét válasz harchoz vezet — az Árnyék hazudik —, de a "elfogadom" ág megmutatja,
+   mit ér az ígérete. */
+function onShadowRefused(){
+  showDialogue(T('shadowSpeaker'), T('shadowRefusedLine'), [{label:T('dlgNext'), action: ()=>{
+    if(game && game.boss){ game.boss.frozen = 0; game.boss.surrenderAt = 0; }
+  }}]);
+}
+function onShadowAccepted(){
+  showDialogue(T('shadowSpeaker'), T('shadowAcceptedLine'), [{label:T('dlgNext'), action: ()=>{
+    showDialogue(T('shadowSpeaker'), T('shadowBetrayalLine'), [{label:T('dlgNext'), action: ()=>{
+      if(game && game.boss){ game.boss.frozen = 0; game.boss.surrenderAt = 0; }
+    }}]);
+  }}]);
+}
+function onShadowOffer(){
+  showDialogue(T('shadowSpeaker'), T('shadowOfferLine'), [
+    { label:T('shadowRefuse'), action: onShadowRefused },
+    { label:T('shadowAccept'), action: onShadowAccepted },
+  ]);
+}
 function onKingSurrender(){
   showDialogue(T('kingSpeaker'), T('kingEnough'), [{label:T('dlgNext'), action: ()=>{
     showDialogue(T('kingSpeaker'), T('kingOffer'), [
@@ -4658,6 +4994,8 @@ function markChapterCleared(idx){
 }
 
 /* --- Következő fejezet betöltése menü nélkül (vagy végső győzelem) --- */
+/* Melyik fejezet elé jön rövid átvezető jelenet (a 2. a barát-megismerés, az külön ág). */
+const CHAPTER_SCENES = { 3:'sceneWatchtower', 4:'sceneMine', 5:'sceneAshen', 6:'sceneSanctum', 7:'sceneBridge', 8:'sceneGate' };
 function nextChapter(){
   markChapterCleared(game.chapterIndex);
   const ni = game.chapterIndex + 1;
@@ -4682,7 +5020,19 @@ function nextChapter(){
     game.companion.invuln = Math.max(game.companion.invuln||0, 30);
   }
   loadChapterLayout(game.chapter);
-  startMusic(game.chapter.id);   // fejezet-téma váltás (a loop megy tovább)
+  startMusic(game.chapter.music || game.chapter.id);   // fejezet-téma váltás (a loop megy tovább)
+  /* Fejezetek közti jelenet. Eddig csak a barát-megismerés volt ilyen (2. index);
+     most bármelyik fejezethez tartozhat egy rövid, OK-gombos jelenet. */
+  const sceneKey = CHAPTER_SCENES[ni];
+  if(sceneKey && ni!==2){
+    game.state = 'dialogue';
+    const lines = T(sceneKey);
+    playDialogueSequence(lines.slice(0,-1).map(text=>({ speaker:'', text })), {
+      speaker:'', text: lines[lines.length-1],
+      choices:[ { label:T('dlgNext'), action: ()=> showChapterIntro(game.chapter) } ]
+    });
+    return;
+  }
   if(ni===2 && !game.companion && chosenCompanionClass){
     // a barát-megismerés önálló, lépésenkénti (OK-gombos) jelenet, mielőtt a Királyság bevezetője jönne
     const compLabel = (CLASSES[chosenCompanionClass] ? clsTxt(chosenCompanionClass,'label') : null) || T('strangerSpeaker');
@@ -5161,7 +5511,7 @@ function draw(){
     ctx.fillStyle='rgba(10,14,20,0.7)'; ctx.fillRect(bx,by,bw,bh);
     ctx.fillStyle='#7dffb0'; ctx.fillRect(bx,by,bw*clamp(comp.hp/comp.maxHp,0,1),bh);
     ctx.font='9px Trebuchet MS'; ctx.fillStyle='rgba(255,255,255,0.65)'; ctx.textAlign='center';
-    ctx.fillText(CLASSES[comp.cls].label, comp.x, by-4);
+    if(CLASSES[comp.cls]) ctx.fillText(clsTxt(comp.cls,'label'), comp.x, by-4);
   }
 
   // ---- lebegő sebzésszámok (még a világ-koordinátákban) ----
