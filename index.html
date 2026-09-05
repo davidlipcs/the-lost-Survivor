@@ -4101,16 +4101,20 @@ function spawnWave(){
      mire az utolsó ellenfél megérkezett, az elsőket rég leszedted. Most nagyobb
      a létszám, és sűrűbben is érkeznek, ahogy nő a hullámszám. */
   const density = (typeof SETTINGS!=='undefined' && SETTINGS.waveDensity) ? SETTINGS.waveDensity : 1;
+  /* A nyers létszám. A felső korlát nem balansz, hanem teljesítmény: e fölött
+     a képkockasebesség gyengébb gépen látványosan esik, és a hullám-méret
+     csúszkával amúgy is feljebb tolható, ha a gép bírja. */
+  const raw = Math.min(150, 18 + wn*5.0);
   const count = (isAdminUser() && game.mode==='story') ? 1
-    : Math.max(5, Math.round((10 + wn*3.8) * game.diff.count * cmul * density));
+    : Math.max(8, Math.round(raw * game.diff.count * cmul * density));
   /* Csoportos beérkezés: az ellenfelek 3-5 fős rajokban jönnek, nem egyesével
      csordogálva. Ugyanannyi ellenfél így sokkal telibbnek hat, mert egyszerre
      többen vannak a képernyőn — az egyenletes szivárgás azt eredményezte, hogy
      az elsőket már leszedted, mire az utolsók megérkeztek. */
-  const gap = Math.max(22, Math.round(64 - wn*1.6));   // két raj közti szünet
+  const gap = Math.max(18, Math.round(58 - wn*1.5));   // két raj közti szünet
   let t = 8, i = 0;
   while(i < count){
-    const burst = Math.min(count - i, 3 + Math.floor(Math.random()*3));
+    const burst = Math.min(count - i, 4 + Math.floor(Math.random()*4));
     for(let k=0;k<burst;k++){
       game.pendingSpawns.push({ type: pool[Math.floor(Math.random()*pool.length)], timer: t + k*4 });
       i++;
@@ -5441,7 +5445,11 @@ function draw(){
 
   // ellenfelek
   const nowT = Date.now();
-  const lightFx = !!SETTINGS.lowFx;   // kímélő látvány: elmosások nélkül rajzolunk
+  /* Kímélő rajzolás: vagy mert a játékos bekapcsolta, vagy mert egyszerre nagyon
+     sokan vannak a pályán. Az elmosás (glow) ellenfelenként fizetendő, és 90 fölött
+     a képkockasebesség felére esik tőle — nagy hullámban a folyamatosság többet ér,
+     mint a fény. Képkockánként dől el, szóval a kisebb hullámok látványa nem változik. */
+  const lightFx = !!SETTINGS.lowFx || game.enemies.length > 55;
   game.enemies.forEach(en=>{
     // a képernyőn kívül lévőket meg se rajzoljuk — a hullámok jó része kívülről sétál be
     const margin = en.r*3 + 20;
