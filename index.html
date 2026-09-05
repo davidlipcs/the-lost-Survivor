@@ -486,6 +486,13 @@
         <button class="toggleBtn" id="lowFxToggle"></button>
       </div>
       <div class="setRow">
+        <span><span class="setLabel" id="waveDensityLbl" data-i18n="waveDensityLabel">Hullám-méret</span><span class="setHint" data-i18n="waveDensityHint"></span></span>
+        <span style="display:flex; align-items:center; gap:8px;">
+          <input type="range" id="waveDensityRange" min="60" max="220" step="10" aria-labelledby="waveDensityLbl">
+          <span class="setVal" id="waveDensityVal">100%</span>
+        </span>
+      </div>
+      <div class="setRow">
         <span class="setLabel" id="uiBoostLbl" data-i18n="uiBoostLabel">Kezelőfelület mérete</span>
         <span style="display:flex; align-items:center; gap:8px;">
           <input type="range" id="uiBoostRange" min="80" max="140" step="5" aria-labelledby="uiBoostLbl">
@@ -1011,6 +1018,7 @@ const TRANSLATIONS = {
     shakeLabel: 'Screen shake', shakeHint: 'Explosions and hits nudge the picture.',
     dmgNumbersLabel: 'Damage numbers', dmgNumbersHint: 'Shows how much each hit took off.',
     lowFxLabel: 'Lighter visuals', lowFxHint: 'Fewer particles — helps on slower phones.',
+    waveDensityLabel: 'Wave size', waveDensityHint: 'How many enemies a wave sends at you.',
     uiBoostLabel: 'Interface size',
     exportBtn: '⬇️ Save a backup', importBtn: '⬆️ Load a backup',
     exportHint: 'Your progress lives only in this browser. Download a backup and you can carry it to another device — or get it back if you clear your browser data.',
@@ -1209,6 +1217,7 @@ const TRANSLATIONS = {
     shakeLabel: 'Képernyőrázás', shakeHint: 'A robbanások és találatok megrázzák a képet.',
     dmgNumbersLabel: 'Sebzésszámok', dmgNumbersHint: 'Kiírja, mennyit vitt le egy-egy találat.',
     lowFxLabel: 'Kímélő látvány', lowFxHint: 'Kevesebb részecske — gyengébb telefonon segít.',
+    waveDensityLabel: 'Hullám-méret', waveDensityHint: 'Hány ellenfelet küld rád egy hullám.',
     uiBoostLabel: 'Kezelőfelület mérete',
     exportBtn: '⬇️ Mentés kimentése', importBtn: '⬆️ Mentés betöltése',
     exportHint: 'A haladásod csak ebben a böngészőben él. Mentsd ki, és átviheted másik eszközre — vagy visszakapod, ha törölnéd a böngésző adatait.',
@@ -1624,7 +1633,7 @@ profile.totalKills = profile.totalKills || 0;              // összes legyőzöt
 profile.totalRuns = profile.totalRuns || 0;                // lejátszott meccsek száma
 /* Játékbeállítások — hangerő, játékérzet, teljesítmény. Régi mentésben nincsenek,
    ezért mindegyiket alapértékkel töltjük fel. */
-const DEFAULT_SETTINGS = { sfxVol:0.8, musVol:0.5, shake:true, dmgNumbers:true, lowFx:false, uiBoost:1 };
+const DEFAULT_SETTINGS = { sfxVol:0.8, musVol:0.5, shake:true, dmgNumbers:true, lowFx:false, uiBoost:1, waveDensity:1 };
 profile.settings = Object.assign({}, DEFAULT_SETTINGS, profile.settings||{});
 // Ha a rendszer csökkentett mozgást kér, alapból ne rázzuk a képernyőt.
 try{
@@ -3573,6 +3582,9 @@ function renderSettings(){
   const mus = document.getElementById('musVolRange');
   mus.value = Math.round(SETTINGS.musVol*100);
   document.getElementById('musVolVal').textContent = Math.round(SETTINGS.musVol*100)+'%';
+  const wd = document.getElementById('waveDensityRange');
+  wd.value = Math.round((SETTINGS.waveDensity||1)*100);
+  document.getElementById('waveDensityVal').textContent = Math.round((SETTINGS.waveDensity||1)*100)+'%';
   const ui = document.getElementById('uiBoostRange');
   ui.value = Math.round((SETTINGS.uiBoost||1)*100);
   document.getElementById('uiBoostVal').textContent = Math.round((SETTINGS.uiBoost||1)*100)+'%';
@@ -3617,6 +3629,11 @@ function bindSettingsUi(){
     SETTINGS.musVol = (+e.target.value)/100;
     if(SND.musGain) SND.musGain.gain.value = SETTINGS.musVol;
     document.getElementById('musVolVal').textContent = e.target.value+'%';
+    saveProfile();
+  });
+  on('waveDensityRange','input', e=>{
+    SETTINGS.waveDensity = (+e.target.value)/100;
+    document.getElementById('waveDensityVal').textContent = e.target.value+'%';
     saveProfile();
   });
   on('uiBoostRange','input', e=>{
@@ -4083,10 +4100,22 @@ function spawnWave(){
      fix 36 képkockára volt szétkenve — a késői hullámok üresnek hatottak, mert
      mire az utolsó ellenfél megérkezett, az elsőket rég leszedted. Most nagyobb
      a létszám, és sűrűbben is érkeznek, ahogy nő a hullámszám. */
-  const count = (isAdminUser() && game.mode==='story') ? 1 : Math.max(4, Math.round((6 + wn*3.4) * game.diff.count * cmul));
-  const gap = Math.max(9, Math.round(34 - wn*1.1));   // egyre sűrűbb beérkezés
-  for(let i=0;i<count;i++){
-    game.pendingSpawns.push({ type: pool[Math.floor(Math.random()*pool.length)], timer: 8 + i*gap });
+  const density = (typeof SETTINGS!=='undefined' && SETTINGS.waveDensity) ? SETTINGS.waveDensity : 1;
+  const count = (isAdminUser() && game.mode==='story') ? 1
+    : Math.max(5, Math.round((10 + wn*3.8) * game.diff.count * cmul * density));
+  /* Csoportos beérkezés: az ellenfelek 3-5 fős rajokban jönnek, nem egyesével
+     csordogálva. Ugyanannyi ellenfél így sokkal telibbnek hat, mert egyszerre
+     többen vannak a képernyőn — az egyenletes szivárgás azt eredményezte, hogy
+     az elsőket már leszedted, mire az utolsók megérkeztek. */
+  const gap = Math.max(22, Math.round(64 - wn*1.6));   // két raj közti szünet
+  let t = 8, i = 0;
+  while(i < count){
+    const burst = Math.min(count - i, 3 + Math.floor(Math.random()*3));
+    for(let k=0;k<burst;k++){
+      game.pendingSpawns.push({ type: pool[Math.floor(Math.random()*pool.length)], timer: t + k*4 });
+      i++;
+    }
+    t += gap;
   }
 }
 
