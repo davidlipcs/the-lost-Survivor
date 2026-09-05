@@ -4104,17 +4104,17 @@ function spawnWave(){
   /* A nyers létszám. A felső korlát nem balansz, hanem teljesítmény: e fölött
      a képkockasebesség gyengébb gépen látványosan esik, és a hullám-méret
      csúszkával amúgy is feljebb tolható, ha a gép bírja. */
-  const raw = Math.min(150, 18 + wn*5.0);
+  const raw = Math.min(130, 11 + wn*3.9);
   const count = (isAdminUser() && game.mode==='story') ? 1
     : Math.max(8, Math.round(raw * game.diff.count * cmul * density));
   /* Csoportos beérkezés: az ellenfelek 3-5 fős rajokban jönnek, nem egyesével
      csordogálva. Ugyanannyi ellenfél így sokkal telibbnek hat, mert egyszerre
      többen vannak a képernyőn — az egyenletes szivárgás azt eredményezte, hogy
      az elsőket már leszedted, mire az utolsók megérkeztek. */
-  const gap = Math.max(18, Math.round(58 - wn*1.5));   // két raj közti szünet
+  const gap = Math.max(20, Math.round(60 - wn*1.5));   // két raj közti szünet
   let t = 8, i = 0;
   while(i < count){
-    const burst = Math.min(count - i, 4 + Math.floor(Math.random()*4));
+    const burst = Math.min(count - i, 3 + Math.floor(Math.random()*3));
     for(let k=0;k<burst;k++){
       game.pendingSpawns.push({ type: pool[Math.floor(Math.random()*pool.length)], timer: t + k*4 });
       i++;
