@@ -272,6 +272,17 @@
   .slotChip.ult{ border-color:var(--gold); } .slotChip.ult .keyBtn{ border-color:var(--gold); color:var(--gold); }
   #abilityHint{ font-size:11px; color:var(--dim); margin-bottom:8px; }
 
+  /* ---- diadal-kép ---- */
+  #tableauCanvas{ border-radius:8px; box-shadow:0 14px 40px rgba(0,0,0,0.6); max-width:96vw; }
+
+  /* ---- hódító térkép ---- */
+  #conquestMap{ pointer-events:all; cursor:pointer; border-radius:6px;
+    box-shadow:0 10px 34px rgba(0,0,0,0.55); max-width:96vw; touch-action:manipulation; }
+  #conquestInfo{ max-width:560px; min-height:52px; margin:10px auto 6px; text-align:center;
+    font-size:13px; line-height:1.5; color:var(--text); }
+  #conquestInfo .kName{ font-weight:bold; color:var(--gold); letter-spacing:1px; font-size:15px; }
+  #conquestInfo .kLine{ color:var(--dim); font-size:12px; }
+
   /* ---- beállítások képernyő ---- */
   #storageWarn{ position:absolute; top:0; left:0; right:0; z-index:40; padding:8px 14px; margin:0;
     background:#4a1420; color:#ffd9e0; font-size:12px; line-height:1.45; text-align:center; border-bottom:1px solid #7a2233; }
@@ -365,6 +376,7 @@
       <button class="bigBtn gold hidden" id="resumeRunBtn" data-i18n="resumeRunBtn">▶️ FUTAM FOLYTATÁSA</button>
       <button class="bigBtn" id="startBtn" data-i18n="playBtn">JÁTÉK</button>
       <button class="bigBtn gold" id="storyModeBtn" data-i18n="storyBtn">SZTORI MÓD</button>
+      <button class="bigBtn gold hidden" id="storyNewBtn" title="" style="padding:12px 16px;">+</button>
     </div>
     <button class="bigBtn ghost" id="heroSelectOpenBtn" style="margin-top:4px;" data-i18n="heroSelectBtn">🎮 Hős kiválasztása / felszerelés</button>
     <div style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center; margin-top:10px;">
@@ -443,10 +455,28 @@
     <button class="bigBtn" id="resumeBtn" data-i18n="resumeBtn">FOLYTATÁS</button>
     <button class="bigBtn ghost" id="pauseRestartBtn" data-i18n="restartBtn">ÚJRAKEZDÉS</button>
     <button class="bigBtn ghost" id="pauseSettingsBtn" data-i18n="settingsBtn">⚙️ Beállítások</button>
-    <button class="bigBtn ghost" id="pauseMenuBtn" data-i18n="menuBtn">FŐMENÜ</button>
+    <button class="bigBtn gold" id="pauseSaveQuitBtn" data-i18n="saveQuitBtn">💾 MENTÉS ÉS KILÉPÉS</button>
+    <button class="bigBtn ghost" id="pauseMenuBtn" data-i18n="quitNoSaveBtn">KILÉPÉS MENTÉS NÉLKÜL</button>
     <div style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center;">
       <button class="bigBtn ghost sndBtn sndSfxBtn"></button>
       <button class="bigBtn ghost sndBtn sndMusBtn"></button>
+    </div>
+  </div>
+
+  <div id="tableauScreen" class="overlay hidden">
+    <canvas id="tableauCanvas"></canvas>
+    <div class="storyBox" id="tableauText" style="margin-top:12px;"></div>
+    <button class="bigBtn gold" id="tableauBtn" data-i18n="dlgNext">Tovább</button>
+  </div>
+
+  <div id="conquestScreen" class="overlay hidden">
+    <h1 class="title" style="font-size:26px; margin-bottom:2px;" data-i18n="conquestTitle">A HÓDÍTÁS</h1>
+    <div class="subtitle" id="conquestSub" style="margin-bottom:8px;"></div>
+    <canvas id="conquestMap"></canvas>
+    <div id="conquestInfo"></div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center;">
+      <button class="bigBtn red hidden" id="conquestAttackBtn" style="margin:0;"></button>
+      <button class="bigBtn ghost" id="conquestBackBtn" style="margin:0;" data-i18n="backPlain">Vissza</button>
     </div>
   </div>
 
@@ -1093,6 +1123,80 @@ const TRANSLATIONS = {
     shadowRefuse: '“No.”', shadowAccept: '“...And what happens to everyone else?”',
     shadowRefusedLine: '“No?” — the voice is not friendly any more. “Then you stay here too. Like everyone else who said no.”',
     shadowAcceptedLine: '“Everyone else? Oh, they all go home as well. Everyone goes home. There simply will not be one.”',
+    /* --- hódítás --- */
+    conquestTitle: 'THE CONQUEST',
+    conquestSub: (n, all)=> `${n} / ${all} kingdoms are yours`,
+    conquestPick: 'Pick a kingdom on the map.',
+    conquestHome: '★ Your own kingdom',
+    conquestMine: '✓ Already yours',
+    conquestOpen: '⚔ Open to attack — it borders you',
+    conquestLocked: '🔒 Does not border you — take the kingdom in between first',
+    conquestReward: (w)=> `${w} waves · 900 💰 and 14 🔷 for the win`,
+    conquestAttack: (n)=> `⚔ ATTACK: ${n}`,
+    conquestGoal: (w, n)=> `Survive ${w} waves, then beat the lord of ${n}.`,
+    conquestWinTitle: 'THE KINGDOM HAS FALLEN',
+    conquestWinText: (k, hero)=> `${k}'s banner came down, and yours went up in its place.<br>`+
+      `The wall between the two lands is gone from the map — this is ${hero}'s kingdom now as well.<br>`,
+    homeKingdom: (hero)=> `${hero}'s kingdom`,
+    homeKingdomDesc: 'Yours. Every campaign starts from here.',
+    storyContinueBtn: '📖 CONTINUE THE STORY',
+    storyNewConfirm: 'Start a new story? Your current story progress and conquests are lost.',
+    saveQuitBtn: '💾 SAVE AND QUIT',
+    quitNoSaveBtn: 'QUIT WITHOUT SAVING',
+    confirmQuitNoSave: 'Quit without saving? The run you are playing right now is lost.',
+    tableauText: (hero)=> `The King bent his knee, the gates opened — and ${hero} stood in that courtyard not as a stranger, but as a lord.<br><br>`+
+      `Beside you, the friend who has come with you since the farm. Beside them, the princess. Behind you, the castle that is yours now.<br><br>`+
+      `But the realm is wide, and ten lords have not bent their knee yet.`,
+    kingdom_szelmarat: 'Windscour',
+    kingdomDesc_szelmarat: 'A wind-beaten plateau where the grass never grows back.',
+    kingdomBoss_szelmarat: 'Ulmar the Axe',
+    kingdomIntro_szelmarat: 'A wind-beaten plateau where the grass never grows back.',
+    kingdomBossIntro_szelmarat: 'A gaunt, wind-cured lord stands on the grassy plateau.<br><br>“The King has fallen? Good. Then no one is left to protect you from me.”',
+    kingdom_rotvolgy: 'Redvale',
+    kingdomDesc_rotvolgy: 'A red clay valley full of old battlefields.',
+    kingdomBoss_rotvolgy: 'Ilka the Red',
+    kingdomIntro_rotvolgy: 'A red clay valley full of old battlefields.',
+    kingdomBossIntro_rotvolgy: 'A woman comes to meet you, her armour rust-coloured with clay.<br><br>“Three armies already lie under this ground. There is room for yours.”',
+    kingdom_hollovar: 'Ravenhold',
+    kingdomDesc_hollovar: 'A fortress built on rock, under raven banners.',
+    kingdomBoss_hollovar: 'Bendeguz of the Ravens',
+    kingdomIntro_hollovar: 'A fortress built on rock, under raven banners.',
+    kingdomBossIntro_hollovar: 'Black birds burst off the walls all at once.<br><br>“My ravens see everything from up there. They saw you coming, too.”',
+    kingdom_kohat: 'Stoneback',
+    kingdomDesc_kohat: 'A land of quarries and walls — the spine of the realm.',
+    kingdomBoss_kohat: 'The Lord of Stoneback',
+    kingdomIntro_kohat: 'A land of quarries and walls — the spine of the realm.',
+    kingdomBossIntro_kohat: 'An armoured figure whose plate looks carved out of the mountain.<br><br>“I am made of stone. Whoever gets past me gets past the mountain.”',
+    kingdom_sospart: 'Saltshore',
+    kingdomDesc_sospart: 'Salt pans and harbours, gulls and money.',
+    kingdomBoss_sospart: 'Dorja of the Salt',
+    kingdomIntro_sospart: 'Salt pans and harbours, gulls and money.',
+    kingdomBossIntro_sospart: 'A harbour mistress, with two guards and ten ships.<br><br>“Everything has a price. Yours does too — and right now it is cheap.”',
+    kingdom_tuzkoho: 'Firehearth',
+    kingdomDesc_tuzkoho: 'Furnaces and anvils, where the weapons are made.',
+    kingdomBoss_tuzkoho: 'Vazul the Smith',
+    kingdomIntro_tuzkoho: 'Furnaces and anvils, where the weapons are made.',
+    kingdomBossIntro_tuzkoho: 'The glow of the furnaces paints his face red.<br><br>“The sword you carry — I probably forged it. I know where it breaks.”',
+    kingdom_hofejsze: 'Snowaxe',
+    kingdomDesc_hofejsze: 'A snowbound pass where the wind carries the sound away.',
+    kingdomBoss_hofejsze: 'Aja Snowaxe',
+    kingdomIntro_hofejsze: 'A snowbound pass where the wind carries the sound away.',
+    kingdomBossIntro_hofejsze: 'She steps out of the blizzard with an axe on her shoulder.<br><br>“We do not shout up here. There is no one to hear it.”',
+    kingdom_aranyhid: 'Goldbridge',
+    kingdomDesc_aranyhid: 'A merchant city over the river, with golden bridges.',
+    kingdomBoss_aranyhid: 'Bridgemaster Theodor',
+    kingdomIntro_aranyhid: 'A merchant city over the river, with golden bridges.',
+    kingdomBossIntro_aranyhid: 'A stooped, wealthy man stands in the middle of the bridge.<br><br>“I collect a toll. Those who do not pay, swim.”',
+    kingdom_vasmarok: 'Ironhold',
+    kingdomDesc_vasmarok: 'A mercenary province where loyalty is bought.',
+    kingdomBoss_vasmarok: 'Dan Ironhold',
+    kingdomIntro_vasmarok: 'A mercenary province where loyalty is bought.',
+    kingdomBossIntro_vasmarok: 'A mercenary captain, two hundred men behind him.<br><br>“I am not to be defeated. I am to be paid. And you cannot afford me.”',
+    kingdom_feketetorony: 'Blacktower',
+    kingdomDesc_feketetorony: 'The last tower of the realm. This is where it all started.',
+    kingdomBoss_feketetorony: 'The Black Lord',
+    kingdomIntro_feketetorony: 'The last tower of the realm. This is where it all started.',
+    kingdomBossIntro_feketetorony: 'A figure waits at the foot of the tower, and he seems to know you.<br><br>“I sent the army to your town. I made you lose your way.<br><br>Without me you would never have become a hero. And now you have come to kill me.”',
     shadowBetrayalLine: 'For a moment you really do see your home. The kitchen door, the light in the window.<br><br>'+
       'Then the edges of it blacken, and you understand: it does not mean to take you home. It means to take you where the other pictures went.',
   },
@@ -1292,6 +1396,80 @@ const TRANSLATIONS = {
     shadowRefuse: '„Nem.”', shadowAccept: '„...És mi lesz a többiekkel?”',
     shadowRefusedLine: '„Nem?” — A hang már nem barátságos. „Akkor te is itt maradsz. Mint a többi, aki nemet mondott.”',
     shadowAcceptedLine: '„A többiekkel? Ó, ők is hazamennek. Mindenki hazamegy. Csak nem lesz hova.”',
+    /* --- hódítás --- */
+    conquestTitle: 'A HÓDÍTÁS',
+    conquestSub: (n, all)=> `${n} / ${all} királyság a tiéd`,
+    conquestPick: 'Válassz egy királyságot a térképen.',
+    conquestHome: '★ A te királyságod',
+    conquestMine: '✓ Már a tiéd',
+    conquestOpen: '⚔ Megtámadható — határos veled',
+    conquestLocked: '🔒 Nem határos veled — előbb a köztes királyságot kell elfoglalnod',
+    conquestReward: (w)=> `${w} hullám · a győzelemért 900 💰 és 14 🔷`,
+    conquestAttack: (n)=> `⚔ TÁMADÁS: ${n}`,
+    conquestGoal: (w, n)=> `Élj túl ${w} hullámot, majd győzd le ${n} urát.`,
+    conquestWinTitle: 'A KIRÁLYSÁG ELESETT',
+    conquestWinText: (k, hero)=> `${k} zászlaja lekerült, és a helyére a tiéd került.<br>`+
+      `A térképen eltűnt a fal a két terület között — mostantól ez is ${hero} királysága.<br>`,
+    homeKingdom: (hero)=> `${hero} királysága`,
+    homeKingdomDesc: 'A tiéd. Innen indul minden hadjárat.',
+    storyContinueBtn: '📖 SZTORI FOLYTATÁSA',
+    storyNewConfirm: 'Új sztorit kezdesz? A jelenlegi történet-haladásod és a hódításaid elvesznek.',
+    saveQuitBtn: '💾 MENTÉS ÉS KILÉPÉS',
+    quitNoSaveBtn: 'KILÉPÉS MENTÉS NÉLKÜL',
+    confirmQuitNoSave: 'Biztosan kilépsz mentés nélkül? A futam, amit most játszol, elveszik.',
+    tableauText: (hero)=> `A Király térdet hajtott, a kapuk kinyíltak — és ${hero} nem idegenként állt meg az udvaron, hanem úrként.<br><br>`+
+      `Melletted a barátod, aki a farm óta veled jött. Mellette a hercegnő. Mögöttetek a kastély, ami mostantól a tiéd.<br><br>`+
+      `De a birodalom nagy, és tíz úr nem hajtott még térdet.`,
+    kingdom_szelmarat: 'Szélmarat',
+    kingdomDesc_szelmarat: 'Szélverte fennsík, ahol a fű sosem nő vissza.',
+    kingdomBoss_szelmarat: 'Bárd Ulmár',
+    kingdomIntro_szelmarat: 'Szélverte fennsík, ahol a fű sosem nő vissza.',
+    kingdomBossIntro_szelmarat: 'Egy csontsovány, szélcserzett úr áll a füves fennsíkon.<br><br>„A Király elesett? Jó. Akkor nincs, aki megvédjen tőlem.”',
+    kingdom_rotvolgy: 'Rőtvölgy',
+    kingdomDesc_rotvolgy: 'Vörös agyagos völgy, tele régi csatamezőkkel.',
+    kingdomBoss_rotvolgy: 'Vörös Ilka',
+    kingdomIntro_rotvolgy: 'Vörös agyagos völgy, tele régi csatamezőkkel.',
+    kingdomBossIntro_rotvolgy: 'Egy asszony jön eléd, páncélja rozsdaszín az agyagtól.<br><br>„Itt már három sereg fekszik a föld alatt. Lesz hely a tiédnek is.”',
+    kingdom_hollovar: 'Hollóvár',
+    kingdomDesc_hollovar: 'Sziklára épült erőd, holló-lobogók alatt.',
+    kingdomBoss_hollovar: 'Holló Bendegúz',
+    kingdomIntro_hollovar: 'Sziklára épült erőd, holló-lobogók alatt.',
+    kingdomBossIntro_hollovar: 'A várfalról fekete madarak rebbennek fel egyszerre.<br><br>„Idelátnak a hollóim mindent. Téged is láttak jönni.”',
+    kingdom_kohat: 'Kőhát',
+    kingdomDesc_kohat: 'Kőbányák és falak földje, a birodalom gerince.',
+    kingdomBoss_kohat: 'Kőhát Ura',
+    kingdomIntro_kohat: 'Kőbányák és falak földje, a birodalom gerince.',
+    kingdomBossIntro_kohat: 'Egy páncélos alak, akinek a vértje mintha a hegyből lenne kivésve.<br><br>„Kőből vagyok. Aki átmegy rajtam, az a hegyen megy át.”',
+    kingdom_sospart: 'Sóspart',
+    kingdomDesc_sospart: 'Sópárlók és kikötők, sirályok és pénz.',
+    kingdomBoss_sospart: 'Sós Dorja',
+    kingdomIntro_sospart: 'Sópárlók és kikötők, sirályok és pénz.',
+    kingdomBossIntro_sospart: 'Egy kikötői úrnő, két testőrrel és tíz hajóval.<br><br>„Mindennek ára van. A te életednek is — és most épp olcsó.”',
+    kingdom_tuzkoho: 'Tűzkohó',
+    kingdomDesc_tuzkoho: 'Kohók és üllők földje, ahol a fegyverek készülnek.',
+    kingdomBoss_tuzkoho: 'Kovács Vazul',
+    kingdomIntro_tuzkoho: 'Kohók és üllők földje, ahol a fegyverek készülnek.',
+    kingdomBossIntro_tuzkoho: 'A kohók fénye vörösre festi az arcát.<br><br>„A kardot, amivel jössz, valószínűleg én kovácsoltam. Tudom, hol törik el.”',
+    kingdom_hofejsze: 'Hófejsze',
+    kingdomDesc_hofejsze: 'Havas hágó, ahol a szél elviszi a hangot.',
+    kingdomBoss_hofejsze: 'Hófejsze Aja',
+    kingdomIntro_hofejsze: 'Havas hágó, ahol a szél elviszi a hangot.',
+    kingdomBossIntro_hofejsze: 'A hóviharból lép elő, fejszével a vállán.<br><br>„Errefelé nem kiabálunk. Nincs, aki meghallja.”',
+    kingdom_aranyhid: 'Aranyhíd',
+    kingdomDesc_aranyhid: 'Folyó fölé épült kereskedőváros, arany hidakkal.',
+    kingdomBoss_aranyhid: 'Hídmester Teodor',
+    kingdomIntro_aranyhid: 'Folyó fölé épült kereskedőváros, arany hidakkal.',
+    kingdomBossIntro_aranyhid: 'Egy hajlott, gazdag ember áll a híd közepén.<br><br>„Vámot szedek. Aki nem fizet, az úszik.”',
+    kingdom_vasmarok: 'Vasmarok',
+    kingdomDesc_vasmarok: 'Zsoldos-tartomány, ahol a hűséget veszik.',
+    kingdomBoss_vasmarok: 'Vasmarok Dán',
+    kingdomIntro_vasmarok: 'Zsoldos-tartomány, ahol a hűséget veszik.',
+    kingdomBossIntro_vasmarok: 'Egy zsoldoskapitány, mögötte kétszáz ember.<br><br>„Engem nem legyőzni kell. Engem megfizetni. De te nem tudsz.”',
+    kingdom_feketetorony: 'Feketetorony',
+    kingdomDesc_feketetorony: 'A birodalom utolsó tornya. Innen indult minden.',
+    kingdomBoss_feketetorony: 'A Fekete Úr',
+    kingdomIntro_feketetorony: 'A birodalom utolsó tornya. Innen indult minden.',
+    kingdomBossIntro_feketetorony: 'A torony tövében egy alak vár rád, aki mintha ismerne.<br><br>„Én küldtem a sereget a városodra. Én tettem, hogy eltévedj.<br><br>Nélkülem sosem lettél volna hős. Most pedig eljöttél megölni.”',
     shadowBetrayalLine: 'Egy pillanatra tényleg látod az otthonodat. A konyhaajtót, a fényt az ablakban.<br><br>'+
       'Aztán a kép széle megfeketedik, és rájössz: nem hazavinni akar. Odavinni akar oda, ahol a többi kép van.',
   },
@@ -1527,7 +1705,7 @@ function applyLanguage(){
   });
   const nameEl = document.getElementById('nameInput');
   // csak az érintetlen alapértelmezett nevet írjuk át — amit a játékos beírt, azt sosem
-  if(nameEl && ['Hős','Hero'].includes(nameEl.value.trim())) nameEl.value = dict.defaultHeroName;
+  if(nameEl && !profile.heroName && ['Hős','Hero'].includes(nameEl.value.trim())) nameEl.value = dict.defaultHeroName;
   document.querySelectorAll('[data-i18n-aria]').forEach(el=>{
     const key = el.getAttribute('data-i18n-aria');
     if(dict[key]) el.setAttribute('aria-label', dict[key]);
@@ -1550,6 +1728,11 @@ function applyLanguage(){
   if(typeof renderRewardLadder==='function') renderRewardLadder();
   if(typeof renderSettings==='function') renderSettings();
   if(typeof refreshResumeBtn==='function') refreshResumeBtn();
+  if(typeof refreshStoryButtons==='function') refreshStoryButtons();
+  if(typeof renderConquest==='function'){
+    const cq = document.getElementById('conquestScreen');
+    if(cq && !cq.classList.contains('hidden')) renderConquest();
+  }
   try{ localStorage.setItem('kilencpecset_lang', currentLang); }catch(e){}
 }
 document.getElementById('langToggleBtn').addEventListener('click', ()=>{
@@ -1628,6 +1811,7 @@ profile.heroTiers = profile.heroTiers || {};              // hősönkénti fejle
 profile.abilityUpgrades = profile.abilityUpgrades || {};  // pecsétenkénti fejlesztési szint (0-3) — kristállyal fejleszthető
 profile.quests = profile.quests || null;                  // napi küldetések állapota
 profile.bestWaveCampaign = profile.bestWaveCampaign || 0;  // legmagasabb elért hullám a kampányban
+profile.heroName = profile.heroName || '';                 // a beírt karakternév — a térképen is ez jelenik meg
 profile.heroBest = profile.heroBest || {};                 // hősönkénti legjobb hullám: id -> hullám
 profile.totalKills = profile.totalKills || 0;              // összes legyőzött ellenfél
 profile.totalRuns = profile.totalRuns || 0;                // lejátszott meccsek száma
@@ -1791,6 +1975,9 @@ function isAdminUser(){
 }
 // gépelés közben azonnal frissítse a zárolás-jelzéseket, ne csak képernyőváltáskor
 document.getElementById('nameInput').addEventListener('input', ()=>{
+  // a nevet megjegyezzük: a hódító térképen a saját királyságod ezt viseli
+  profile.heroName = document.getElementById('nameInput').value;
+  saveProfile();
   if(typeof renderClassCards==='function') renderClassCards();
   if(typeof renderMapCards==='function') renderMapCards();
   if(typeof buildLoadoutUI==='function') buildLoadoutUI();
@@ -3405,7 +3592,7 @@ function renderHeroDetail(){
 }
 
 // ---- Sztori mód: képernyő-router + fejezet-választó + intro ----
-const SCREENS = ['startScreen','heroSelectScreen','mapScreen','storyIntro','pauseScreen','bossIntro','winScreen','deathScreen','ladderScreen','settingsScreen'];
+const SCREENS = ['startScreen','heroSelectScreen','mapScreen','storyIntro','pauseScreen','bossIntro','winScreen','deathScreen','ladderScreen','settingsScreen','conquestScreen','tableauScreen'];
 function showScreen(id){
   SCREENS.forEach(s=>{ const el=document.getElementById(s); if(el) el.classList.toggle('hidden', s!==id); });
   // képernyőváltáskor, ha kontroller van, azonnal jelölje ki az első elemet — ne kelljen
@@ -3725,6 +3912,31 @@ function importSave(file){
   reader.onerror = ()=> saveStatus(T('importFail'), false);
   reader.readAsText(file);
 }
+document.getElementById('tableauBtn').addEventListener('click', ()=>{
+  game = null;
+  conquestSel = null;
+  showScreen('conquestScreen'); renderConquest();
+});
+document.getElementById('conquestBackBtn').addEventListener('click', ()=> showScreen('startScreen'));
+document.getElementById('conquestAttackBtn').addEventListener('click', ()=>{
+  if(conquestSel && conquestAttackable(conquestSel)) startConquestBattle(conquestSel);
+});
+(function bindConquestMap(){
+  const cv = document.getElementById('conquestMap'); if(!cv) return;
+  const pick = (e)=>{
+    const r = cv.getBoundingClientRect();
+    const t = (e.touches && e.touches[0]) || e;
+    conquestPickAt(t.clientX - r.left, t.clientY - r.top);
+  };
+  cv.addEventListener('click', pick);
+  cv.addEventListener('touchstart', (e)=>{ e.preventDefault(); pick(e); }, {passive:false});
+})();
+window.addEventListener('resize', ()=>{
+  const el = document.getElementById('conquestScreen');
+  if(el && !el.classList.contains('hidden')) renderConquest();
+  const tb = document.getElementById('tableauScreen');
+  if(tb && !tb.classList.contains('hidden')) renderVictoryTableau();
+});
 document.getElementById('ladderToggleBtnTL').addEventListener('click', ()=>{
   showScreen('ladderScreen');
   renderRewardLadder();
@@ -3941,6 +4153,7 @@ function makePlayer(name, color, head){
 function resetGame(){
   const name = document.getElementById('nameInput').value.trim() || T('defaultHeroName');
   const story = (startMode==='story');
+  const conquest = (startMode==='conquest');
   recordHeroPlay(chosenClass);
   // 1. fázis: ha még nincs kiválasztva barát-hős (nincs UI hozzá), válaszd az első lehetséges párost automatikusan
   // csak akkor nyúlunk hozzá, ha a mentett választás ehhez a hőshöz érvénytelen;
@@ -3961,7 +4174,8 @@ function resetGame(){
     boss:null, endless:false,
     mode: startMode,
     chapterIndex: story ? selectedChapter : 0,
-    chapter: story ? (CHAPTERS[selectedChapter] || null) : null,
+    chapter: story ? (CHAPTERS[selectedChapter] || null)
+           : (startMode==='conquest' ? conquestChapter : null),
     chapterWave: 1,
     diff: DIFFICULTIES[chosenDifficulty] || DIFFICULTIES.normal,
     state:'playing',
@@ -4977,9 +5191,19 @@ function playDialogueSequence(lines, finalChoices){
 function onKingAccepted(){
   showDialogue(T('kingSpeaker'), T('kingWise'), [{label:T('dlgNext'), action: ()=>{
     showDialogue(T('princessSpeaker'), T('princessMeet'), [{label:T('dlgNext'), action: ()=>{
-      if(game && game.chapter) nextChapter();
+      // a Királyság teljesítve — jön a diadal-kép, utána megnyílik a hódító térkép
+      if(game && game.chapter) markChapterCleared(game.chapterIndex);
+      conquestState(); saveProfile();
+      showVictoryTableau();
     }}]);
   }}]);
+}
+/* A diadal-kép: itt zárul a "bevezető" történet, és innentől a hódítás megy. */
+function showVictoryTableau(){
+  if(game) game.state='tableau';
+  hideCombatUI(); stopMusic();
+  showScreen('tableauScreen');
+  renderVictoryTableau();
 }
 /* A kilencedik pecsétnél az Árnyék alkut kínál: hagyd nyitva a rést, és hazavisz.
    Mindkét válasz harchoz vezet — az Árnyék hazudik —, de a "elfogadom" ág megmutatja,
@@ -5040,6 +5264,572 @@ function markChapterCleared(idx){
 }
 
 /* --- Következő fejezet betöltése menü nélkül (vagy végső győzelem) --- */
+/* =========================================================
+   HÓDÍTÁS — a Király legyőzése után nyíló szakasz.
+   A fejezet-lista helyett egy régies, pergamen-térkép: a saját királyságod
+   és tíz másik. Mindig csak a SZOMSZÉDOS királyságokat támadhatod meg;
+   amit legyőzöl, az a tiéd lesz, és megnyitja a maga szomszédait.
+   Minden királyság 20 hullám, a futam-indításkor választott nehézségen.
+   ========================================================= */
+const CONQUEST_WAVES = 20;
+const KINGDOMS = [
+  // x/y: arányos pozíció a térképen (0-1). A "home" a bal szélen, a végső cél jobbra.
+  { id:'home', x:0.09, y:0.50, home:true, nb:['szelmarat','rotvolgy'] },
+  { id:'szelmarat',   x:0.24, y:0.29, nb:['home','hollovar','kohat'] },
+  { id:'rotvolgy',    x:0.24, y:0.72, nb:['home','kohat','sospart'] },
+  { id:'hollovar',    x:0.39, y:0.14, nb:['szelmarat','tuzkoho'] },
+  { id:'kohat',       x:0.40, y:0.50, nb:['szelmarat','rotvolgy','tuzkoho','hofejsze'] },
+  { id:'sospart',     x:0.39, y:0.87, nb:['rotvolgy','hofejsze'] },
+  { id:'tuzkoho',     x:0.56, y:0.28, nb:['hollovar','kohat','aranyhid'] },
+  { id:'hofejsze',    x:0.56, y:0.73, nb:['kohat','sospart','vasmarok'] },
+  { id:'aranyhid',    x:0.72, y:0.40, nb:['tuzkoho','feketetorony'] },
+  { id:'vasmarok',    x:0.72, y:0.63, nb:['hofejsze','feketetorony'] },
+  { id:'feketetorony',x:0.89, y:0.50, nb:['aranyhid','vasmarok'], final:true },
+];
+const KINGDOM_BY_ID = Object.fromEntries(KINGDOMS.map(k=>[k.id,k]));
+
+/* A hódítás állapota a profilban él, és minden csata után magától mentődik. */
+function conquestState(){
+  profile.conquest = profile.conquest || { owned:['home'], lastTarget:null };
+  if(!profile.conquest.owned || !profile.conquest.owned.length) profile.conquest.owned = ['home'];
+  return profile.conquest;
+}
+function conquestOwned(id){ return conquestState().owned.includes(id); }
+/* Megtámadható: még nem a tiéd, de a térképen HATÁROS egy már elfoglalttal.
+   A szomszédságot a kirajzolt tartományokból olvassuk, így a térkép és a
+   szabály sosem mond mást; amíg nincs kirajzolva, a kézi lista áll helyette. */
+function conquestAttackable(id){
+  if(conquestOwned(id)) return false;
+  const k = KINGDOM_BY_ID[id]; if(!k) return false;
+  const geo = (typeof geoNeighbors==='function') ? geoNeighbors(id) : null;
+  const nb = (geo && geo.length) ? geo : k.nb;
+  return nb.some(n=>conquestOwned(n));
+}
+function conquestTake(id){
+  const st = conquestState();
+  if(!st.owned.includes(id)) st.owned.push(id);
+  st.lastTarget = null;
+  saveProfile();
+}
+function conquestDone(){ return KINGDOMS.every(k=>conquestOwned(k.id)); }
+// A hódítás akkor nyílik meg, ha a Királyságot (3. fejezet) teljesítetted.
+function conquestUnlocked(){ return (profile.storyDone||[]).includes('kingdom') || (profile.storyProgress||0) >= 3; }
+
+/* =========================================================
+   A PERGAMEN-TÉRKÉP KIRAJZOLÁSA
+   Régies, kézzel rajzolt hatás: barna pergamen alap, tintás határvonalak,
+   tollrajz-kastélyok. A saját területeid ki vannak satírozva és bekarikázva,
+   a köztük lévő "fal" eltűnik, ahogy elfoglalod őket.
+   ========================================================= */
+let conquestSel = null;          // épp kiválasztott királyság id-je
+let conquestHitboxes = [];       // {id, x, y, r} képernyő-koordinátákban
+
+function drawParchment(g, w, h){
+  // alap: meleg pergamen, foltokkal
+  const grad = g.createRadialGradient(w*0.5, h*0.45, 0, w*0.5, h*0.45, Math.max(w,h)*0.75);
+  grad.addColorStop(0, '#e8d7ae'); grad.addColorStop(0.6, '#dcc79a'); grad.addColorStop(1, '#c3a877');
+  g.fillStyle = grad; g.fillRect(0,0,w,h);
+  for(let i=0;i<Math.round(w*h/2600);i++){
+    const x=Math.random()*w, y=Math.random()*h, r=1+Math.random()*3.2;
+    g.beginPath(); g.arc(x,y,r,0,PI2);
+    g.fillStyle = Math.random()<0.5 ? 'rgba(120,90,50,0.055)' : 'rgba(255,240,205,0.07)';
+    g.fill();
+  }
+  // nagyobb, kávéfolt-szerű pacák
+  for(let i=0;i<7;i++){
+    const x=Math.random()*w, y=Math.random()*h, r=18+Math.random()*54;
+    const gg=g.createRadialGradient(x,y,0,x,y,r);
+    gg.addColorStop(0,'rgba(120,85,40,0.07)'); gg.addColorStop(1,'rgba(120,85,40,0)');
+    g.fillStyle=gg; g.beginPath(); g.arc(x,y,r,0,PI2); g.fill();
+  }
+  // égett szélek
+  const eg = g.createRadialGradient(w*0.5,h*0.5,Math.min(w,h)*0.34, w*0.5,h*0.5, Math.max(w,h)*0.68);
+  eg.addColorStop(0,'rgba(90,60,25,0)'); eg.addColorStop(1,'rgba(70,45,18,0.5)');
+  g.fillStyle=eg; g.fillRect(0,0,w,h);
+  // keret
+  g.lineWidth=3; g.strokeStyle='rgba(90,62,28,0.55)'; g.strokeRect(6,6,w-12,h-12);
+  g.lineWidth=1; g.strokeStyle='rgba(90,62,28,0.35)'; g.strokeRect(12,12,w-24,h-24);
+}
+
+// tintás, kicsit reszkető vonal — kézzel húzott hatás
+function inkLine(g, x1,y1,x2,y2, seed){
+  const segs = 8, dx=(x2-x1)/segs, dy=(y2-y1)/segs;
+  g.beginPath(); g.moveTo(x1,y1);
+  for(let i=1;i<=segs;i++){
+    const n = Math.sin(seed + i*1.7)*1.8;
+    g.lineTo(x1+dx*i + n*0.6, y1+dy*i - n*0.6);
+  }
+  g.stroke();
+}
+
+// kis tollrajz-kastély
+function drawInkCastle(g, x, y, r, col){
+  g.save(); g.translate(x,y);
+  g.fillStyle = col; g.strokeStyle='rgba(52,34,14,0.9)'; g.lineWidth=Math.max(1.2, r*0.11);
+  // törzs
+  g.beginPath(); g.rect(-r*0.62, -r*0.15, r*1.24, r*0.95); g.fill(); g.stroke();
+  // két torony
+  for(const sx of [-1,1]){
+    g.beginPath(); g.rect(sx*r*0.62 - r*0.26, -r*0.75, r*0.52, r*1.55); g.fill(); g.stroke();
+    // oromzat
+    for(let i=0;i<3;i++){
+      g.beginPath(); g.rect(sx*r*0.62 - r*0.26 + i*r*0.19, -r*0.95, r*0.13, r*0.22); g.fill(); g.stroke();
+    }
+  }
+  // kaputorony
+  g.beginPath(); g.rect(-r*0.2, -r*0.55, r*0.4, r*0.5); g.fill(); g.stroke();
+  // zászló
+  g.beginPath(); g.moveTo(0,-r*0.55); g.lineTo(0,-r*1.15); g.stroke();
+  g.beginPath(); g.moveTo(0,-r*1.15); g.lineTo(r*0.42,-r*0.98); g.lineTo(0,-r*0.82); g.closePath();
+  g.fill(); g.stroke();
+  g.restore();
+}
+
+/* --- Voronoi-tartományok: minden királyság egy kitöltött terület, nem pötty.
+   Félsík-vágással készül (Sutherland–Hodgman): a teljes térkép-téglalapból
+   indulunk, és minden másik királyság felezőmerőlegesével levágjuk. 11 magnál
+   ez pillanatok alatt lefut, és pontos. A szomszédságot is ebből olvassuk ki,
+   így a térkép sosem mutat közös határt olyan királysággal, amit nem támadhatsz. --- */
+function clipHalfPlane(poly, ax, ay, bx, by){
+  // megtartjuk azt az oldalt, amelyik A-hoz (ax,ay) van közelebb
+  const mx=(ax+bx)/2, my=(ay+by)/2, nx=bx-ax, ny=by-ay;
+  const inside = (x,y)=> ((x-mx)*nx + (y-my)*ny) <= 0;
+  const cut = (p1,p2)=>{
+    const d1=(p1[0]-mx)*nx+(p1[1]-my)*ny, d2=(p2[0]-mx)*nx+(p2[1]-my)*ny;
+    const t = d1/(d1-d2);
+    return [p1[0]+(p2[0]-p1[0])*t, p1[1]+(p2[1]-p1[1])*t];
+  };
+  const out=[];
+  for(let i=0;i<poly.length;i++){
+    const cur=poly[i], prv=poly[(i+poly.length-1)%poly.length];
+    const ci=inside(cur[0],cur[1]), pi=inside(prv[0],prv[1]);
+    if(ci){ if(!pi) out.push(cut(prv,cur)); out.push(cur); }
+    else if(pi){ out.push(cut(prv,cur)); }
+  }
+  return out;
+}
+function buildVoronoi(sites, x0,y0,x1,y1){
+  const cells = {};
+  sites.forEach(a=>{
+    let poly = [[x0,y0],[x1,y0],[x1,y1],[x0,y1]];
+    sites.forEach(b=>{ if(b.id!==a.id && poly.length) poly = clipHalfPlane(poly, a.px,a.py, b.px,b.py); });
+    cells[a.id] = poly;
+  });
+  return cells;
+}
+// két tartomány szomszédos, ha van közös élük
+function voronoiNeighbors(cells){
+  const ids = Object.keys(cells), nb = {};
+  ids.forEach(i=>nb[i]=new Set());
+  const key = (p)=> Math.round(p[0]*2)/2 + ',' + Math.round(p[1]*2)/2;
+  const edges = {};
+  ids.forEach(id=>{
+    const poly = cells[id];
+    for(let i=0;i<poly.length;i++){
+      const a=poly[i], b=poly[(i+1)%poly.length];
+      const k = [key(a),key(b)].sort().join('|');
+      (edges[k] = edges[k] || []).push(id);
+    }
+  });
+  Object.values(edges).forEach(list=>{
+    if(list.length===2 && list[0]!==list[1]){ nb[list[0]].add(list[1]); nb[list[1]].add(list[0]); }
+  });
+  const out={}; ids.forEach(i=>out[i]=[...nb[i]]);
+  return out;
+}
+let conquestGeo = null;   // { cells, nb } — a legutóbb kirajzolt térkép geometriája
+
+function renderConquestMap(){
+  const cv = document.getElementById('conquestMap'); if(!cv) return;
+  const w = Math.round(Math.min(window.innerWidth*0.94, 780));
+  const h = Math.round(w*0.64);
+  cv.width=w; cv.height=h; cv.style.width=w+'px'; cv.style.height=h+'px';
+  const g = cv.getContext('2d');
+  drawParchment(g, w, h);
+
+  // a térkép belső területe (a pergamen-kereten belül)
+  const m = Math.round(w*0.045);
+  const x0=m, y0=m, x1=w-m, y1=h-m;
+  const sites = KINGDOMS.map(k=>({ id:k.id, px: x0 + k.x*(x1-x0), py: y0 + k.y*(y1-y0) }));
+  const cells = buildVoronoi(sites, x0,y0,x1,y1);
+  const nb = voronoiNeighbors(cells);
+  conquestGeo = { cells, nb, sites:Object.fromEntries(sites.map(s=>[s.id,s])) };
+
+  const MINE_FILL = 'rgba(122,158,104,0.55)';     // a saját birodalmad egységes zöldje
+  const TINTS = ['rgba(214,196,138,0.55)','rgba(190,203,168,0.55)','rgba(206,180,168,0.55)',
+                 'rgba(178,196,206,0.55)','rgba(206,188,206,0.55)','rgba(214,186,150,0.55)',
+                 'rgba(186,206,196,0.55)','rgba(212,200,170,0.55)','rgba(200,182,196,0.55)',
+                 'rgba(196,206,178,0.55)','rgba(180,172,164,0.55)'];
+
+  const poly = (pts)=>{ g.beginPath(); pts.forEach((pt,i)=> i?g.lineTo(pt[0],pt[1]):g.moveTo(pt[0],pt[1])); g.closePath(); };
+
+  // --- 1. tartományok kitöltése ---
+  KINGDOMS.forEach((k,idx)=>{
+    const pts = cells[k.id]; if(!pts || pts.length<3) return;
+    const mine = conquestOwned(k.id), open = conquestAttackable(k.id);
+    poly(pts);
+    g.fillStyle = mine ? MINE_FILL : TINTS[idx % TINTS.length];
+    g.fill();
+    if(open){
+      // megtámadható: halvány vörös rásatírozás
+      g.save(); poly(pts); g.clip();
+      g.strokeStyle='rgba(168,54,44,0.22)'; g.lineWidth=2;
+      for(let d=-h; d<w+h; d+=9){ g.beginPath(); g.moveTo(x0+d,y0); g.lineTo(x0+d-h,y1); g.stroke(); }
+      g.restore();
+    }
+    if(conquestSel===k.id){
+      g.save(); poly(pts); g.clip();
+      g.fillStyle='rgba(184,134,47,0.18)'; g.fillRect(x0,y0,x1-x0,y1-y0);
+      g.restore();
+    }
+  });
+
+  // --- 2. határok: a két saját tartomány közti fal ELTŰNIK ---
+  const nearestOther = (mx,my,selfId)=>{
+    let best=null, bd=1e9;
+    for(const st of sites){ if(st.id===selfId) continue;
+      const d=(st.px-mx)**2+(st.py-my)**2; if(d<bd){ bd=d; best=st.id; } }
+    return best;
+  };
+  const drawnEdge = new Set();
+  KINGDOMS.forEach(k=>{
+    const pts = cells[k.id]; if(!pts || pts.length<3) return;
+    for(let i=0;i<pts.length;i++){
+      const a=pts[i], b=pts[(i+1)%pts.length];
+      const mx=(a[0]+b[0])/2, my=(a[1]+b[1])/2;
+      // a térkép szélén futó él nem belső határ
+      const onEdge = (Math.abs(mx-x0)<0.7||Math.abs(mx-x1)<0.7||Math.abs(my-y0)<0.7||Math.abs(my-y1)<0.7);
+      if(onEdge) continue;
+      const other = nearestOther(mx,my,k.id);
+      const ek = [k.id,other].sort().join('|');
+      if(drawnEdge.has(ek)) continue;
+      drawnEdge.add(ek);
+      if(conquestOwned(k.id) && conquestOwned(other)){
+        // ledőlt fal: alig látszó nyom marad
+        g.setLineDash([3,8]); g.lineWidth=1.2; g.strokeStyle='rgba(70,95,60,0.28)';
+        g.beginPath(); g.moveTo(a[0],a[1]); g.lineTo(b[0],b[1]); g.stroke();
+        g.setLineDash([]);
+      } else {
+        g.lineWidth=2.4; g.strokeStyle='rgba(58,38,16,0.75)';
+        inkLine(g, a[0],a[1], b[0],b[1], (a[0]+b[1])*0.07);
+      }
+    }
+  });
+
+  // --- 3. a birodalmad külső kontúrja: vastag, egybefüggő vonal ---
+  g.lineWidth=3.4; g.strokeStyle='rgba(44,74,40,0.9)';
+  KINGDOMS.filter(k=>conquestOwned(k.id)).forEach(k=>{
+    const pts = cells[k.id]; if(!pts || pts.length<3) return;
+    for(let i=0;i<pts.length;i++){
+      const a=pts[i], b=pts[(i+1)%pts.length];
+      const mx=(a[0]+b[0])/2, my=(a[1]+b[1])/2;
+      const onEdge = (Math.abs(mx-x0)<0.7||Math.abs(mx-x1)<0.7||Math.abs(my-y0)<0.7||Math.abs(my-y1)<0.7);
+      const other = onEdge ? null : nearestOther(mx,my,k.id);
+      if(other && conquestOwned(other)) continue;   // belül van, nem kontúr
+      g.beginPath(); g.moveTo(a[0],a[1]); g.lineTo(b[0],b[1]); g.stroke();
+    }
+  });
+
+  // --- 4. kastélyok és feliratok ---
+  conquestHitboxes = [];
+  const R = Math.max(11, Math.round(w*0.019));
+  KINGDOMS.forEach(k=>{
+    const st = conquestGeo.sites[k.id];
+    const mine = conquestOwned(k.id), open = conquestAttackable(k.id);
+    const col = k.home ? '#5f8a4c' : (mine ? '#7fa86a' : (open ? '#b5654f' : '#8d8069'));
+    drawInkCastle(g, st.px, st.py, R*(k.home||k.final?1.3:1), col);
+
+    const label = k.home ? T('homeKingdom', heroDisplayName()) : T('kingdom_'+k.id);
+    g.font = `bold ${Math.max(9, Math.round(R*0.98))}px 'Trebuchet MS'`;
+    g.textAlign='center';
+    g.lineWidth=3.4; g.strokeStyle='rgba(238,224,188,0.92)';
+    g.strokeText(label, st.px, st.py + R*2.35);
+    g.fillStyle = mine ? '#24401f' : (open ? '#7c2f22' : '#4e3c1f');
+    g.fillText(label, st.px, st.py + R*2.35);
+
+    conquestHitboxes.push({ id:k.id, x:st.px, y:st.py, r:R*2.6, poly:cells[k.id] });
+  });
+
+  // --- 5. iránytű a sarokban, a régies hatásért ---
+  const cxp=x1-Math.round(w*0.055), cyp=y0+Math.round(w*0.055), cr=Math.round(w*0.032);
+  g.strokeStyle='rgba(70,48,20,0.65)'; g.lineWidth=1.6;
+  g.beginPath(); g.arc(cxp,cyp,cr,0,PI2); g.stroke();
+  g.beginPath(); g.moveTo(cxp,cyp-cr*0.95); g.lineTo(cxp+cr*0.28,cyp); g.lineTo(cxp,cyp+cr*0.95);
+  g.lineTo(cxp-cr*0.28,cyp); g.closePath();
+  g.fillStyle='rgba(120,40,30,0.75)'; g.fill(); g.stroke();
+  g.font=`bold ${Math.round(cr*0.6)}px 'Trebuchet MS'`; g.textAlign='center';
+  g.fillStyle='rgba(70,48,20,0.8)'; g.fillText('É', cxp, cyp-cr*1.15);
+}
+
+/* =========================================================
+   DIADAL-KÉP a Király legyőzése után: a hős, mellette a barátja és a
+   hercegnő, mögöttük a kivilágított kastély. Nem fotó — a játék saját
+   rajz-eszközeivel készül, hogy a hősöd tényleg AZ a hős legyen,
+   akit összeraktál (kaszt, kinézet, fej, szín).
+   ========================================================= */
+function drawCastleScene(g, w, h){
+  // égbolt: alkonyat a csata után
+  const sky = g.createLinearGradient(0,0,0,h*0.72);
+  sky.addColorStop(0,'#1b2340'); sky.addColorStop(0.55,'#54385a'); sky.addColorStop(1,'#c97a4e');
+  g.fillStyle=sky; g.fillRect(0,0,w,h*0.74);
+  // csillagok fent
+  for(let i=0;i<70;i++){
+    const x=Math.random()*w, y=Math.random()*h*0.34, r=Math.random()*1.3;
+    g.beginPath(); g.arc(x,y,r,0,PI2); g.fillStyle=`rgba(255,255,255,${0.18+Math.random()*0.5})`; g.fill();
+  }
+  // távoli dombok
+  g.fillStyle='#2b2440';
+  g.beginPath(); g.moveTo(0,h*0.70);
+  for(let x=0;x<=w;x+=24) g.lineTo(x, h*0.70 - Math.sin(x*0.008)*16 - Math.sin(x*0.021)*9);
+  g.lineTo(w,h); g.lineTo(0,h); g.closePath(); g.fill();
+
+  // --- a kastély ---
+  const cx=w*0.5, base=h*0.735, S=h*0.030;
+  const stone='#4a4757', stoneD='#35323f', stoneL='#5d5a6b';
+  const tower=(x,ww,hh,capH)=>{
+    g.fillStyle=stone; g.fillRect(x-ww/2, base-hh, ww, hh);
+    g.fillStyle=stoneD; g.fillRect(x-ww/2, base-hh, ww*0.28, hh);
+    g.fillStyle=stoneL; g.fillRect(x+ww*0.22, base-hh, ww*0.28, hh);
+    // oromzat
+    const n=Math.max(3,Math.round(ww/(S*0.9)));
+    for(let i=0;i<n;i++){ if(i%2) continue;
+      g.fillStyle=stoneL; g.fillRect(x-ww/2 + i*(ww/n), base-hh-S*0.52, ww/n, S*0.55); }
+    // kúpos tető
+    if(capH){
+      g.beginPath(); g.moveTo(x-ww*0.62, base-hh-S*0.5);
+      g.lineTo(x, base-hh-S*0.5-capH); g.lineTo(x+ww*0.62, base-hh-S*0.5); g.closePath();
+      g.fillStyle='#6d3a46'; g.fill();
+      g.strokeStyle='#4a2530'; g.lineWidth=2; g.stroke();
+      // zászló
+      g.strokeStyle='#e8c96a'; g.lineWidth=2;
+      g.beginPath(); g.moveTo(x, base-hh-S*0.5-capH); g.lineTo(x, base-hh-S*0.5-capH-S*1.1); g.stroke();
+      g.fillStyle='#e8c96a';
+      g.beginPath(); g.moveTo(x, base-hh-S*0.5-capH-S*1.1);
+      g.lineTo(x+S*1.25, base-hh-S*0.5-capH-S*0.78);
+      g.lineTo(x, base-hh-S*0.5-capH-S*0.48); g.closePath(); g.fill();
+    }
+  };
+  // fal
+  g.fillStyle=stone;   g.fillRect(cx-S*7.2, base-S*3.4, S*14.4, S*3.4);
+  g.fillStyle=stoneD;  g.fillRect(cx-S*7.2, base-S*3.4, S*14.4, S*0.4);
+  for(let i=0;i<15;i++){ if(i%2) continue;
+    g.fillStyle=stoneL; g.fillRect(cx-S*7.2 + i*S*0.96, base-S*3.9, S*0.96, S*0.55); }
+  // tornyok
+  tower(cx-S*6.6, S*2.5, S*6.2, S*2.4);
+  tower(cx+S*6.6, S*2.5, S*6.2, S*2.4);
+  tower(cx,       S*4.4, S*9.0, S*3.4);
+  // kapu
+  g.fillStyle='#20161a';
+  g.beginPath(); g.moveTo(cx-S*1.5, base); g.lineTo(cx-S*1.5, base-S*1.9);
+  g.quadraticCurveTo(cx, base-S*3.3, cx+S*1.5, base-S*1.9); g.lineTo(cx+S*1.5, base); g.closePath(); g.fill();
+  g.strokeStyle='#6b5a3a'; g.lineWidth=2; g.stroke();
+  // kivilágított ablakok
+  for(const [ox,oy] of [[-6.6,-4.4],[-6.6,-2.6],[6.6,-4.4],[6.6,-2.6],[-1.3,-6.4],[1.3,-6.4],[0,-4.6]]){
+    g.fillStyle='#ffd98a'; g.shadowColor='#ffb84a'; g.shadowBlur=12;
+    g.fillRect(cx+ox*S - S*0.28, base+oy*S, S*0.56, S*0.8);
+    g.shadowBlur=0;
+  }
+  // talaj
+  const gr=g.createLinearGradient(0,base,0,h);
+  gr.addColorStop(0,'#2c2a24'); gr.addColorStop(1,'#171612');
+  g.fillStyle=gr; g.fillRect(0,base,w,h-base);
+  // fáklyák a kapunál
+  for(const sx of [-1,1]){
+    const fx=cx+sx*S*2.6, fy=base-S*0.9;
+    g.fillStyle='#4a3a22'; g.fillRect(fx-S*0.09, fy, S*0.18, S*0.9);
+    const fg=g.createRadialGradient(fx,fy,0,fx,fy,S*1.6);
+    fg.addColorStop(0,'rgba(255,190,90,0.85)'); fg.addColorStop(1,'rgba(255,150,40,0)');
+    g.fillStyle=fg; g.beginPath(); g.arc(fx,fy,S*1.6,0,PI2); g.fill();
+  }
+}
+
+// egy álló alak felülnézet helyett OLDALNÉZETBEN — a diadal-képhez
+function drawStandingFigure(g, x, groundY, hh, bodyCol, accentCol, headStyle, label){
+  const s = hh/100;
+  g.save();
+  // árnyék
+  g.beginPath(); g.ellipse(x, groundY, hh*0.26, hh*0.07, 0,0,PI2);
+  g.fillStyle='rgba(0,0,0,0.45)'; g.fill();
+  // lábak
+  g.strokeStyle='#2a2530'; g.lineWidth=s*7; g.lineCap='round';
+  g.beginPath(); g.moveTo(x-s*7, groundY-s*30); g.lineTo(x-s*9, groundY-s*2); g.stroke();
+  g.beginPath(); g.moveTo(x+s*7, groundY-s*30); g.lineTo(x+s*9, groundY-s*2); g.stroke();
+  // törzs
+  g.beginPath();
+  g.moveTo(x-s*13, groundY-s*30); g.lineTo(x-s*15, groundY-s*62);
+  g.quadraticCurveTo(x, groundY-s*72, x+s*15, groundY-s*62);
+  g.lineTo(x+s*13, groundY-s*30); g.closePath();
+  g.fillStyle=bodyCol; g.fill();
+  g.lineWidth=s*2.4; g.strokeStyle='rgba(0,0,0,0.45)'; g.stroke();
+  // vállvért / dísz
+  g.fillStyle=accentCol;
+  g.beginPath(); g.ellipse(x-s*15, groundY-s*60, s*7, s*5, -0.3,0,PI2); g.fill();
+  g.beginPath(); g.ellipse(x+s*15, groundY-s*60, s*7, s*5, 0.3,0,PI2); g.fill();
+  // karok
+  g.strokeStyle=bodyCol; g.lineWidth=s*6.5;
+  g.beginPath(); g.moveTo(x-s*15, groundY-s*58); g.lineTo(x-s*21, groundY-s*36); g.stroke();
+  g.beginPath(); g.moveTo(x+s*15, groundY-s*58); g.lineTo(x+s*21, groundY-s*36); g.stroke();
+  // fej
+  const hy = groundY-s*80;
+  g.beginPath(); g.arc(x, hy, s*11, 0, PI2);
+  g.fillStyle='#d9b48f'; g.fill();
+  g.lineWidth=s*2; g.strokeStyle='rgba(0,0,0,0.4)'; g.stroke();
+  // sisak / haj a fej-stílus szerint
+  g.fillStyle = headStyle==='crown' ? '#e8c96a' : accentCol;
+  if(headStyle==='crown'){
+    g.beginPath(); g.moveTo(x-s*11, hy-s*7);
+    for(let i=0;i<4;i++){ g.lineTo(x-s*11+i*s*7.3, hy-s*15); g.lineTo(x-s*11+(i+0.5)*s*7.3, hy-s*7); }
+    g.lineTo(x+s*11, hy-s*7); g.closePath(); g.fill();
+  } else if(headStyle==='hair'){
+    g.beginPath(); g.arc(x, hy-s*2, s*11.5, Math.PI, 0); g.fill();
+    g.beginPath(); g.ellipse(x-s*11, hy+s*5, s*3.5, s*11, 0,0,PI2); g.fill();
+    g.beginPath(); g.ellipse(x+s*11, hy+s*5, s*3.5, s*11, 0,0,PI2); g.fill();
+  } else {
+    g.beginPath(); g.arc(x, hy-s*1, s*11.5, Math.PI, 0); g.fill();
+    g.fillRect(x-s*11.5, hy-s*2, s*23, s*3.5);
+  }
+  // szemek
+  g.fillStyle='#20242e';
+  g.beginPath(); g.arc(x-s*4, hy+s*1.5, s*1.5,0,PI2); g.arc(x+s*4, hy+s*1.5, s*1.5,0,PI2); g.fill();
+  // név
+  if(label){
+    g.font=`bold ${Math.max(10,Math.round(s*13))}px 'Trebuchet MS'`; g.textAlign='center';
+    g.lineWidth=3; g.strokeStyle='rgba(0,0,0,0.75)';
+    g.strokeText(label, x, groundY + s*20);
+    g.fillStyle='#ffe9a8'; g.fillText(label, x, groundY + s*20);
+  }
+  g.restore();
+}
+
+function renderVictoryTableau(){
+  const cv = document.getElementById('tableauCanvas'); if(!cv) return;
+  const w = Math.round(Math.min(window.innerWidth*0.94, 760));
+  const h = Math.round(w*0.58);
+  cv.width=w; cv.height=h; cv.style.width=w+'px'; cv.style.height=h+'px';
+  const g = cv.getContext('2d');
+  drawCastleScene(g, w, h);
+
+  const groundY = h*0.94, figH = h*0.40;
+  const heroSkin = heroSkinData(chosenClass, chosenSkin).skin;
+  // a barátod balra, te középen, a hercegnő jobbra
+  if(chosenCompanionClass && CLASSES[chosenCompanionClass]){
+    const cs = heroSkinData(chosenCompanionClass, 0).skin;
+    drawStandingFigure(g, w*0.30, groundY, figH*0.92, cs.col, cs.accent, 'helmet',
+      clsTxt(chosenCompanionClass,'label'));
+  }
+  drawStandingFigure(g, w*0.50, groundY, figH, heroSkin.col, heroSkin.accent, 'helmet', heroDisplayName());
+  drawStandingFigure(g, w*0.70, groundY, figH*0.90, '#c96a9a', '#ffd9ea', 'hair', T('princessSpeaker'));
+
+  const txt = document.getElementById('tableauText');
+  if(txt) txt.innerHTML = T('tableauText', heroDisplayName());
+}
+
+// a hős neve a térképen (amit a játékos beírt)
+function heroDisplayName(){
+  const el = document.getElementById('nameInput');
+  const n = el ? el.value.trim() : '';
+  return n || T('defaultHeroName');
+}
+
+function renderConquest(){
+  const st = conquestState();
+  renderConquestMap();
+  const sub = document.getElementById('conquestSub');
+  const owned = st.owned.filter(id=>id!=='home').length;
+  if(sub) sub.textContent = T('conquestSub', owned, KINGDOMS.length-1);
+
+  const info = document.getElementById('conquestInfo');
+  const btn  = document.getElementById('conquestAttackBtn');
+  const k = conquestSel ? KINGDOM_BY_ID[conquestSel] : null;
+  if(!k){
+    if(info) info.innerHTML = `<span class="kLine">${T('conquestPick')}</span>`;
+    if(btn) btn.classList.add('hidden');
+    return;
+  }
+  const name = k.home ? T('homeKingdom', heroDisplayName()) : T('kingdom_'+k.id);
+  const mine = conquestOwned(k.id), open = conquestAttackable(k.id);
+  const state = k.home ? T('conquestHome') : (mine ? T('conquestMine') : (open ? T('conquestOpen') : T('conquestLocked')));
+  const desc = k.home ? T('homeKingdomDesc') : T('kingdomDesc_'+k.id);
+  if(info) info.innerHTML =
+    `<div class="kName">${name}</div><div>${desc}</div><div class="kLine">${state}</div>` +
+    (open ? `<div class="kLine">${T('conquestReward', CONQUEST_WAVES)}</div>` : '');
+  if(btn){
+    btn.classList.toggle('hidden', !open);
+    btn.textContent = T('conquestAttack', name);
+  }
+}
+
+// pont a sokszögben? (sugárvetéses teszt)
+function pointInPoly(x, y, poly){
+  let inside=false;
+  for(let i=0, j=poly.length-1; i<poly.length; j=i++){
+    const xi=poly[i][0], yi=poly[i][1], xj=poly[j][0], yj=poly[j][1];
+    if(((yi>y)!==(yj>y)) && (x < (xj-xi)*(y-yi)/(yj-yi) + xi)) inside=!inside;
+  }
+  return inside;
+}
+/* Az egész TARTOMÁNYRA lehet kattintani, nem csak a kastélyra — így viselkedik
+   egy igazi térkép. Ha mégsem talál sokszöget, a kastélyhoz esik vissza. */
+function conquestPickAt(cx, cy){
+  for(const hb of conquestHitboxes){
+    if(hb.poly && hb.poly.length>2 && pointInPoly(cx, cy, hb.poly)){
+      conquestSel = hb.id; renderConquest(); return;
+    }
+  }
+  let best=null, bd=1e9;
+  for(const hb of conquestHitboxes){
+    const d = Math.hypot(hb.x-cx, hb.y-cy);
+    if(d < hb.r && d < bd){ bd=d; best=hb.id; }
+  }
+  if(best){ conquestSel = best; renderConquest(); }
+}
+
+/* A hódítás egy csatája: 20 hullám, a választott nehézségen, majd a
+   királyság a tiéd lesz. A rendes fejezet-motort használja, csak egy
+   menet közben összeállított "fejezettel". */
+function conquestChapterFor(id){
+  const k = KINGDOM_BY_ID[id];
+  const themes = { szelmarat:'farm', rotvolgy:'forest', hollovar:'ruins', kohat:'kingdom',
+                   sospart:'cave', tuzkoho:'ash', hofejsze:'frost', aranyhid:'ruins',
+                   vasmarok:'ruins', feketetorony:'void' };
+  return {
+    id: 'kd_'+id, conquestId: id,
+    title: T('kingdom_'+id), seal: null,
+    intro: T('kingdomIntro_'+id),
+    goal: T('conquestGoal', CONQUEST_WAVES, T('kingdom_'+id)),
+    waveCount: CONQUEST_WAVES,
+    enemyPool: ['grunt','scout','charger','tank','sniper','bomber','medic','turret','swarmling'],
+    groundTheme: themes[id] || 'kingdom',
+    obstacleKinds: (themes[id]==='void') ? [] : ['wall','barrel'],
+    obstacleCount: (themes[id]==='void') ? 0 : 10,
+    obstacleR: [20,30],
+    obstacles:[], covers:[], barrels:[], hazards:[],
+    crates:[ {nx:0.5,ny:0.22,loot:'heal'}, {nx:0.5,ny:0.8,loot:'ult'} ],
+    music: (themes[id]==='frost') ? 'frost' : (themes[id]==='ash' ? 'flame' : 'city'),
+    boss: { name: T('kingdomBoss_'+id), type: k.final?'shadow':'king',
+            hp: 1200 + KINGDOMS.indexOf(k)*180, r:50, speed:1.1,
+            col: k.final ? '#c9a6ff' : '#e8c96a', fireRate:0.95,
+            patterns: k.final ? ['spread','aimed','spiral'] : ['spread','aimed'],
+            intro: T('kingdomBossIntro_'+id) },
+  };
+}
+function startConquestBattle(id){
+  conquestState().lastTarget = id;
+  saveProfile();
+  startMode = 'conquest';
+  conquestChapter = conquestChapterFor(id);
+  showScreen(); showCombatUI();
+  resetGame();
+}
+let conquestChapter = null;
+
+// a Voronoi-geometriából olvasott szomszédság — a térkép sose hazudjon
+function geoNeighbors(id){
+  if(conquestGeo && conquestGeo.nb && conquestGeo.nb[id]) return conquestGeo.nb[id];
+  const k = KINGDOM_BY_ID[id];
+  return k ? k.nb : [];
+}
+
 /* Melyik fejezet elé jön rövid átvezető jelenet (a 2. a barát-megismerés, az külön ág). */
 const CHAPTER_SCENES = { 3:'sceneWatchtower', 4:'sceneMine', 5:'sceneAshen', 6:'sceneSanctum', 7:'sceneBridge', 8:'sceneGate' };
 function nextChapter(){
@@ -5109,6 +5899,7 @@ function showChapterIntro(ch){
 
 /* --- Vissza a megfelelő menübe (mód szerint) --- */
 function goMenu(){
+  const conquest = game && game.mode==='conquest';
   const story = game && game.mode==='story';
   document.getElementById('winScreen').classList.add('hidden');
   document.getElementById('deathScreen').classList.add('hidden');
@@ -5117,7 +5908,8 @@ function goMenu(){
   stopMusic();
   game = null;
   refreshResumeBtn();
-  if(story){ showScreen('mapScreen'); renderMapCards(); }
+  if(conquest){ conquestSel = null; showScreen('conquestScreen'); renderConquest(); }
+  else if(story){ showScreen('mapScreen'); renderMapCards(); }
   else { showScreen('startScreen'); refreshMenu(); }
 }
 
@@ -5172,14 +5964,34 @@ function hideCombatUI(){
 }
 function winGame(){
   clearRun();
+  // hódító csata: a legyőzött királyság a tiéd lesz, és megnyílnak a szomszédai
+  if(game.mode==='conquest' && game.chapter && game.chapter.conquestId){
+    conquestTake(game.chapter.conquestId);
+  }
   game.state='win'; resetSticks(); stopMusic(); SFX.win();
   const story = game.mode==='story';
+  const conquest = game.mode==='conquest';
   if(story) markChapterCleared(game.chapterIndex);
   const r = matchXp(story?260:150);
   questProgress('win', 1);
   const endlessBtnEl = document.getElementById('endlessBtn');
   const winTitle = document.querySelector('#winScreen .title');
-  if(story){
+  if(conquest){
+    // egy királyság elesett: nagy pénz- és kristály-jutalom
+    const kid = game.chapter && game.chapter.conquestId;
+    const kname = kid ? T('kingdom_'+kid) : '';
+    const coinBonus = 900, shardBonus = 14;
+    profile.coins = (profile.coins||0) + coinBonus;
+    profile.shards = (profile.shards||0) + shardBonus;
+    saveProfile();
+    endlessBtnEl.classList.add('hidden');
+    if(winTitle) winTitle.textContent = T('conquestWinTitle');
+    document.getElementById('winText').innerHTML =
+      T('conquestWinText', kname, heroDisplayName()) +
+      `<b>+${coinBonus} 💰</b> &nbsp;|&nbsp; <b>+${shardBonus} 🔷</b><br>` +
+      T('rewardLine', r.earned, r.coins) + (r.up?T('profileUpLine', r.up):'');
+    document.getElementById('restartBtnWin').textContent = T('backToMapBtn');
+  } else if(story){
     endlessBtnEl.classList.add('hidden');
     if(winTitle) winTitle.textContent = T('winTitleStory');
     document.getElementById('winText').innerHTML =
@@ -5730,11 +6542,38 @@ document.getElementById('startBtn').addEventListener('click', ()=>{
   startPlay();
 });
 document.getElementById('resumeRunBtn').addEventListener('click', resumeRun);
+/* SZTORI MÓD: ha van már haladásod, a "folytatás" oda dob vissza, ahol tartottál
+   (a hódító térképre, ha a Királyságon már túl vagy). A "+" új sztorit indít,
+   és a hős-/társ-/képesség-választóra visz. */
+function storyContinue(){
+  if(conquestUnlocked()){ conquestSel=null; showScreen('conquestScreen'); renderConquest(); return; }
+  startMode='story';
+  selectedChapter = Math.min(profile.storyProgress||0, CHAPTERS.length-1);
+  showScreen('mapScreen'); renderMapCards();
+}
+function storyNew(){
+  if(!confirm(T('storyNewConfirm'))) return;
+  profile.storyProgress = 0; profile.storyDone = [];
+  profile.conquest = { owned:['home'], lastTarget:null };
+  saveProfile();
+  startMode='story'; selectedChapter=0;
+  showScreen('heroSelectScreen');
+}
+function hasStoryProgress(){ return (profile.storyProgress||0) > 0 || conquestUnlocked(); }
+function refreshStoryButtons(){
+  const cont = document.getElementById('storyModeBtn');
+  const plus = document.getElementById('storyNewBtn');
+  if(!cont || !plus) return;
+  const has = hasStoryProgress();
+  cont.textContent = has ? T('storyContinueBtn') : T('storyBtn');
+  plus.classList.toggle('hidden', !has);
+}
 document.getElementById('storyModeBtn').addEventListener('click', ()=>{
   if(listeningSlot!==null){ listeningSlot=null; buildLoadoutUI(); }
-  startMode='story';
-  showScreen('heroSelectScreen');
+  if(hasStoryProgress()) storyContinue();
+  else { startMode='story'; showScreen('heroSelectScreen'); }
 });
+document.getElementById('storyNewBtn').addEventListener('click', storyNew);
 document.getElementById('storyProceedBtn').addEventListener('click', ()=>{
   if(listeningSlot!==null){ listeningSlot=null; buildLoadoutUI(); }
   startMode='story';
@@ -5763,9 +6602,19 @@ document.getElementById('pauseRestartBtn').addEventListener('click', ()=>{
   showCombatUI();
   resetGame();
 });
+/* Mentés és kilépés: a futam a helyére mentődik, és a főmenüből folytatható.
+   A profil (pénz, szint, hódítás) amúgy is minden változásnál magától mentődik. */
+document.getElementById('pauseSaveQuitBtn').addEventListener('click', ()=>{
+  saveRun(); saveProfile(); saveHeroStats();
+  document.getElementById('pauseScreen').classList.add('hidden');
+  goMenu();
+});
+/* Kilépés mentés nélkül: visszakérdez, és a félbehagyott futamot eldobja.
+   A profilt NEM dobjuk el — az, amit a meccs előtt szereztél, a tiéd marad. */
 document.getElementById('pauseMenuBtn').addEventListener('click', ()=>{
-  // futó meccsből kilépni véletlenül is könnyű volt — most rákérdezünk
-  if(!confirm(T('confirmQuit'))) return;
+  if(!confirm(T('confirmQuitNoSave'))) return;
+  clearRun();
+  document.getElementById('pauseScreen').classList.add('hidden');
   goMenu();
 });
 document.getElementById('bossStartBtn').addEventListener('click', ()=>{
@@ -5795,7 +6644,13 @@ document.getElementById('installBtn').addEventListener('click', tryInstallApp);
 window.addEventListener('resize', ()=>{ if(game && game.chapter) relayoutChapter(); });
 bindSettingsUi();
 applyUiBoost();
+// a korábban beírt karakternév visszatöltése
+(function restoreHeroName(){
+  const el = document.getElementById('nameInput');
+  if(el && profile.heroName) el.value = profile.heroName;
+})();
 refreshResumeBtn();
+refreshStoryButtons();
 applyLanguage();   // legvégén hívjuk — így minden, amire a fordítás-frissítés támaszkodik (SND, IS_COARSE stb.) már biztosan létezik
 </script>
 </body>
