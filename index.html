@@ -276,6 +276,12 @@
   #tableauCanvas{ border-radius:8px; box-shadow:0 14px 40px rgba(0,0,0,0.6); max-width:96vw; }
 
   /* ---- hódító térkép ---- */
+  #campaignMap{ pointer-events:all; cursor:pointer; border-radius:6px;
+    box-shadow:0 10px 34px rgba(0,0,0,0.55); max-width:96vw; touch-action:manipulation; }
+  #campaignInfo{ max-width:560px; min-height:56px; margin:10px auto 6px; text-align:center;
+    font-size:13px; line-height:1.5; color:var(--text); }
+  #campaignInfo .kName{ font-weight:bold; color:var(--gold); letter-spacing:1px; font-size:15px; }
+  #campaignInfo .kLine{ color:var(--dim); font-size:12px; }
   #conquestMap{ pointer-events:all; cursor:pointer; border-radius:6px;
     box-shadow:0 10px 34px rgba(0,0,0,0.55); max-width:96vw; touch-action:manipulation; }
   #conquestInfo{ max-width:560px; min-height:52px; margin:10px auto 6px; text-align:center;
@@ -534,9 +540,13 @@
 
   <div id="mapScreen" class="overlay hidden">
     <h1 class="title">THE LOST SURVIVOR</h1>
-    <div class="subtitle" data-i18n="mapSubtitle">Válaszd ki a fejezetet. Minden pecsét külön pálya és boss — a legyőzött pecsét feloldja a következőt. A kaszt- és képesség-beállításod a HŐS-VÁLASZTÓ képernyőn állítható.</div>
-    <div class="classRow" id="mapRow"></div>
-    <button class="bigBtn ghost" id="mapBackBtn" data-i18n="backShort">VISSZA</button>
+    <div class="subtitle" id="campaignSub" data-i18n="mapSubtitle">A térkép a kezedben. Az állomások sorban nyílnak — az út a saját királyságodnál ér véget.</div>
+    <canvas id="campaignMap"></canvas>
+    <div id="campaignInfo"></div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center;">
+      <button class="bigBtn gold hidden" id="campaignGoBtn" style="margin:0;"></button>
+      <button class="bigBtn ghost" id="mapBackBtn" style="margin:0;" data-i18n="backShort">VISSZA</button>
+    </div>
   </div>
 
   <div id="storyIntro" class="overlay hidden">
@@ -1141,8 +1151,23 @@ const TRANSLATIONS = {
 
     /* --- sztori mód --- */
     installBtn: '📲 INSTALL', backShort: 'BACK', backPlain: 'Back',
-    mapSubtitle: 'Pick a chapter. Every seal is its own stage and boss — beating a seal unlocks the next one. Your class and seal setup is on the HERO screen.',
+    mapSubtitle: 'The map in your hand. The stations open in order — the road ends at your own kingdom.',
     mapCleared: '✓ Cleared',
+    campaignMapLabel: 'The road to the kingdom',
+    campaignSub: (d,t)=> `${d} / ${t} stations behind you — you may only step to the next one.`,
+    campaignHere: '📍 You are here — this is your next mission',
+    campaignCleared: '✓ Done. In this story you cannot play it again.',
+    campaignLocked: '🔒 Locked — finish the previous mission first',
+    campaignUnknown: 'Unknown road',
+    campaignUnknownDesc: 'The map is blank here. You will see it when you get there.',
+    campaignGo: (n)=> `▶️ SET OUT: ${n}`,
+    campaignAllDone: '👑 The kingdom is yours. From here the conquest map takes over.',
+    conquestAllTitle: 'THE WHOLE REALM IS YOURS',
+    conquestAllText: (hero, n)=> `The last banner came down. All ${n} kingdoms answer to ${hero} now — `+
+      `from the windswept plateau to the Black Tower, there is not one gate left closed to you.<br>`+
+      `The road that began with a lost survivor ends with a crown.<br>`,
+    conquestAllReward: (lv)=> `👑 The spoils of the realm: enough to carry a hero ${lv} levels up from nothing.`,
+    conquestLevelLine: (lv, c)=> `<br><b>+${lv} profile level${lv>1?'s':''}</b>${c>0?` &nbsp;(+${c} 💰 level rewards)`:''}`,
     prologueTitle: 'PROLOGUE', storyStartLabel: 'THE STORY BEGINS',
     firstStageNote: (title)=> `— stage 1: ${title} —`,
     dlgNext: 'Continue', dlgStart: 'Set off', dlgReady: 'Are you ready?', dlgAccept: '“I accept.”',
@@ -1414,8 +1439,23 @@ const TRANSLATIONS = {
 
     /* --- sztori mód --- */
     installBtn: '📲 TELEPÍTÉS', backShort: 'VISSZA', backPlain: 'Vissza',
-    mapSubtitle: 'Válaszd ki a fejezetet. Minden pecsét külön pálya és boss — a legyőzött pecsét feloldja a következőt. A kaszt- és képesség-beállításod a HŐS-VÁLASZTÓ képernyőn állítható.',
+    mapSubtitle: 'A térkép a kezedben. Az állomások sorban nyílnak — az út a saját királyságodnál ér véget.',
     mapCleared: '✓ Teljesítve',
+    campaignMapLabel: 'Az út a királyságig',
+    campaignSub: (d,t)=> `${d} / ${t} állomás megvan — csak a következőre léphetsz.`,
+    campaignHere: '📍 Itt vagy — ez a következő küldetésed',
+    campaignCleared: '✓ Kész. Ebben a sztoriban már nem játszhatod újra.',
+    campaignLocked: '🔒 Zárva — előbb az előző küldetést kell befejezned',
+    campaignUnknown: 'Ismeretlen út',
+    campaignUnknownDesc: 'A térkép itt üres. Majd akkor látod, ha odaérsz.',
+    campaignGo: (n)=> `▶️ INDULÁS: ${n}`,
+    campaignAllDone: '👑 A királyság a tiéd. Innentől a hódító térkép veszi át.',
+    conquestAllTitle: 'AZ EGÉSZ BIRODALOM A TIÉD',
+    conquestAllText: (hero, n)=> `Az utolsó zászló is lekerült. Mind a ${n} királyság ${hero} szavára hallgat — `+
+      `a szélverte fennsíktól a Fekete Toronyig nincs egyetlen kapu sem, ami zárva maradna előtted.<br>`+
+      `Az út, ami egy eltévedt túlélővel kezdődött, koronával ér véget.<br>`,
+    conquestAllReward: (lv)=> `👑 A birodalom zsákmánya: ennyi a semmiből is ${lv} szintet visz fel egy hőst.`,
+    conquestLevelLine: (lv, c)=> `<br><b>+${lv} profil-szint</b>${c>0?` &nbsp;(+${c} 💰 szint-jutalom)`:''}`,
     prologueTitle: 'BEVEZETŐ', storyStartLabel: 'A TÖRTÉNET KEZDETE',
     firstStageNote: (title)=> `— 1. pálya: ${title} —`,
     dlgNext: 'Tovább', dlgStart: 'Indulás', dlgReady: 'Készen állsz?', dlgAccept: '„Elfogadom.”',
@@ -2780,7 +2820,7 @@ function padConfirm(){
     const e = document.getElementById('endlessBtn');
     (e.classList.contains('hidden') ? document.getElementById('restartBtnWin') : e).click();
   }
-  else if(vis('mapScreen')){ showScreen('storyIntro'); renderStoryIntro(); }
+  else if(vis('mapScreen')){ campaignStart(); }
   else if(vis('startScreen')) document.getElementById('startBtn').click();
 }
 
@@ -4743,42 +4783,277 @@ function renderHeroDetail(){
 const SCREENS = ['startScreen','heroSelectScreen','mapScreen','storyIntro','pauseScreen','bossIntro','winScreen','deathScreen','ladderScreen','settingsScreen','conquestScreen','tableauScreen'];
 function showScreen(id){
   SCREENS.forEach(s=>{ const el=document.getElementById(s); if(el) el.classList.toggle('hidden', s!==id); });
+  // a térkép animációja csak akkor pörögjön, amíg tényleg látszik
+  if(id!=='mapScreen' && typeof stopCampaignAnim==='function') stopCampaignAnim();
+  if(id!=='conquestScreen' && typeof stopConquestAnim==='function') stopConquestAnim();
   // képernyőváltáskor, ha kontroller van, azonnal jelölje ki az első elemet — ne kelljen
   // "belelépni" a navigációba, az első gombnyomás már tényleg aktiváljon valamit
   setPadFocus(pad.connected ? (padFocusables()[0] || null) : null);
 }
-function renderMapCards(){
-  const row = document.getElementById('mapRow'); if(!row) return; row.innerHTML='';
-  const prog = profile.storyProgress||0;
-  const done = profile.storyDone||[];
-  CHAPTERS.forEach((ch,i)=>{
-    const unlocked = TEST_MODE_UNLOCK_ALL || isAdminUser() || i <= prog;
-    const cleared = done.includes(ch.id);
-    const card = document.createElement('div');
-    card.className = 'classCard' + (i===selectedChapter?' selected':'') + (unlocked?'':' locked');
-    card.style.setProperty('--ccol', ch.boss ? ch.boss.col : '#6ee7ff');
-    card.innerHTML =
-      `<div class="cName">${i+1}. ${chTxt(ch,'title')}</div>`+
-      (ch.seal ? `<div class="cRole">${chTxt(ch,'seal')}</div>` : '')+
-      `<div class="cLine">${chTxt(ch,'goal')}</div>`+
-      (cleared?`<div class="cUlt">${T('mapCleared')}</div>`:'')+
-      (unlocked?'':`<div class="lockTag">🔒</div>`);
-    if(unlocked) card.addEventListener('click', ()=>{
-      selectedChapter=i; renderMapCards();
-      if(i===0){
-        // az 1. pálya kiválasztásakor a "Bevezető" önálló, lépésenkénti jelenetként pereg le,
-        // csak utána jön a szokásos "1. A Fenyves" felkészülő képernyő a HARC KEZDÉSE gombbal
-        playDialogueSequence(T('prologue').map(text=>({ speaker:'', text })), {
-          speaker:'', text:T('dlgReady'),
-          choices:[ { label:T('dlgStart'), action: ()=>{ showScreen('storyIntro'); renderStoryIntro(); } } ]
-        });
-      } else {
-        showScreen('storyIntro'); renderStoryIntro();
-      }
-    });
-    row.appendChild(card);
-  });
+/* ---- A kampány térképe: "a térkép a kezedben" ----
+   A régi fejezet-kártyasor helyett egy pergamen útitérkép. Az állomások sorban
+   nyílnak: a teljesítettekre pipa kerül (soha nem játszhatók újra ugyanabban a
+   sztoriban), a még el nem érhetőkre lakat, és mindig pontosan EGY állomás
+   aktív — ahol épp tartasz. Ugrálni nem lehet. */
+var CAMPAIGN_SITES = [
+  { x:0.15, y:0.70 }, { x:0.46, y:0.33 }, { x:0.82, y:0.62 },
+];
+/* Az út a Királyságig tart: onnantól már nem állomásokat jársz, hanem
+   a hódító térképen foglalsz tartományokat. */
+function roadLength(){
+  const i = CHAPTERS.findIndex(c=>c.id==='kingdom');
+  return i >= 0 ? i+1 : Math.min(3, CHAPTERS.length);
 }
+function roadChapters(){ return CHAPTERS.slice(0, roadLength()); }
+var campaignHitboxes = [];    // {i, x, y, r}
+var campaignSel = null;       // épp megnézett állomás indexe
+
+/* Hányadik állomásnál tartunk? Az első olyan fejezet, amit még nem teljesítettél. */
+function campaignCurrent(){
+  const done = profile.storyDone || [];
+  const n = roadLength();
+  for(let i=0;i<n;i++) if(!done.includes(CHAPTERS[i].id)) return i;
+  return n;   // az út végigjárva — jöhet a hódítás
+}
+/* Elérhető-e az állomás? Csakis a soron következő — se vissza, se előre.
+   (Adminnak / teszt-módban minden nyitva marad, hogy ellenőrizni lehessen.) */
+function campaignOpen(i){
+  if(i >= roadLength()) return false;
+  if(TEST_MODE_UNLOCK_ALL || isAdminUser()) return true;
+  return i === campaignCurrent();
+}
+function campaignCleared(i){
+  const ch = CHAPTERS[i];
+  return !!ch && (profile.storyDone||[]).includes(ch.id);
+}
+
+// állomás-jelkép fejezetenként: kis tintarajz a pergamenen
+function drawSiteGlyph(g, id, x, y, r, ink){
+  g.save(); g.translate(x,y); g.strokeStyle=ink; g.fillStyle=ink;
+  g.lineWidth=1.6; g.lineCap='round'; g.lineJoin='round';
+  const u = r*0.62;
+  switch(id){
+    case 'forest':      // fenyő
+      g.beginPath(); g.moveTo(0,-u); g.lineTo(u*0.62,u*0.25); g.lineTo(-u*0.62,u*0.25); g.closePath(); g.fill();
+      g.fillRect(-u*0.12, u*0.25, u*0.24, u*0.45); break;
+    case 'farm':        // szénaboglya + karó
+      g.beginPath(); g.moveTo(-u*0.7,u*0.55); g.quadraticCurveTo(0,-u*0.85, u*0.7,u*0.55); g.closePath(); g.fill();
+      g.beginPath(); g.moveTo(0,-u*0.85); g.lineTo(0,-u*1.05); g.stroke(); break;
+    case 'kingdom':     // korona
+      g.beginPath(); g.moveTo(-u*0.8,u*0.4); g.lineTo(-u*0.8,-u*0.4); g.lineTo(-u*0.3,u*0.02);
+      g.lineTo(0,-u*0.66); g.lineTo(u*0.3,u*0.02); g.lineTo(u*0.8,-u*0.4); g.lineTo(u*0.8,u*0.4);
+      g.closePath(); g.fill(); break;
+    case 'watchtower':  // torony
+      g.fillRect(-u*0.34,-u*0.5,u*0.68,u*1.05);
+      g.beginPath(); g.moveTo(-u*0.55,-u*0.5); g.lineTo(u*0.55,-u*0.5); g.lineTo(u*0.34,-u*0.78);
+      g.lineTo(-u*0.34,-u*0.78); g.closePath(); g.fill(); break;
+    case 'mine':        // csákány
+      g.beginPath(); g.moveTo(-u*0.8,-u*0.4); g.quadraticCurveTo(0,-u*0.9, u*0.8,-u*0.4); g.stroke();
+      g.beginPath(); g.moveTo(0,-u*0.7); g.lineTo(0,u*0.75); g.lineWidth=2.4; g.stroke(); break;
+    case 'ashen':       // láng
+      g.beginPath(); g.moveTo(0,-u*0.95); g.quadraticCurveTo(u*0.75,-u*0.1, u*0.3,u*0.6);
+      g.quadraticCurveTo(0,u*0.95, -u*0.3,u*0.6); g.quadraticCurveTo(-u*0.75,-u*0.1, 0,-u*0.95);
+      g.closePath(); g.fill(); break;
+    case 'sanctum':     // kristály
+      g.beginPath(); g.moveTo(0,-u*0.95); g.lineTo(u*0.55,-u*0.1); g.lineTo(0,u*0.9);
+      g.lineTo(-u*0.55,-u*0.1); g.closePath(); g.fill(); break;
+    case 'bridge':      // híd-ív
+      g.beginPath(); g.arc(0,u*0.45,u*0.8,Math.PI,0); g.lineWidth=2.4; g.stroke();
+      g.beginPath(); g.moveTo(-u*0.9,u*0.45); g.lineTo(u*0.9,u*0.45); g.lineWidth=1.6; g.stroke(); break;
+    default:            // kapu
+      g.beginPath(); g.moveTo(-u*0.7,u*0.75); g.lineTo(-u*0.7,-u*0.2);
+      g.quadraticCurveTo(0,-u*1.0, u*0.7,-u*0.2); g.lineTo(u*0.7,u*0.75);
+      g.lineWidth=2.4; g.stroke(); break;
+  }
+  g.restore();
+}
+
+// lakat a még zárt állomások fölé
+function drawPadlock(g, x, y, s2, ink){
+  g.save(); g.translate(x,y); g.strokeStyle=ink; g.fillStyle=ink; g.lineWidth=s2*0.22; g.lineCap='round';
+  g.beginPath(); g.arc(0,-s2*0.32,s2*0.42,Math.PI,0); g.stroke();
+  g.beginPath(); g.roundRect ? g.roundRect(-s2*0.66,-s2*0.1,s2*1.32,s2*0.95,s2*0.16)
+                             : g.rect(-s2*0.66,-s2*0.1,s2*1.32,s2*0.95);
+  g.fill(); g.restore();
+}
+// pipa a teljesített állomásokra
+function drawTick(g, x, y, s2, col){
+  g.save(); g.translate(x,y); g.strokeStyle=col; g.lineWidth=s2*0.3; g.lineCap='round'; g.lineJoin='round';
+  g.beginPath(); g.moveTo(-s2*0.55,0); g.lineTo(-s2*0.12,s2*0.46); g.lineTo(s2*0.62,-s2*0.5); g.stroke();
+  g.restore();
+}
+
+function renderCampaignMap(){
+  const cv = document.getElementById('campaignMap'); if(!cv) return;
+  const w = Math.round(Math.min(window.innerWidth*0.94, 780));
+  const h = Math.round(w*0.60);
+  cv.width=w; cv.height=h; cv.style.width=w+'px'; cv.style.height=h+'px';
+  const g = cv.getContext('2d');
+  drawParchment(g, w, h);
+
+  const m = Math.round(w*0.055);
+  const x0=m, y0=m, x1=w-m, y1=h-m;
+  const pts = roadChapters().map((ch,i)=>{
+    const s2 = CAMPAIGN_SITES[i] || { x:0.1+i*0.1, y:0.5 };
+    return { i, id:ch.id, x: x0 + s2.x*(x1-x0), y: y0 + s2.y*(y1-y0) };
+  });
+  const cur = campaignCurrent();
+  const INK = 'rgba(74,48,20,0.85)', FAINT = 'rgba(74,48,20,0.3)';
+
+  // az út: a megtett szakasz kihúzott tinta, az ismeretlen rész halvány pont-vonal
+  for(let i=0;i<pts.length-1;i++){
+    const a=pts[i], b=pts[i+1];
+    const travelled = (i+1) <= cur;
+    g.save();
+    g.lineWidth = travelled ? 2.6 : 2;
+    g.strokeStyle = travelled ? INK : FAINT;
+    if(!travelled) g.setLineDash([5, 7]);
+    inkLine(g, a.x, a.y, b.x, b.y, i*3.1);
+    g.restore();
+  }
+
+  campaignHitboxes = [];
+  const R = Math.max(17, Math.round(w*0.031));
+  pts.forEach(p=>{
+    const cleared = campaignCleared(p.i);
+    const open = campaignOpen(p.i) && !cleared;
+    const known = cleared || open;          // amit még nem értél el, csak sejtés
+    const sel = (campaignSel === p.i);
+
+    // az aktív állomás lüktető glóriája
+    if(open){
+      const t = (Date.now()/560) % (Math.PI*2);
+      const pulse = 1 + Math.sin(t)*0.1;
+      const hg = g.createRadialGradient(p.x,p.y,R*0.6, p.x,p.y,R*2.5*pulse);
+      hg.addColorStop(0,'rgba(196,146,40,0.4)'); hg.addColorStop(1,'rgba(196,146,40,0)');
+      g.fillStyle=hg; g.beginPath(); g.arc(p.x,p.y,R*2.5*pulse,0,PI2); g.fill();
+    }
+    // medál
+    g.beginPath(); g.arc(p.x,p.y,R,0,PI2);
+    g.fillStyle = cleared ? 'rgba(140,58,42,0.9)'      // viaszpecsét-vörös
+                : open    ? 'rgba(232,206,140,0.96)'
+                          : 'rgba(150,130,98,0.5)';
+    g.fill();
+    g.lineWidth = sel ? 3.4 : 2.2;
+    g.strokeStyle = sel ? 'rgba(196,146,40,1)' : (known ? INK : FAINT);
+    g.stroke();
+
+    if(cleared){
+      drawSiteGlyph(g, p.id, p.x, p.y, R*0.88, 'rgba(60,20,14,0.45)');
+      drawTick(g, p.x, p.y, R*0.78, 'rgba(250,236,200,0.95)');
+    } else if(open){
+      drawSiteGlyph(g, p.id, p.x, p.y, R*0.95, INK);
+    } else {
+      drawPadlock(g, p.x, p.y, R*0.5, 'rgba(74,48,20,0.6)');
+    }
+
+    // sorszám a medál fölött
+    g.save(); g.font = 'bold '+Math.round(R*0.62)+'px monospace'; g.textAlign='center';
+    g.fillStyle = 'rgba(74,48,20,0.8)'; g.fillText(String(p.i+1), p.x, p.y - R - 5); g.restore();
+
+    // név: a teljesítettek és az aktív alá kiírjuk, a zártakat nem áruljuk el
+    g.save(); g.font = Math.round(R*0.58)+'px system-ui, sans-serif'; g.textAlign='center';
+    g.fillStyle = known ? 'rgba(58,38,16,0.9)' : 'rgba(74,48,20,0.4)';
+    g.fillText(known ? chTxt(CHAPTERS[p.i],'title') : '???', p.x, p.y + R + Math.round(R*0.78));
+    g.restore();
+
+    campaignHitboxes.push({ i:p.i, x:p.x, y:p.y, r:R*1.9 });
+  });
+
+  // "itt vagy" zászló az aktív állomásnál
+  if(cur < pts.length){
+    const p = pts[cur];
+    g.save(); g.translate(p.x + R*1.15, p.y - R*1.15);
+    g.strokeStyle=INK; g.lineWidth=1.8; g.beginPath(); g.moveTo(0,0); g.lineTo(0,-R*1.25); g.stroke();
+    g.fillStyle='rgba(170,58,42,0.92)'; g.beginPath();
+    g.moveTo(0,-R*1.25); g.lineTo(R*1.15,-R*1.0); g.lineTo(0,-R*0.75); g.closePath(); g.fill();
+    g.restore();
+  }
+  // pergamen-felirat
+  g.save(); g.font = 'bold '+Math.round(w*0.026)+'px serif'; g.textAlign='left';
+  g.fillStyle='rgba(74,48,20,0.5)'; g.fillText(T('campaignMapLabel'), m+4, h-m*0.35); g.restore();
+}
+
+/* A térkép lüktetése: amíg a térkép látszik, újrarajzoljuk, hogy az aktív
+   állomás glóriája éljen. Csökkentett mozgásnál egyetlen statikus kép. */
+var campaignAnim = 0;
+function reducedMotion(){
+  try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch(e){ return false; }
+}
+function stopCampaignAnim(){ if(campaignAnim){ cancelAnimationFrame(campaignAnim); campaignAnim = 0; } }
+/* A hódító térkép glóriája ugyanígy él, amíg a képernyő látszik. */
+var conquestAnim = 0;
+function stopConquestAnim(){ if(conquestAnim){ cancelAnimationFrame(conquestAnim); conquestAnim = 0; } }
+function conquestTick(){
+  conquestAnim = 0;
+  const scr = document.getElementById('conquestScreen');
+  if(!scr || scr.classList.contains('hidden')) return;
+  if(reducedMotion()) return;
+  renderConquestMap();
+  conquestAnim = requestAnimationFrame(conquestTick);
+}
+function campaignTick(){
+  campaignAnim = 0;
+  const scr = document.getElementById('mapScreen');
+  if(!scr || scr.classList.contains('hidden')) return;
+  if(reducedMotion()) return;
+  renderCampaignMap();
+  campaignAnim = requestAnimationFrame(campaignTick);
+}
+
+function campaignPickAt(cx, cy){
+  let best=null, bd=1e9;
+  for(const hb of campaignHitboxes){
+    const d = Math.hypot(hb.x-cx, hb.y-cy);
+    if(d < hb.r && d < bd){ bd=d; best=hb.i; }
+  }
+  if(best!==null){ campaignSel = best; renderMapCards(); }
+}
+
+/* A régi név megmarad, hogy minden hívó helyén működjön — de már a
+   pergamen-térképet rajzolja, nem a fejezet-kártyákat. */
+function renderMapCards(){
+  const cv = document.getElementById('campaignMap'); if(!cv) return;
+  const cur = campaignCurrent(), n = roadLength();
+  if(campaignSel===null || campaignSel>=n) campaignSel = Math.min(cur, n-1);
+  renderCampaignMap();
+  if(!campaignAnim) campaignTick();
+
+  const sub = document.getElementById('campaignSub');
+  if(sub) sub.textContent = T('campaignSub', Math.min(cur, n), n);
+
+  const info = document.getElementById('campaignInfo');
+  const btn  = document.getElementById('campaignGoBtn');
+  const i = campaignSel, ch = CHAPTERS[i];
+  if(!ch){ if(btn) btn.classList.add('hidden'); return; }
+  const cleared = campaignCleared(i), open = campaignOpen(i) && !cleared;
+  const state = cleared ? T('campaignCleared') : (open ? T('campaignHere') : T('campaignLocked'));
+  if(info) info.innerHTML =
+    `<div class="kName">${(i+1)}. ${(cleared||open) ? chTxt(ch,'title') : T('campaignUnknown')}</div>` +
+    ((cleared||open) ? `<div>${chTxt(ch,'goal')}</div>` : `<div>${T('campaignUnknownDesc')}</div>`) +
+    `<div class="kLine">${state}</div>`;
+  if(btn){
+    btn.classList.toggle('hidden', !open);
+    btn.textContent = T('campaignGo', chTxt(ch,'title'));
+  }
+}
+
+/* Az aktív állomás indítása: ez viszi tovább a sztorit. Az 1. fejezetnél
+   előbb lepereg a bevezető jelenet, ahogy eddig is. */
+function campaignStart(){
+  const i = campaignSel;
+  if(!campaignOpen(i) || campaignCleared(i)) return;
+  selectedChapter = i;
+  if(i===0){
+    playDialogueSequence(T('prologue').map(text=>({ speaker:'', text })), {
+      speaker:'', text:T('dlgReady'),
+      choices:[ { label:T('dlgStart'), action: ()=>{ showScreen('storyIntro'); renderStoryIntro(); } } ]
+    });
+  } else {
+    showScreen('storyIntro'); renderStoryIntro();
+  }
+}
+
 function renderStoryIntro(){
   const ch = CHAPTERS[selectedChapter]; if(!ch) return;
   const isVeryFirst = (selectedChapter===0);   // az első fejezetnél ez a történet BEVEZETŐJE is egyben
@@ -5079,9 +5354,22 @@ document.getElementById('conquestAttackBtn').addEventListener('click', ()=>{
   cv.addEventListener('click', pick);
   cv.addEventListener('touchstart', (e)=>{ e.preventDefault(); pick(e); }, {passive:false});
 })();
+(function bindCampaignMap(){
+  const cv = document.getElementById('campaignMap'); if(!cv) return;
+  const pick = (e)=>{
+    const r = cv.getBoundingClientRect();
+    const t = (e.touches && e.touches[0]) || e;
+    campaignPickAt(t.clientX - r.left, t.clientY - r.top);
+  };
+  cv.addEventListener('click', pick);
+  cv.addEventListener('touchstart', (e)=>{ e.preventDefault(); pick(e); }, {passive:false});
+})();
+document.getElementById('campaignGoBtn').addEventListener('click', campaignStart);
 window.addEventListener('resize', ()=>{
   const el = document.getElementById('conquestScreen');
   if(el && !el.classList.contains('hidden')) renderConquest();
+  const cm = document.getElementById('mapScreen');
+  if(cm && !cm.classList.contains('hidden')) renderCampaignMap();
   const tb = document.getElementById('tableauScreen');
   if(tb && !tb.classList.contains('hidden')) renderVictoryTableau();
 });
@@ -6696,7 +6984,28 @@ function renderConquestMap(){
     const st = conquestGeo.sites[k.id];
     const mine = conquestOwned(k.id), open = conquestAttackable(k.id);
     const col = k.home ? '#5f8a4c' : (mine ? '#7fa86a' : (open ? '#b5654f' : '#8d8069'));
+    // a megtámadható királyság fölött lüktető glória — ide léphetsz most
+    if(open && !reducedMotion()){
+      const t = (Date.now()/560) % PI2, pulse = 1 + Math.sin(t)*0.12;
+      const hg = g.createRadialGradient(st.px,st.py,R*0.8, st.px,st.py,R*2.6*pulse);
+      hg.addColorStop(0,'rgba(181,101,79,0.42)'); hg.addColorStop(1,'rgba(181,101,79,0)');
+      g.fillStyle=hg; g.beginPath(); g.arc(st.px,st.py,R*2.6*pulse,0,PI2); g.fill();
+    }
     drawInkCastle(g, st.px, st.py, R*(k.home||k.final?1.3:1), col);
+    /* Pipa a már elfoglaltakra, lakat arra, ami még nem határos veled —
+       a kastély mellé, jobbra-fel, hogy ne takarja el a rajzot. */
+    const badgeX = st.px + R*1.35, badgeY = st.py - R*1.45;
+    if(mine && !k.home){
+      g.beginPath(); g.arc(badgeX, badgeY, R*0.62, 0, PI2);
+      g.fillStyle='rgba(238,228,196,0.9)'; g.fill();
+      g.lineWidth=1.2; g.strokeStyle='rgba(44,74,40,0.7)'; g.stroke();
+      drawTick(g, badgeX, badgeY, R*0.42, 'rgba(36,84,36,0.95)');
+    } else if(!mine && !open && !k.home){
+      g.beginPath(); g.arc(badgeX, badgeY, R*0.62, 0, PI2);
+      g.fillStyle='rgba(232,222,192,0.82)'; g.fill();
+      g.lineWidth=1.2; g.strokeStyle='rgba(74,48,20,0.5)'; g.stroke();
+      drawPadlock(g, badgeX, badgeY + R*0.06, R*0.3, 'rgba(74,48,20,0.8)');
+    }
 
     const label = k.home ? T('homeKingdom', heroDisplayName()) : T('kingdom_'+k.id);
     g.font = `bold ${Math.max(9, Math.round(R*0.98))}px 'Trebuchet MS'`;
@@ -6893,6 +7202,7 @@ function heroDisplayName(){
 function renderConquest(){
   const st = conquestState();
   renderConquestMap();
+  if(!conquestAnim) conquestTick();
   const sub = document.getElementById('conquestSub');
   const owned = st.owned.filter(id=>id!=='home').length;
   if(sub) sub.textContent = T('conquestSub', owned, KINGDOMS.length-1);
@@ -7136,19 +7446,44 @@ function winGame(){
   const endlessBtnEl = document.getElementById('endlessBtn');
   const winTitle = document.querySelector('#winScreen .title');
   if(conquest){
-    // egy királyság elesett: nagy pénz- és kristály-jutalom
+    /* Egy királyság elesett. A jutalom nő azzal, mennyi van már meg — a
+       tizedik, utolsó királyság pedig akkora zsákmányt hoz, hogy nulláról is
+       kitesz húsz szintet. */
     const kid = game.chapter && game.chapter.conquestId;
     const kname = kid ? T('kingdom_'+kid) : '';
-    const coinBonus = 900, shardBonus = 14;
+    const st = conquestState();
+    const taken = st.owned.filter(id=>id!=='home').length;   // a mostanival együtt
+    const total = KINGDOMS.length - 1;
+    const allDone = taken >= total;
+
+    // lépcsőzetes jutalom: az első királyság 900, a kilencedik már 2500 körül
+    let coinBonus  = 900 + (taken-1) * 200;
+    let shardBonus = 14 + (taken-1) * 4;
+    let xpBonus    = 0;
+    if(allDone){
+      // a nagy zsákmány: pontosan 20 profil-szintnyi XP nulláról, plusz pénz és kristály
+      xpBonus    = PROFILE_STEP * 20;
+      coinBonus += 12000;
+      shardBonus += 240;
+    }
     profile.coins = (profile.coins||0) + coinBonus;
     profile.shards = (profile.shards||0) + shardBonus;
     saveProfile();
+    // awardXp pénzt ad vissza, nem szint-objektumot — a szintugrást magunk mérjük
+    const lvlBefore = profileLevel();
+    const bonusCoins = xpBonus ? awardXp(xpBonus) : 0;
+    const lvlGained = profileLevel() - lvlBefore;
+
     endlessBtnEl.classList.add('hidden');
-    if(winTitle) winTitle.textContent = T('conquestWinTitle');
+    if(winTitle) winTitle.textContent = allDone ? T('conquestAllTitle') : T('conquestWinTitle');
     document.getElementById('winText').innerHTML =
-      T('conquestWinText', kname, heroDisplayName()) +
-      `<b>+${coinBonus} 💰</b> &nbsp;|&nbsp; <b>+${shardBonus} 🔷</b><br>` +
-      T('rewardLine', r.earned, r.coins) + (r.up?T('profileUpLine', r.up):'');
+      (allDone ? T('conquestAllText', heroDisplayName(), total)
+               : T('conquestWinText', kname, heroDisplayName())) +
+      `<b>+${coinBonus} 💰</b> &nbsp;|&nbsp; <b>+${shardBonus} 🔷</b>` +
+      (xpBonus ? ` &nbsp;|&nbsp; <b>+${xpBonus} XP</b>` : '') + `<br>` +
+      (allDone ? `<div style="color:var(--gold);margin:6px 0;">${T('conquestAllReward', 20)}</div>` : '') +
+      T('rewardLine', r.earned, r.coins) + (r.up?T('profileUpLine', r.up):'') +
+      (lvlGained>0 ? T('conquestLevelLine', lvlGained, bonusCoins) : '');
     document.getElementById('restartBtnWin').textContent = T('backToMapBtn');
   } else if(story){
     endlessBtnEl.classList.add('hidden');
@@ -7651,9 +7986,14 @@ document.getElementById('resumeRunBtn').addEventListener('click', resumeRun);
    (a hódító térképre, ha a Királyságon már túl vagy). A "+" új sztorit indít,
    és a hős-/társ-/képesség-választóra visz. */
 function storyContinue(){
-  if(conquestUnlocked()){ conquestSel=null; showScreen('conquestScreen'); renderConquest(); return; }
   startMode='story';
-  selectedChapter = Math.min(profile.storyProgress||0, CHAPTERS.length-1);
+  // amíg a királyság nincs meg, a pontról pontra vezető út térképe jön;
+  // onnantól a hódító térkép veszi át, tartományokkal
+  if(conquestUnlocked()){
+    conquestSel=null; showScreen('conquestScreen'); renderConquest(); return;
+  }
+  campaignSel = null;
+  selectedChapter = Math.min(campaignCurrent(), roadLength()-1);
   showScreen('mapScreen'); renderMapCards();
 }
 function storyNew(){
