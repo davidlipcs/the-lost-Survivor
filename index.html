@@ -276,6 +276,20 @@
   #tableauCanvas{ border-radius:8px; box-shadow:0 14px 40px rgba(0,0,0,0.6); max-width:96vw; }
 
   /* ---- hódító térkép ---- */
+  /* ---- futam-összefoglaló a győzelem/halál képernyőn ---- */
+  .runSummary{ width:100%; max-width:460px; margin:2px auto 14px; }
+  .runSummary h4{ margin:0 0 8px; font-size:10px; letter-spacing:2px; color:var(--gold);
+    font-weight:bold; text-align:center; opacity:0.85; }
+  .runStats{ display:grid; grid-template-columns:repeat(auto-fit, minmax(88px,1fr)); gap:7px; }
+  .runStat{ background:rgba(255,255,255,0.045); border:1px solid rgba(255,255,255,0.09);
+    border-radius:9px; padding:8px 6px; text-align:center; }
+  .runStat .v{ font-size:17px; font-weight:bold; color:var(--text); line-height:1.2;
+    font-variant-numeric:tabular-nums; }
+  .runStat .k{ font-size:9.5px; letter-spacing:1px; color:var(--dim); margin-top:3px;
+    text-transform:uppercase; }
+  .runStat.hi .v{ color:var(--gold); }
+  @media (max-width:420px){ .runStat .v{ font-size:15px; } .runStat{ padding:7px 4px; } }
+
   #campaignMap{ pointer-events:all; cursor:pointer; border-radius:6px;
     box-shadow:0 10px 34px rgba(0,0,0,0.55); max-width:96vw; touch-action:manipulation; }
   #campaignInfo{ max-width:560px; min-height:56px; margin:10px auto 6px; text-align:center;
@@ -676,6 +690,7 @@
   <div id="winScreen" class="overlay hidden">
     <h1 class="title" style="color:var(--gold); -webkit-text-fill-color:var(--gold);" data-i18n="winTitle">GYŐZELEM</h1>
     <div class="storyBox" id="winText"></div>
+    <div class="runSummary hidden" id="winSummary"></div>
     <button class="bigBtn gold" id="endlessBtn" data-i18n="endlessBtn">VÉGTELEN MÓD FOLYTATÁSA</button>
     <button class="bigBtn" id="restartBtnWin" data-i18n="newGameBtn">ÚJ JÁTÉK</button>
   </div>
@@ -683,6 +698,7 @@
   <div id="deathScreen" class="overlay hidden">
     <h1 class="title" style="color:var(--accent2); -webkit-text-fill-color:var(--accent2);" data-i18n="deathTitle">ELBUKTÁL</h1>
     <div class="storyBox" id="deathText"></div>
+    <div class="runSummary hidden" id="deathSummary"></div>
     <button class="bigBtn" id="restartBtnDeath" data-i18n="retryBtn">ÚJRAPRÓBÁLOM</button>
     <button class="bigBtn ghost" id="deathMenuBtn" data-i18n="menuBtn">FŐMENÜ</button>
   </div>
@@ -1162,6 +1178,9 @@ const TRANSLATIONS = {
     campaignUnknownDesc: 'The map is blank here. You will see it when you get there.',
     campaignGo: (n)=> `▶️ SET OUT: ${n}`,
     campaignAllDone: '👑 The kingdom is yours. From here the conquest map takes over.',
+    sumTitle: 'THIS RUN',
+    sumTime: 'Time', sumKills: 'Kills', sumWave: 'Wave',
+    sumUlts: 'Ultimates', sumSeals: 'Seals cast', sumDamage: 'Damage taken',
     conquestAllTitle: 'THE WHOLE REALM IS YOURS',
     conquestAllText: (hero, n)=> `The last banner came down. All ${n} kingdoms answer to ${hero} now — `+
       `from the windswept plateau to the Black Tower, there is not one gate left closed to you.<br>`+
@@ -1450,6 +1469,9 @@ const TRANSLATIONS = {
     campaignUnknownDesc: 'A térkép itt üres. Majd akkor látod, ha odaérsz.',
     campaignGo: (n)=> `▶️ INDULÁS: ${n}`,
     campaignAllDone: '👑 A királyság a tiéd. Innentől a hódító térkép veszi át.',
+    sumTitle: 'EZ A FUTAM',
+    sumTime: 'Idő', sumKills: 'Ölések', sumWave: 'Hullám',
+    sumUlts: 'Ultimate', sumSeals: 'Pecsét', sumDamage: 'Kapott seb.',
     conquestAllTitle: 'AZ EGÉSZ BIRODALOM A TIÉD',
     conquestAllText: (hero, n)=> `Az utolsó zászló is lekerült. Mind a ${n} királyság ${hero} szavára hallgat — `+
       `a szélverte fennsíktól a Fekete Toronyig nincs egyetlen kapu sem, ami zárva maradna előtted.<br>`+
@@ -2182,6 +2204,7 @@ function recordAbilityUse(id){
   heroStats.abilityUses[id] = (heroStats.abilityUses[id]||0) + 1;
   saveHeroStats();
   questProgress('abilityUses', 1);
+  if(game) game.abilitiesUsed = (game.abilitiesUsed||0) + 1;
 }
 function abilityBalanceMult(id){
   const m = heroStats.abilityMult[id];
@@ -5606,6 +5629,8 @@ function resetGame(){
     clouds:[], drones:[], beams:[], traps:[], slowT:0,
     barrels:[], hazards:[], crates:[],
     pendingSpawns:[], killsThisRun:0,
+    // futam-statisztika a végi összefoglalóhoz (csak játék közben nő, szünetben áll)
+    runFrames:0, ultsUsed:0, abilitiesUsed:0, damageTaken:0, bestWave:1,
     wave:1, waveTimer:70, spawning:true,
     boss:null, endless:false,
     mode: startMode,
@@ -5948,6 +5973,9 @@ function levelUp(){
    ========================================================= */
 function update(){
   if(!game || game.state !== 'playing') return;
+  // futam-óra: csak játék közben ketyeg, szünetben/párbeszédben nem
+  game.runFrames = (game.runFrames||0) + 1;
+  game.bestWave = Math.max(game.bestWave||1, game.chapter ? (game.chapterWave||1) : (game.wave||1));
   const p = game.player;
   const w = canvas.width, h = canvas.height;
   const dif = game.diff;
@@ -6046,6 +6074,7 @@ function update(){
   }
   if(p.ult && p.ult.key && keys[p.ult.key] && p.ult.charge>=p.ult.chargeMax){
     ULTIMATES[p.ult.id].run(p); p.ult.charge = 0; addUltShake(); vfxPunch(p.x, p.y, '#ffd166', 2.2);
+    game.ultsUsed = (game.ultsUsed||0) + 1;
     SFX.ult(); padRumble(0.3, 0.7, 220);
   }
 
@@ -6439,6 +6468,7 @@ function update(){
     const lost = hp0 - p.hp;
     p.hp = Math.min(p.maxHp, p.hp + lost*(3/7));
   }
+  if(p.hp < hp0){ game.damageTaken = (game.damageTaken||0) + (hp0 - p.hp); }
   if(p.hp < hp0 - 0.8){ SFX.hurt(); padRumble(0.5, 0.25, 120); }   // csak érdemi sérülésre (láva-tick nem spammel)
   if(p.hp<=0){ p.hp=0; deathGame(); }
 
@@ -6540,6 +6570,9 @@ function saveRun(){
       chapterIndex: game.chapterIndex, chapterWave: game.chapterWave,
       wave: game.wave, diff: game.diff.key,
       killsThisRun: game.killsThisRun||0,
+      runFrames: game.runFrames||0, ultsUsed: game.ultsUsed||0,
+      abilitiesUsed: game.abilitiesUsed||0, damageTaken: game.damageTaken||0,
+      bestWave: game.bestWave||1,
       hero: { cls:p.cls, name:p.name, color:p.color, head:p.head, skin:p.skin,
               level:p.level, xp:p.xp, xpNext:p.xpNext, hp:p.hp, maxHp:p.maxHp,
               fireRate:p.fireRate, bulletDmg:p.bulletDmg },
@@ -6592,6 +6625,9 @@ function resumeRun(){
   game.wave = d.wave; game.chapterWave = d.chapterWave||1;
   game.endless = !!d.endless;
   game.killsThisRun = d.killsThisRun||0;
+  game.runFrames = d.runFrames||0; game.ultsUsed = d.ultsUsed||0;
+  game.abilitiesUsed = d.abilitiesUsed||0; game.damageTaken = d.damageTaken||0;
+  game.bestWave = d.bestWave||1;
   game.enemies.length = 0; game.pendingSpawns.length = 0;
   spawnWave(); game.waveTimer = waveInterval();
   updateHud();
@@ -7431,6 +7467,33 @@ function hideCombatUI(){
   document.getElementById('pauseBtn').classList.add('hidden');
   document.getElementById('menuEmbers').classList.remove('hidden');
 }
+/* ---- Futam-összefoglaló: mennyi ideig tartott, mit vittél véghez ----
+   A számlálók a game objektumban élnek, és a futam-mentésben is utaznak,
+   így egy folytatott menet végén sem nullázódnak le. */
+function fmtRunTime(frames){
+  const sec = Math.max(0, Math.round((frames||0)/60));
+  const m = Math.floor(sec/60), ss = sec%60;
+  return m + ':' + String(ss).padStart(2,'0');
+}
+function renderRunSummary(elId){
+  const el = document.getElementById(elId);
+  if(!el || !game){ if(el) el.classList.add('hidden'); return; }
+  const g = game;
+  const waveNum = g.chapter ? (g.bestWave || g.chapterWave || 1) : (g.bestWave || g.wave || 1);
+  const stats = [
+    { k:T('sumTime'),    v:fmtRunTime(g.runFrames), hi:false },
+    { k:T('sumKills'),   v:String(g.killsThisRun||0), hi:true },
+    { k:T('sumWave'),    v:String(waveNum), hi:false },
+    { k:T('sumUlts'),    v:String(g.ultsUsed||0), hi:false },
+    { k:T('sumSeals'),   v:String(g.abilitiesUsed||0), hi:false },
+    { k:T('sumDamage'),  v:String(Math.round(g.damageTaken||0)), hi:false },
+  ];
+  el.innerHTML = `<h4>${T('sumTitle')}</h4><div class="runStats">` +
+    stats.map(st=>`<div class="runStat${st.hi?' hi':''}"><div class="v">${st.v}</div><div class="k">${st.k}</div></div>`).join('') +
+    `</div>`;
+  el.classList.remove('hidden');
+}
+
 function winGame(){
   clearRun();
   // hódító csata: a legyőzött királyság a tiéd lesz, és megnyílnak a szomszédai
@@ -7500,6 +7563,7 @@ function winGame(){
       T('rewardLine', r.earned, r.coins) + (r.up?T('profileUpLine', r.up):'');
     document.getElementById('restartBtnWin').textContent = T('newGameBtn');
   }
+  renderRunSummary('winSummary');
   document.getElementById('winScreen').classList.remove('hidden');
   hideCombatUI();
 }
@@ -7517,6 +7581,7 @@ function deathGame(){
   }
   document.getElementById('deathText').innerHTML = msg +
     T('rewardLine', r.earned, r.coins) + (r.up?T('profileUpLine', r.up):'');
+  renderRunSummary('deathSummary');
   document.getElementById('deathScreen').classList.remove('hidden');
   hideCombatUI();
 }
