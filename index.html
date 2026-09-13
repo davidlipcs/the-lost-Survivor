@@ -260,6 +260,10 @@
   .abCell .epicTag.legendaryTag{ background:linear-gradient(90deg,#c9a6ff,#ffd166); }
   .abCell .nerfDot{ position:absolute; bottom:-6px; right:-6px; width:14px; height:14px; border-radius:50%;
     background:#ff5c7c; color:#0a0e14; font-size:9px; font-weight:bold; display:flex; align-items:center; justify-content:center; }
+  /* a felerősített pecsét ugyanúgy látszik, mint a visszafogott — különben a
+     játékos nem tudja, hogy megérte elővenni azt, amit sosem használt */
+  .abCell .buffDot{ position:absolute; bottom:-6px; right:-6px; width:14px; height:14px; border-radius:50%;
+    background:#7dffb0; color:#0a0e14; font-size:9px; font-weight:bold; display:flex; align-items:center; justify-content:center; }
   .abCell .upgBadge{ position:absolute; bottom:-6px; left:-6px; min-width:14px; height:14px; border-radius:7px;
     background:#1c2333; border:1px solid #2a3348; color:var(--dim); font-size:8px; font-weight:bold;
     display:flex; align-items:center; justify-content:center; padding:0 3px; cursor:pointer; pointer-events:all; }
@@ -1192,6 +1196,8 @@ const TRANSLATIONS = {
     epicTag: 'EPIC · max rank 10', legendaryTag: 'LEGENDARY · max rank 10',
     tunedTitle: (pct)=> ` (tuned: ${pct}%)`, upgradedTitle: (pct)=> ` — upgraded: +${pct}%`,
     nerfDotTitle: 'tuned down', upgBadgeTitle: 'Seal upgrade',
+    buffDotTitle: (p)=> `tuned up to ${p}% — rarely used, so it hits harder`,
+    boostedTitle: (p)=> ` · tuned up to ${p}%`,
     adminMaxAbility: 'Admin: this seal is already at the highest (test) tier.',
     abilityMaxed: (name)=> `“${name}” is already at the highest (3rd) upgrade tier.`,
     confirmAbilityUpg: (name, t, cost)=> `Upgrade “${name}” to tier ${t} for ${cost} 🔷? (+8% power per tier)`,
@@ -1514,6 +1520,8 @@ const TRANSLATIONS = {
     epicTag: 'EPIKUS · max 10. rang', legendaryTag: 'LEGENDÁS · max 10. rang',
     tunedTitle: (pct)=> ` (finomhangolva: ${pct}%)`, upgradedTitle: (pct)=> ` — fejlesztve: +${pct}%`,
     nerfDotTitle: 'finomhangolva', upgBadgeTitle: 'Pecsét-fejlesztés',
+    buffDotTitle: (p)=> `felerősítve ${p}%-ra — ritkán használod, ezért többet üt`,
+    boostedTitle: (p)=> ` · felerősítve ${p}%-ra`,
     adminMaxAbility: 'Admin: ez a pecsét már a legmagasabb (teszt) szinten van.',
     abilityMaxed: (name)=> `„${name}” már a legmagasabb (3.) fejlesztési szinten van.`,
     confirmAbilityUpg: (name, t, cost)=> `Fejleszted „${name}”-t a(z) ${t}. szintre ${cost} 🔷-ért? (+8% erő szintenként)`,
@@ -2329,6 +2337,13 @@ function abilityBalanceMult(id){
   const m = heroStats.abilityMult[id];
   return (typeof m==='number') ? m : 1;
 }
+/* A finomhangolás SZÁNDÉKOSAN aszimmetrikus: a mellőzött pecséteket sokkal
+   határozottabban emeli, mint amennyire a népszerűeket visszafogja. A cél nem
+   az, hogy mindent egy szintre nyomjunk, hanem hogy tényleg megérje kipróbálni
+   azt, amit sosem veszel elő. A nerf-oldal szándékosan maradt olyan óvatos,
+   amilyen volt — a kedvenc pecséted ne váljon használhatatlanná attól, hogy
+   szereted. Ezért tér el a lépés (0,05 vs 0,03), a küszöb (0,7x vs 2x) és a
+   határ (1,50 vs 0,60) is a két irányban. */
 function runDailyAbilityBalanceCheck(){
   const ids = Object.keys(ABILITIES);
   const uses = ids.map(id=>heroStats.abilityUses[id]||0);
@@ -2339,12 +2354,12 @@ function runDailyAbilityBalanceCheck(){
     const share = uses[i]/total;
     let cur = heroStats.abilityMult[id]; if(typeof cur!=='number') cur = 1;
     let step = 0;
-    if(share > avgShare*2) step = -0.03;             // amit sokkal többet használsz, mint a többit -> gyengül
-    else if(share < avgShare*0.35 && total>=ids.length*1.5) step = 0.02;  // amit szinte sosem -> ugyanúgy, kis lépésben erősödik
-    if(step!==0) heroStats.abilityMult[id] = clamp(cur+step, 0.6, 1.1);
+    if(share > avgShare*2) step = -0.03;             // amit sokkal többet használsz, mint a többit -> gyengül (változatlan)
+    else if(share < avgShare*0.7) step = 0.05;       // amit ritkán veszel elő -> határozottan erősödik
+    if(step!==0) heroStats.abilityMult[id] = clamp(cur+step, 0.6, 1.5);
   });
 }
-const BALANCE_CHECK_VERSION = 2;   // ha ezt megemeled, aznap is lefut még egyszer az ellenőrzés
+const BALANCE_CHECK_VERSION = 3;   // ha ezt megemeled, aznap is lefut még egyszer az ellenőrzés
 function runDailyHeroBalanceCheck(){
   const today = new Date().toISOString().slice(0,10);
   const forceRecheck = heroStats.checkVersion !== BALANCE_CHECK_VERSION;
@@ -2362,11 +2377,15 @@ function runDailyHeroBalanceCheck(){
       const share = plays[i]/total;
       const cur = heroStats.mult[id] || {hp:1,dmg:1};
       let step = 0;
-      if(share > avgShare*1.5) step = -0.02;        // kiugróan népszerű -> apró nerf
-      else if(share < avgShare*0.5 && total>=ids.length*3) step = 0.02;  // alig használt -> apró buff
+      if(share > avgShare*1.5) step = -0.02;        // kiugróan népszerű -> apró nerf (változatlan)
+      else if(share < avgShare*0.8) step = 0.05;    // alig játszott -> határozott buff
+      /* A buff-oldal itt is erősebb, mint a nerf: nagyobb lépés (0,05 vs 0,02),
+         tágabb küszöb (0,8x vs 1,5x), és nem vár külön extra adatmennyiségre —
+         a nerfhez elég adat a buffhoz is elég. A plafon 1,40, a padló maradt
+         0,85: a mellőzött hős sokat nyerhet, a népszerű keveset veszít. */
       if(step!==0){
-        cur.hp  = clamp(cur.hp  + step, 0.85, 1.15);
-        cur.dmg = clamp(cur.dmg + step, 0.85, 1.15);
+        cur.hp  = clamp(cur.hp  + step, 0.85, 1.40);
+        cur.dmg = clamp(cur.dmg + step, 0.85, 1.40);
         heroStats.mult[id] = cur;
       }
     });
@@ -5242,10 +5261,14 @@ function buildLoadoutUI(){
     const upgTier = abilityUpgradeTier(id);
     const cell = document.createElement('div');
     cell.className = 'abCell' + (idx>=0?' equipped':'') + (unlocked?'':' locked') + (ab.epic?' epicCell':'') + (ab.legendary?' legendaryCell':'');
-    cell.title = abTxt(id,'label') + ' — ' + abTxt(id,'desc') + (abal<0.995?T('tunedTitle', Math.round(abal*100)):'') + (upgTier>0?T('upgradedTitle', upgTier*8):'');
+    cell.title = abTxt(id,'label') + ' — ' + abTxt(id,'desc')
+      + (abal<0.995?T('tunedTitle', Math.round(abal*100)):'')
+      + (abal>1.005?T('boostedTitle', Math.round(abal*100)):'')
+      + (upgTier>0?T('upgradedTitle', upgTier*8):'');
     cell.innerHTML = (ab.epic?`<div class="epicTag">${T('epicTag')}</div>`:'') +
       (ab.legendary?`<div class="epicTag legendaryTag">${T('legendaryTag')}</div>`:'') +
       (abal<0.995?`<div class="nerfDot" title="${T('nerfDotTitle')}">▼</div>`:'') +
+      (abal>1.005?`<div class="buffDot" title="${T('buffDotTitle', Math.round(abal*100))}">▲</div>`:'') +
       (unlocked?`<div class="upgBadge ${upgTier>0?'hasLvl':''}" title="${T('upgBadgeTitle')}">⬆${upgTier}/3</div>`:'') +
       `<div class="ic">${ab.icon}</div><div class="nm">${abTxt(id,'label')}</div>`+
       (idx>=0?`<div class="slotNum">${idx+1}</div>`:'') + (unlocked?'':`<div class="lk">🔒${ab.req}</div>`);
