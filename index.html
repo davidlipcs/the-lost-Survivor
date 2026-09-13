@@ -64,6 +64,8 @@
   #waveNum{ font-size:calc(23px*var(--ui-scale)); font-weight:bold; color:var(--accent); text-shadow:0 0 12px rgba(110,231,255,0.5); }
   #enemyCount{ font-size:calc(11px*var(--ui-scale)); color:var(--dim); margin-top:2px; }
   #modeTag{ font-size:calc(10px*var(--ui-scale)); color:var(--gold); margin-top:2px; }
+  #eliteTag{ font-size:calc(12px*var(--ui-scale)); margin-top:3px; letter-spacing:2px; line-height:1; }
+  #eliteTag:empty{ display:none; }
 
   /* pause gomb */
   #pauseBtn{ position:absolute; top: max(calc(10px*var(--ui-scale)), env(safe-area-inset-top)); left:50%; transform:translateX(-50%);
@@ -299,6 +301,8 @@
     border:1px solid rgba(232,201,106,0.5); box-shadow:0 8px 28px rgba(0,0,0,0.55); text-align:left;
     animation:trIn 0.45s cubic-bezier(.2,1.3,.4,1) both; }
   .trophyToast.out{ animation:trOut 0.45s ease both; }
+  .trophyToast.elite{ border-color:rgba(255,92,124,0.55); }
+  .trophyToast.elite .tTop{ color:var(--accent2); }
   .trophyToast .tIcon{ font-size:26px; }
   .trophyToast .tTop{ font-size:9px; letter-spacing:2px; color:var(--gold); font-weight:bold; }
   .trophyToast .tName{ font-size:14px; font-weight:bold; color:var(--text); margin-top:1px; }
@@ -497,6 +501,7 @@
       <div id="waveNum">1</div>
       <div id="enemyCount">0 ellenfél</div>
       <div id="modeTag"></div>
+      <div id="eliteTag" title=""></div>
     </div>
   </div>
 
@@ -1246,6 +1251,12 @@ const TRANSLATIONS = {
     trophy_veteran_name: 'Veteran',             trophy_veteran_desc: 'Finish 50 runs.',
     trophy_sealMaster_name: 'Seal Master',      trophy_sealMaster_desc: 'Fire 100 ultimates in total.',
     trophy_level25_name: 'Proven',              trophy_level25_desc: 'Reach profile level 25.',
+    eliteNew: 'NEW RULE IN PLAY',
+    elite_swift_name: 'Swift Volleys',   elite_swift_desc: 'Enemy shots fly noticeably faster.',
+    elite_siege_name: 'Siege',           elite_siege_desc: 'Half of each wave closes in as a ring from every side.',
+    elite_warded_name: 'Warded',         elite_warded_desc: 'Some arrivals are untouchable for a moment — watch the ring.',
+    elite_frenzy_name: 'Frenzy',         elite_frenzy_desc: 'Enemies break into short sprints instead of a steady crawl.',
+    elite_vengeance_name: 'Vengeance',   elite_vengeance_desc: 'Every kill leaves a small blast behind.',
     sumTitle: 'THIS RUN',
     sumTime: 'Time', sumKills: 'Kills', sumWave: 'Wave',
     sumUlts: 'Ultimates', sumSeals: 'Seals cast', sumDamage: 'Damage taken',
@@ -1562,6 +1573,12 @@ const TRANSLATIONS = {
     trophy_veteran_name: 'Veterán',              trophy_veteran_desc: 'Fejezz be 50 futamot.',
     trophy_sealMaster_name: 'Pecsétmester',      trophy_sealMaster_desc: 'Süss el összesen 100 ultimate-et.',
     trophy_level25_name: 'Bizonyított',          trophy_level25_desc: 'Érd el a 25. profilszintet.',
+    eliteNew: 'ÚJ SZABÁLY LÉPETT ÉLETBE',
+    elite_swift_name: 'Gyors sortűz',    elite_swift_desc: 'Az ellenséges lövedékek érezhetően gyorsabbak.',
+    elite_siege_name: 'Ostrom',          elite_siege_desc: 'A hullám fele gyűrűben, minden oldalról egyszerre zár rád.',
+    elite_warded_name: 'Pajzsos',        elite_warded_desc: 'Az érkezők egy részén egy pillanatig nem fog a találat — a gyűrű jelzi.',
+    elite_frenzy_name: 'Dühroham',       elite_frenzy_desc: 'Az ellenfelek egyenletes csúszás helyett rövid rohamokban jönnek.',
+    elite_vengeance_name: 'Bosszú',      elite_vengeance_desc: 'Minden legyőzött ellenfél kis robbanást hagy maga után.',
     sumTitle: 'EZ A FUTAM',
     sumTime: 'Idő', sumKills: 'Ölések', sumWave: 'Hullám',
     sumUlts: 'Ultimate', sumSeals: 'Pecsét', sumDamage: 'Kapott seb.',
@@ -4451,6 +4468,15 @@ function bakeEnemyBody(g, en, R, variant){
    hőkölés találatkor, test-sprite, HP-csík. Nincs útvonal-rajzolás és nincs elmosás. */
 function drawEnemyLive(g, en, p, lightFx, nowT){
   const R = en.r;
+  // PAJZS (elit): lüktető gyűrű, amíg a találat nem fog rajta — látszódjon, hogy szabály, nem hiba
+  if(en.ward > 0){
+    const w2 = 0.55 + 0.45*Math.sin(nowT/90);
+    g.save();
+    g.strokeStyle = `rgba(140,215,255,${0.5 + w2*0.4})`;
+    g.lineWidth = 2.4;
+    g.beginPath(); g.arc(en.x, en.y, R + 6 + w2*2.5, 0, PI2); g.stroke();
+    g.restore();
+  }
   const face = Math.atan2(p.y-en.y, p.x-en.x);
   const variant = en.frozen>0 ? 'z' : (en.hitFlash>0 ? 'f' : 'n');
   const sp = enemySprite(en, variant);
@@ -5896,7 +5922,26 @@ function spawnWave(){
      többen vannak a képernyőn — az egyenletes szivárgás azt eredményezte, hogy
      az elsőket már leszedted, mire az utolsók megérkeztek. */
   const gap = Math.max(20, Math.round(60 - wn*1.5));   // két raj közti szünet
-  let t = 8, i = 0;
+
+  /* OSTROM (elit módosító): a hullám fele nem a szokásos rajokban szivárog be,
+     hanem egyszerre, szabályos gyűrűben, a pálya minden oldaláról. Ugyanannyi
+     ellenfél, teljesen más feladat: nincs "biztonságos oldal", ahová kihátrálj. */
+  let ringCount = 0;
+  if(eliteOn('siege')){
+    ringCount = Math.round(count * 0.5);
+    const w = canvas.width, h = canvas.height;
+    const cx = w/2, cy = h/2, rx = w*0.62, ry = h*0.62;
+    for(let k=0;k<ringCount;k++){
+      const a = (k/ringCount) * PI2 + Math.random()*0.12;
+      game.pendingSpawns.push({
+        type: pool[Math.floor(Math.random()*pool.length)],
+        timer: 30 + Math.floor(k/6)*6,
+        x: cx + Math.cos(a)*rx, y: cy + Math.sin(a)*ry,
+      });
+    }
+  }
+
+  let t = 8, i = ringCount;
   while(i < count){
     const burst = Math.min(count - i, 3 + Math.floor(Math.random()*3));
     for(let k=0;k<burst;k++){
@@ -5960,7 +6005,19 @@ function spawnEnemyType(type, forcedX, forcedY, hpMult=1, rMult=1){
     range: def.range||0, splits: !!def.splits, isChild: !!(hpMult<1),
     hitFlash:0, atkTimer: Math.random()*60, chargeState:0, chargeAng:0, telegraph:0,
     strafe: Math.random()<0.5?1:-1, strafeTimer: 40+Math.random()*60,
+    /* PAJZS (elit): érkezéskor rövid ideig sérthetetlen. Nem teszi erősebbé,
+       csak megköveteli, hogy a célsorrendet átgondold — a frissen érkezőre
+       kilőtt tár kárba vész. Látható gyűrű jelzi, hogy nem hiba, hanem szabály. */
+    ward: (eliteOn('warded') && Math.random() < 0.45) ? 95 : 0,
+    // DÜH (elit): időnként rövid sprintbe kezd, nem egyenletesen csúszik feléd
+    frenzyT: eliteOn('frenzy') ? Math.floor(Math.random()*220) : -1,
+    frenzyOn: 0,
   });
+  /* A pajzs kiindulási életét MÁR ITT rögzítjük. Ha csak az első képkockán
+     tennénk, az addig beérkező találat még átmenne rajta — épp a pajzs
+     legfontosabb pillanatában. */
+  const spawned = game.enemies[game.enemies.length-1];
+  if(spawned && spawned.ward > 0) spawned._wardHp = spawned.hp;
 }
 
 /* A kampány/végtelen bossai eddig mind ugyanaz a "Gonosz Árnyék" volt, pedig a
@@ -5976,6 +6033,64 @@ function bossVariantFor(wave){
   const cycle = Math.max(0, Math.floor((wave - MAX_WAVES) / MINIBOSS_EVERY));
   return BOSS_VARIANTS[cycle % BOSS_VARIANTS.length];
 }
+
+/* Ugyanaz az értesítő-réteg, mint a trófeáknál, csak vörös kerettel:
+   ez nem jutalom, hanem figyelmeztetés. */
+function showEliteToast(m){
+  const host = document.getElementById('trophyToasts'); if(!host) return;
+  const el = document.createElement('div');
+  el.className = 'trophyToast elite';
+  el.innerHTML = `<div class="tIcon">${m.icon}</div>` +
+    `<div><div class="tTop">${T('eliteNew')}</div>` +
+    `<div class="tName">${T('elite_'+m.id+'_name')}</div>` +
+    `<div class="tRew">${T('elite_'+m.id+'_desc')}</div></div>`;
+  host.appendChild(el);
+  while(host.children.length > 3) host.removeChild(host.firstChild);
+  setTimeout(()=>{ el.classList.add('out'); setTimeout(()=>el.remove(), 500); }, 4200);
+}
+
+/* =========================================================
+   ELIT MÓDOSÍTÓK — a végtelen mód magas hullámai
+   A 12. hullám után eddig ugyanaz a három boss-változat körözött, és a
+   hullámok csak számokban nőttek: a 28. ugyanúgy játszott, mint a 14.,
+   csak tovább tartott leszedni bárkit. Ezek a módosítók nem a számokat
+   emelik, hanem a szabályokat írják át, és rétegződnek: amit egyszer
+   elértél, az onnantól végig él, és mellé jön a következő.
+   Csak a végtelen módra vonatkoznak — a sztorit és a hódítást nem érintik.
+   ========================================================= */
+const ELITE_MODS = [
+  { id:'swift',     from:18, icon:'💨' },   // gyorsabb ellenséges lövedékek
+  { id:'siege',     from:22, icon:'⭕' },   // gyűrűs beérkezés: minden irányból egyszerre
+  { id:'warded',    from:26, icon:'🛡️' },   // rövid sebezhetetlenség érkezéskor
+  { id:'frenzy',    from:31, icon:'🔥' },   // időnkénti sprint-rohamok
+  { id:'vengeance', from:36, icon:'💥' },   // halálkor kis robbanás
+];
+const ELITE_BY_ID = Object.fromEntries(ELITE_MODS.map(m=>[m.id,m]));
+/* Aktív-e egy módosító? Csak végtelen módban, és csak a saját hullámától.
+   Egyetlen elágazás, mert a forró útvonalról is hívjuk. */
+function eliteOn(id){
+  if(!game || !game.endless) return false;
+  const m = ELITE_BY_ID[id];
+  return !!m && game.wave >= m.from;
+}
+function activeElites(){
+  if(!game || !game.endless) return [];
+  return ELITE_MODS.filter(m=>game.wave >= m.from);
+}
+/* Új módosító pontosan akkor lép életbe, amikor a hullámszám eléri —
+   ilyenkor egyszer kiírjuk, mi változott, hogy ne csak érezd, tudd is. */
+function announceNewElites(){
+  if(!game || !game.endless) return;
+  const fresh = ELITE_MODS.filter(m => m.from === game.wave);
+  if(!fresh.length) return;
+  /* Értesítővel jelezzük, nem lebegő szöveggel: a lebegő szöveg ki van kötve
+     a "sebzésszámok" beállításhoz, és ez az üzenet akkor is kell, ha az ki van
+     kapcsolva — különben a szabály megváltozik, és a játékos nem tudja, miért. */
+  for(const m of fresh) showEliteToast(m);
+  addFlash('#ffd166', 0.16, 14); addChroma(0.5); addShake(5, 10);
+  try { SFX.ultReady && SFX.ultReady(); } catch(e){}
+}
+
 function spawnBoss(isMini){
   const dm = game.diff.hp;
   const bd = (!isMini && game.chapter) ? game.chapter.boss : null;   // fejezet-boss adat
@@ -6111,7 +6226,8 @@ function update(){
   // --- Késleltetett spawn-sor (szünet-biztos) ---
   if(game.pendingSpawns.length && !game.boss){
     for(const s of game.pendingSpawns) s.timer--;
-    game.pendingSpawns.filter(s=>s.timer<=0).forEach(s=>spawnEnemyType(s.type));
+    // az x/y opcionális: az ostrom-gyűrű előre kiosztott helyre kéri az ellenfelet
+    game.pendingSpawns.filter(s=>s.timer<=0).forEach(s=>spawnEnemyType(s.type, s.x, s.y));
     game.pendingSpawns = game.pendingSpawns.filter(s=>s.timer>0);
   }
 
@@ -6339,7 +6455,15 @@ function update(){
     const hidePt = (p.buffs.invisible>0 && game._invisPt) ? game._invisPt : game._bushPt;
     const tx = inv ? hidePt.x : p.x, ty = inv ? hidePt.y : p.y;
     const d = dist(en.x,en.y,tx,ty);
-    const spd = en.speed * (game.slowT>0 ? 0.55 : 1);   // időlassítás
+    /* DÜH (elit): az ellenfél nem egyenletes tempóban csúszik feléd, hanem
+       időnként rövid rohamba kezd. Ugyanaz az átlagsebesség, más ritmus —
+       a kitérést időzíteni kell, nem csak távolságot tartani. */
+    if(en.frenzyT >= 0){
+      if(en.frenzyOn > 0) en.frenzyOn--;
+      else if(--en.frenzyT <= 0){ en.frenzyOn = 45; en.frenzyT = 200 + Math.floor(Math.random()*160); }
+    }
+    const frenzyMul = (en.frenzyOn > 0) ? 1.85 : 1;
+    const spd = en.speed * frenzyMul * (game.slowT>0 ? 0.55 : 1);   // időlassítás
     const ang = Math.atan2(ty-en.y, tx-en.x);
     // előretartás: hova tartana a játékos
     const tLead = clamp(d/6, 0, 42);
@@ -6389,7 +6513,7 @@ function update(){
       en.atkTimer++;
       if(en.atkTimer > 90*dif.fireRate && d < en.range+40){
         en.atkTimer = 0;
-        const bs = 5.2; const t2 = d/bs;
+        const bs = 5.2 * (eliteOn('swift') ? 1.45 : 1); const t2 = d/bs;
         const ax = tx + (inv?0:p.vx)*t2*ai, ay = ty + (inv?0:p.vy)*t2*ai;
         const a = Math.atan2(ay-en.y, ax-en.x);
         game.enemyBullets.push({ x:en.x,y:en.y, vx:Math.cos(a)*bs, vy:Math.sin(a)*bs, r:6, life:160, dmg:en.dmg });
@@ -6462,6 +6586,20 @@ function update(){
     game.crates = game.crates.filter(cr=>!cr.dead);
   }
 
+  /* PAJZS (elit): a sebzés sok helyen, közvetlenül az en.hp-n keresztül éri az
+     ellenfelet, ezért nem egy pontban fogjuk el, hanem itt, a képkocka végén
+     vonjuk vissza — így minden sebzés-forrásra egyformán érvényes, a jövőbeliekre
+     is. A pajzs alatt kapott találat látszik (villanás), csak nem számít. */
+  for(const en of game.enemies){
+    if(en.ward > 0){
+      en.ward--;
+      if(en._wardHp !== undefined && en.hp < en._wardHp) en.hp = en._wardHp;
+      en._wardHp = en.hp;
+    } else if(en._wardHp !== undefined){
+      en._wardHp = undefined;
+    }
+  }
+
   // --- Halott ellenfelek + XP + raj-hasadás ---
   game.enemies.filter(en=>en.hp<=0).forEach(en=>{
     addParticles(en.x,en.y,en.color,14); SFX.enemyDie(); addDeathAnim(en);
@@ -6470,6 +6608,18 @@ function update(){
     if(en.splits && !en.isChild){
       spawnEnemyType('swarmling', en.x-10, en.y, 0.5, 0.75);
       spawnEnemyType('swarmling', en.x+10, en.y, 0.5, 0.75);
+    }
+    /* BOSSZÚ (elit): a legyőzött ellenfél kis lökéshullámot hagy maga után.
+       Nem sok sebzés, de megbünteti, ha vakon beleállsz a tömegbe — a
+       közelharcot innentől tempózni kell. A robbanás csak a játékost sebzi. */
+    if(eliteOn('vengeance')){
+      const R2 = 62;
+      addRing(en.x, en.y, '#ff6b4a', R2, 16, 3); addParticles(en.x, en.y, '#ff8c3c', 8);
+      if(p.invuln<=0 && p.shieldActive<=0 && dist(p.x,p.y,en.x,en.y) < R2 + p.r){
+        const af = clamp(1-(p.armor||0)+(p.buffs.berserk>0?0.2:0)-(p.buffs.boneward>0?0.35:0)
+                          -(p.buffs.godShield>0?0.3:0)-(p.buffs.masterShield>0?0.7:0), 0.15, 2);
+        p.hp -= 5 * af; p.invuln = Math.max(p.invuln, 8);
+      }
     }
     // Nekromanta passzíva: esély, hogy a legyőzött ellenfél csontváz-szolgaként feltámadjon
     if(p.cls==='necromancer' && Math.random()<0.22 && game.turrets.length<10){
@@ -6598,7 +6748,9 @@ function update(){
           game.waveTimer = 180;   // biztonsági plafon: ne torlódjon kezelhetetlen tömeg
         } else {
           if(game.mode==='story') game.chapterWave++;
-          game.wave++; game.waveTimer = waveInterval(); spawnWave();
+          game.wave++; game.waveTimer = waveInterval();
+          announceNewElites();   // ha ezzel a hullámmal új szabály lépett életbe
+          spawnWave();
         }
       }
     }
@@ -7849,9 +8001,18 @@ function updateHud(){
   if(game.chapter){
     setWaveNum(bossTag || (game.chapterWave+'/'+game.chapter.waveCount));
     document.getElementById('modeTag').textContent = T('chapterTag', game.chapterIndex+1, game.chapter.title.toUpperCase());
+    const et0 = document.getElementById('eliteTag');
+    if(et0){ et0.textContent=''; et0.title=''; }   // a sztoriban/hódításban nincs elit módosító
   } else {
     setWaveNum(bossTag || game.wave);
     document.getElementById('modeTag').textContent = (game.endless?T('endlessPrefix'):'') + diffTxt(game.diff.key,'label').toUpperCase();
+    // aktív elit módosítók: egy ikonsor, a teljes névsor a tooltipben
+    const et = document.getElementById('eliteTag');
+    if(et){
+      const act = activeElites();
+      et.textContent = act.map(m=>m.icon).join(' ');
+      et.title = act.map(m=>T('elite_'+m.id+'_name')+' — '+T('elite_'+m.id+'_desc')).join('\n');
+    }
   }
   const alive = game.enemies.length + game.pendingSpawns.length;
   document.getElementById('enemyCount').textContent = game.boss
