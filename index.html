@@ -1263,6 +1263,16 @@ const TRANSLATIONS = {
     elite_warded_name: 'Warded',         elite_warded_desc: 'Some arrivals are untouchable for a moment — watch the ring.',
     elite_frenzy_name: 'Frenzy',         elite_frenzy_desc: 'Enemies break into short sprints instead of a steady crawl.',
     elite_vengeance_name: 'Vengeance',   elite_vengeance_desc: 'Every kill leaves a small blast behind.',
+    compRetreat: 'Falling back!', compReturn: 'Back in the fight!',
+    compAb_cGuard: 'Guard', compAb_cSlam: 'Slam', compAb_cRally: 'Second Wind',
+    compAb_cAimed: 'Aimed Shot', compAb_cKit: 'Field Kit',
+    compAb_cWhirl: 'Whirlwind', compAb_cThirst: 'Bloodthirst',
+    compAb_cNova: 'Frost Nova', compAb_cBolt: 'Firebolt', compAb_cWell: 'Wellspring',
+    compAb_cBlink: 'Blink Strike', compAb_cMend: 'Shadow Mend',
+    compAb_cAura: 'Healing Aura', compAb_cBless: 'Blessing',
+    compAb_cRaise: 'Raise Skeleton', compAb_cDrain: 'Life Drain',
+    compAb_cBeast: 'Call Beast', compAb_cTrap: 'Snare', compAb_cHerbs: 'Herbs',
+    compAb_cTurret: 'Deploy Turret', compAb_cDrone: 'Repair Drone',
     sumTitle: 'THIS RUN',
     sumTime: 'Time', sumKills: 'Kills', sumWave: 'Wave',
     sumUlts: 'Ultimates', sumSeals: 'Seals cast', sumDamage: 'Damage taken',
@@ -1587,6 +1597,16 @@ const TRANSLATIONS = {
     elite_warded_name: 'Pajzsos',        elite_warded_desc: 'Az érkezők egy részén egy pillanatig nem fog a találat — a gyűrű jelzi.',
     elite_frenzy_name: 'Dühroham',       elite_frenzy_desc: 'Az ellenfelek egyenletes csúszás helyett rövid rohamokban jönnek.',
     elite_vengeance_name: 'Bosszú',      elite_vengeance_desc: 'Minden legyőzött ellenfél kis robbanást hagy maga után.',
+    compRetreat: 'Visszavonulok!', compReturn: 'Újra itt vagyok!',
+    compAb_cGuard: 'Fedezék', compAb_cSlam: 'Csapás', compAb_cRally: 'Második szusz',
+    compAb_cAimed: 'Célzott lövés', compAb_cKit: 'Elsősegély',
+    compAb_cWhirl: 'Forgószél', compAb_cThirst: 'Vérszomj',
+    compAb_cNova: 'Fagynóva', compAb_cBolt: 'Tűzcsóva', compAb_cWell: 'Forrás',
+    compAb_cBlink: 'Villanócsapás', compAb_cMend: 'Árnyvarrás',
+    compAb_cAura: 'Gyógyaura', compAb_cBless: 'Áldás',
+    compAb_cRaise: 'Csontváz idézése', compAb_cDrain: 'Életelszívás',
+    compAb_cBeast: 'Vadállat hívása', compAb_cTrap: 'Csapda', compAb_cHerbs: 'Gyógyfüvek',
+    compAb_cTurret: 'Torony telepítése', compAb_cDrone: 'Javítódrón',
     sumTitle: 'EZ A FUTAM',
     sumTime: 'Idő', sumKills: 'Ölések', sumWave: 'Hullám',
     sumUlts: 'Ultimate', sumSeals: 'Pecsét', sumDamage: 'Kapott seb.',
@@ -2078,7 +2098,11 @@ function withRot(g,x,y,a,fn){ g.save(); g.translate(x,y); g.rotate(a); fn(); g.r
 // lekerekített téglalap útvonal
 function rr(g,x,y,w,h,r){ g.beginPath(); g.moveTo(x+r,y); g.arcTo(x+w,y,x+w,y+h,r);
   g.arcTo(x+w,y+h,x,y+h,r); g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r); g.closePath(); }
-function hexToRgb(h){ h=h.replace('#',''); if(h.length===3) h=h.split('').map(c=>c+c).join('');
+/* Egy hiányzó szín ne vigye magával az egész képkocka-hurkot: a rajzolás
+   közben dobott kivétel megállítja a futamot, ami sokkal rosszabb, mint egy
+   alapértelmezett szín. */
+function hexToRgb(h){ h = (typeof h==='string' && h) ? h : '#78dc78';
+  h=h.replace('#',''); if(h.length===3) h=h.split('').map(c=>c+c).join('');
   const n=parseInt(h,16); return [n>>16&255, n>>8&255, n&255]; }
 function shade(hex,f){ let [r,g,b]=hexToRgb(hex);
   if(f>=0){ r+=(255-r)*f; g+=(255-g)*f; b+=(255-b)*f; } else { r*=(1+f); g*=(1+f); b*=(1+f); }
@@ -2099,14 +2123,41 @@ let chosenHead = 'commando';
 
 // hp/dmg/speed = ellenfél-szorzók; fireRate = kisebb => gyorsabb tüzelés;
 // count = spawn-mennyiség; ai = 0..1 taktikai okosság (célzás-előretartás, kitérés, cikázás)
+/* NEHÉZSÉGI FOKOZATOK
+   A felső három fokozat korábban elérhetetlen volt, és a mérés megmutatta,
+   miért: nem a sok élet ölt meg, hanem a SEBESSÉG. A leglassabb hős (Tank)
+   1,9-cel mozog, a Felderítő alapja 1,75 — a régi 1,15/1,22/1,30-as szorzóval
+   ez 2,01 / 2,14 / 2,28 lett, vagyis az ellenfél gyorsabb volt nálad, és a
+   kitérés (a műfaj alap-túlélési eszköze) egyszerűen megszűnt. Bottal mérve
+   Rémálmon a 6., Apokaliptikuson az 5. hullámnál jött a halál — az első boss
+   a 12.-nél van, tehát a felső fokozatok a tartalom nagy részét el sem érték.
+
+   Most minden fokozat szelídebb, de szándékosan MÉRSÉKELTEN: a halálosság
+   nagyjából a régi háromnegyede, nem a fele. A kulcs nem is a számok
+   csökkentése, hanem a sebesség-plafon lent — az tette a felső fokozatokat
+   játszhatatlanná, és az nélkül hiába minden más engedmény.
+   A fokozatok közti KÜLÖNBSÉG megmaradt — a nehezebb továbbra is nehezebb. */
 const DIFFICULTIES = {
-  easy:      { key:'easy',      label:'Könnyű',   desc:'lazább kezdés', hp:0.6,  dmg:0.5,  speed:0.85, fireRate:1.5,  count:0.7,  ai:0.3,  col:'#4ade80' },
-  normal:    { key:'normal',    label:'Normál',   desc:'kiegyensúlyozott', hp:0.85, dmg:0.8,  speed:0.95, fireRate:1.1,  count:0.85, ai:0.55, col:'#6ee7ff' },
-  hard:      { key:'hard',      label:'Nehéz',    desc:'okos ellenfelek', hp:1.1,  dmg:1.15, speed:1.05, fireRate:0.85, count:1.0,  ai:0.75, col:'#ffd166' },
-  nightmare: { key:'nightmare', label:'Rémálom',  desc:'kíméletlen', hp:1.4,  dmg:1.4,  speed:1.15, fireRate:0.7,  count:1.15, ai:0.9,  col:'#ff5c7c' },
-  hellish:   { key:'hellish',   label:'Pokoli',   desc:'csak a legelszántabbaknak', hp:1.7, dmg:1.7, speed:1.22, fireRate:0.6,  count:1.3,  ai:1.05, col:'#c0304a' },
-  apocalyptic:{ key:'apocalyptic', label:'Apokaliptikus', desc:'kíméletlen a legvégsőkig', hp:2.0, dmg:2.0, speed:1.3, fireRate:0.5, count:1.5, ai:1.2, col:'#7a1030' },
+  easy:      { key:'easy',      label:'Könnyű',   desc:'lazább kezdés', hp:0.55, dmg:0.42, speed:0.82, fireRate:1.62, count:0.66, ai:0.26, col:'#4ade80' },
+  normal:    { key:'normal',    label:'Normál',   desc:'kiegyensúlyozott', hp:0.79, dmg:0.66, speed:0.90, fireRate:1.22, count:0.79, ai:0.47, col:'#6ee7ff' },
+  hard:      { key:'hard',      label:'Nehéz',    desc:'okos ellenfelek', hp:1.01, dmg:0.93, speed:0.97, fireRate:0.97, count:0.93, ai:0.65, col:'#ffd166' },
+  nightmare: { key:'nightmare', label:'Rémálom',  desc:'kíméletlen', hp:1.26, dmg:1.14, speed:1.00, fireRate:0.82, count:1.07, ai:0.79, col:'#ff5c7c' },
+  hellish:   { key:'hellish',   label:'Pokoli',   desc:'csak a legelszántabbaknak', hp:1.50, dmg:1.36, speed:1.04, fireRate:0.72, count:1.19, ai:0.91, col:'#c0304a' },
+  apocalyptic:{ key:'apocalyptic', label:'Apokaliptikus', desc:'kíméletlen a legvégsőkig', hp:1.76, dmg:1.60, speed:1.08, fireRate:0.63, count:1.34, ai:1.03, col:'#7a1030' },
 };
+/* Szerkezeti garancia, nem csak beállítás: ehhez mérjük az ellenfeleket,
+   hogy egy későbbi hangolás se tudja visszahozni a "nem lehet elfutni"
+   állapotot. A CLASSES-ből olvassuk ki, nem beégetve — így egy később
+   hozzáadott, lassabb hős is automatikusan védve lesz. (A CLASSES lejjebb
+   áll a fájlban, ezért csak az első kéréskor számoljuk ki, és eltesszük.) */
+let _slowestHero = 0;
+function slowestHeroSpeed(){
+  if(_slowestHero) return _slowestHero;
+  let min = Infinity;
+  for(const k in CLASSES){ const sp = CLASSES[k].speed; if(typeof sp==='number' && sp < min) min = sp; }
+  _slowestHero = (min===Infinity) ? 1.9 : min;
+  return _slowestHero;
+}
 let chosenDifficulty = 'normal';
 
 /* =========================================================
@@ -3415,7 +3466,12 @@ function drawDeaths(g, p){
   if(!VFX.deaths.length) return;
   for(const d of VFX.deaths){
     const k = d.t/d.life, a = 1-k;
-    const sp = enemySprite({type:d.type, r:d.r, isChild:d.isChild}, 'n');
+    /* A színt is át kell adni: enélkül a bakeEnemyBody undefined-ot kap, és a
+       gradiens kivételt dob, ami megállítja az egész rajz-hurkot (a játék
+       befagy). Csak néha jött elő, mert az enemySprite típus+méret szerint
+       gyorsítótáraz: ha az adott típusból élő ellenfelet már rajzoltunk,
+       a kész sprite tér vissza, és a hibás ág le sem fut. */
+    const sp = enemySprite({type:d.type, r:d.r, isChild:d.isChild, color:d.color}, 'n');
     g.save(); g.translate(d.x,d.y); g.rotate(d.face);
     if(d.kind==='tank'){         // összerogy: lelapul és elsötétül
       g.globalAlpha = a*0.9; g.scale(1+k*0.35, Math.max(0.08, 1-k*1.1));
@@ -4443,7 +4499,10 @@ function enemySprite(en, variant){
   sp = { c, S:E }; VFX.enemySprites[key]=sp; return sp;
 }
 function bakeEnemyBody(g, en, R, variant){
-  const base = variant==='f' ? shade(en.color,0.6) : (variant==='z' ? '#bfe9ff' : en.color);
+  // a szín sosem hiányozhat: egy rajzolás közbeni kivétel megállítaná a futamot
+  const col = (typeof en.color==='string' && en.color) ? en.color
+            : ((ENEMY_DEFS[en.type] && ENEMY_DEFS[en.type].color) || '#8b6bff');
+  const base = variant==='f' ? shade(col,0.6) : (variant==='z' ? '#bfe9ff' : col);
   const grad = g.createRadialGradient(-R*0.4,-R*0.4,R*0.05, 0,0,R*1.4);
   grad.addColorStop(0, shade(base,0.42)); grad.addColorStop(0.5, base); grad.addColorStop(1, shade(base,-0.52));
   g.lineWidth = R>20 ? 3 : 2; g.strokeStyle='rgba(0,0,0,0.5)';
@@ -5732,15 +5791,177 @@ let startMode = 'campaign';  // 'campaign' | 'story' — a resetGame ezt olvassa
    van (a te specifikációd szerint), de a választó FELÜLET, a
    pecét-beállítás és az intelligens döntéshozatal külön lépésben jön.
    ========================================================= */
+
+/* =========================================================
+   A TÁRS KÉPESSÉGEI
+   Eddig a társ csak lövöldözött: se képessége, se önfenntartása nem volt,
+   és 0 életnél véglegesen kiesett a pálya végéig. Innentől mindegyik
+   osztálynak van egy kis készlete, és MINDEGYIKBEN van életszerző képesség
+   (heal:true) — ez a feltétel teszteléssel is ellenőrizve van.
+
+   A társ nem a játékos ABILITIES-táblájából dolgozik: azok a hősre (p)
+   hatnak, és a paraméterezésük a rang-rendszerhez kötött. Külön, szűk
+   készlet biztonságosabb, és így a társ ereje függetlenül hangolható.
+
+   Minden képesség: want() dönti el, mikor éri meg bevetni, use() csinálja.
+   A sebzések szándékosan szerények — a társ segítsen, ne vegye át a pályát.
+   ========================================================= */
+function compHeal(c, frac, alsoPlayer){
+  const before = c.hp;
+  c.hp = Math.min(c.maxHp, c.hp + c.maxHp*frac);
+  addParticles(c.x, c.y, '#8affc1', 14); addRing(c.x, c.y, '#8affc1', 46, 16, 3);
+  if(alsoPlayer && game.player && game.player.hp < game.player.maxHp){
+    game.player.hp = Math.min(game.player.maxHp, game.player.hp + game.player.maxHp*frac*0.5);
+    addParticles(game.player.x, game.player.y, '#8affc1', 10);
+  }
+  return c.hp - before;
+}
+function compAoe(c, range, dmg, col){
+  let hit = 0;
+  for(const en of game.enemies){
+    if(dist(en.x, en.y, c.x, c.y) < range + en.r){ en.hp -= dmg; en.hitFlash = 8; hit++; }
+  }
+  if(game.boss && dist(game.boss.x, game.boss.y, c.x, c.y) < range + game.boss.r){
+    game.boss.hp -= dmg*0.5; game.boss.hitFlash = 8;
+  }
+  addRing(c.x, c.y, col, range, 18, 4); addParticles(c.x, c.y, col, 16);
+  return hit;
+}
+/* ctx: { near, count } — a legközelebbi ellenfél távolsága és a közelben lévők száma.
+   Egyszer számoljuk ki képkockánként, és minden want() ezt kapja. */
+const COMPANION_KITS = {
+  tank: [
+    { id:'cGuard',  cd:430, heal:false, want:(c,p,x)=> c.hp < c.maxHp*0.65 || x.count >= 3,
+      use:(c)=>{ c.invuln = Math.max(c.invuln, 110); addRing(c.x,c.y,'#6ee7ff',40,20,4); } },
+    { id:'cSlam',   cd:250, heal:false, want:(c,p,x)=> x.near < 120 && x.count >= 2,
+      use:(c)=>{ compAoe(c, 120, 22, '#c9a06a'); addShake(4, 8); } },
+    { id:'cRally',  cd:620, heal:true,  want:(c)=> c.hp < c.maxHp*0.6,
+      use:(c)=>{ compHeal(c, 0.30, false); } },
+  ],
+  sniper: [
+    { id:'cAimed',  cd:200, heal:false, want:(c,p,x)=> x.near < 420,
+      use:(c)=>{ const t = nearestEnemies(c.x,c.y,420,1)[0] || (game.boss||null);
+        if(!t) return; const a = Math.atan2(t.y-c.y, t.x-c.x);
+        game.bullets.push({ x:c.x, y:c.y, vx:Math.cos(a)*13, vy:Math.sin(a)*13, r:5, life:80,
+                            friendly:true, dmg: Math.round(c.bulletDmg*3.2) });
+        c.facing = a; c._muzzle = 6; } },
+    { id:'cKit',    cd:600, heal:true,  want:(c)=> c.hp < c.maxHp*0.6,
+      use:(c)=>{ compHeal(c, 0.28, false); } },
+  ],
+  berserker: [
+    { id:'cWhirl',  cd:230, heal:false, want:(c,p,x)=> x.near < 105 && x.count >= 2,
+      use:(c)=>{ compAoe(c, 105, 26, '#ff8a5c'); } },
+    { id:'cThirst', cd:520, heal:true,  want:(c,p,x)=> c.hp < c.maxHp*0.65,
+      /* vérszomj: sebez maga körül, és amit leszed, abból gyógyul —
+         így a heal akkor a legerősebb, amikor tényleg körbevették */
+      use:(c)=>{ const hit = compAoe(c, 130, 16, '#ff5c7c');
+                 compHeal(c, 0.12 + Math.min(hit,5)*0.04, false); } },
+  ],
+  mage: [
+    { id:'cNova',   cd:430, heal:false, want:(c,p,x)=> x.near < 170 && x.count >= 2,
+      use:(c)=>{ for(const en of game.enemies){ if(dist(en.x,en.y,c.x,c.y) < 170+en.r){ en.frozen = 90; en.hp -= 8; } }
+                 addRing(c.x,c.y,'#8fd8ff',170,20,4); addParticles(c.x,c.y,'#8fd8ff',20); } },
+    { id:'cBolt',   cd:250, heal:false, want:(c,p,x)=> x.near < 300,
+      use:(c)=>{ const t = nearestEnemies(c.x,c.y,300,1)[0]; if(!t) return;
+        game.fireballs.push({ x:c.x, y:c.y, r:8, life:60, dmg:18, hitEnemies:new Set() }); } },
+    { id:'cWell',   cd:600, heal:true,  want:(c)=> c.hp < c.maxHp*0.6,
+      use:(c)=>{ compHeal(c, 0.28, false); } },
+  ],
+  assassin: [
+    { id:'cBlink',  cd:330, heal:false, want:(c,p,x)=> x.near > 150 && x.near < 360,
+      use:(c)=>{ const t = nearestEnemies(c.x,c.y,360,1)[0]; if(!t) return;
+        addParticles(c.x,c.y,'#c9a6ff',12);
+        c.x = t.x - Math.cos(Math.atan2(t.y-c.y,t.x-c.x))*30;
+        c.y = t.y - Math.sin(Math.atan2(t.y-c.y,t.x-c.x))*30;
+        t.hp -= 30; t.hitFlash = 8; c.invuln = Math.max(c.invuln, 30);
+        addParticles(c.x,c.y,'#c9a6ff',14); } },
+    { id:'cMend',   cd:560, heal:true,  want:(c)=> c.hp < c.maxHp*0.62,
+      use:(c)=>{ compHeal(c, 0.30, false); c.invuln = Math.max(c.invuln, 40); } },
+  ],
+  support: [
+    /* a Támogató a társak közt az egyetlen, aki a HŐST is rendesen gyógyítja —
+       ez a szerepe, ezért nála a heal nagyobb és rövidebb hűtésű */
+    { id:'cAura',   cd:400, heal:true,  want:(c,p)=> c.hp < c.maxHp*0.8 || p.hp < p.maxHp*0.7,
+      use:(c)=>{ compHeal(c, 0.26, true); } },
+    { id:'cBless',  cd:640, heal:false, want:(c,p)=> !!game.enemies.length,
+      use:(c)=>{ const p2 = game.player; if(!p2) return;
+        p2.surgeActive = Math.max(p2.surgeActive||0, 150);
+        addRing(p2.x,p2.y,'#ffd166',44,18,3); addParticles(p2.x,p2.y,'#ffd166',12); } },
+  ],
+  necromancer: [
+    { id:'cRaise',  cd:480, heal:false, want:()=> game.turrets.length < 8 && game.enemies.length > 0,
+      use:(c)=>{ game.turrets.push({ x:c.x, y:c.y, life:420, fireCd:0, dmg:8, mobile:true, skeleton:true });
+        addParticles(c.x,c.y,'#9d5cff',14); } },
+    { id:'cDrain',  cd:430, heal:true,  want:(c,p,x)=> c.hp < c.maxHp*0.7 && x.near < 200,
+      /* elszívás: a közelieket sebzi, és abból gyógyul — életszerző és sebző egyben */
+      use:(c)=>{ const hit = compAoe(c, 200, 14, '#9d5cff');
+                 compHeal(c, 0.10 + Math.min(hit,5)*0.045, false); } },
+  ],
+  hunter: [
+    { id:'cBeast',  cd:520, heal:false, want:()=> game.turrets.length < 8 && game.enemies.length > 0,
+      use:(c)=>{ game.turrets.push({ x:c.x, y:c.y, life:460, fireCd:0, dmg:9, mobile:true, beast:true });
+        addParticles(c.x,c.y,'#7dffb0',12); } },
+    { id:'cTrap',   cd:360, heal:false, want:(c,p,x)=> x.near < 280,
+      use:(c)=>{ const t = nearestEnemies(c.x,c.y,280,1)[0]; if(!t) return;
+        game.traps.push({ x:t.x, y:t.y, r:32, dmg:20, root:70, armed:true }); } },
+    { id:'cHerbs',  cd:580, heal:true,  want:(c)=> c.hp < c.maxHp*0.6,
+      use:(c)=>{ compHeal(c, 0.28, false); } },
+  ],
+  engineer: [
+    { id:'cTurret', cd:500, heal:false, want:()=> game.turrets.length < 8 && game.enemies.length > 0,
+      use:(c)=>{ game.turrets.push({ x:c.x, y:c.y, life:420, fireCd:0, dmg:9 });
+        addParticles(c.x,c.y,'#6ee7ff',12); } },
+    { id:'cDrone',  cd:600, heal:true,  want:(c,p)=> c.hp < c.maxHp*0.7 || p.hp < p.maxHp*0.6,
+      /* javító drón: a hőst folyamatosan gyógyítja, a társ pedig azonnal kap egy adagot */
+      use:(c)=>{ game.drones.push({ x:c.x, y:c.y, ang:Math.random()*6, life:420, fireCd:0, heal:1 });
+                 compHeal(c, 0.20, false); } },
+  ],
+};
+/* Biztonsági háló: ha valamiért olyan osztály kerül társnak, aminek nincs
+   készlete, kapjon legalább egy gyógyítást — a "ne haljon meg könnyen"
+   szabály osztálytól függetlenül érvényes. */
+const COMPANION_FALLBACK_KIT = [
+  { id:'cMend', cd:560, heal:true, want:(c)=> c.hp < c.maxHp*0.6, use:(c)=>{ compHeal(c, 0.28, false); } },
+];
+function companionKit(cls){ return COMPANION_KITS[cls] || COMPANION_FALLBACK_KIT; }
+
 function makeCompanion(cls){
   const c = CLASSES[cls] || CLASSES.tank;
   const bal = c.sealed ? {hp:1,dmg:1} : heroBalanceMult(cls);
   return {
     cls, skin:0, x:0, y:0, r:16, facing:0, alive:true, hitFlash:0, invuln:0,
+    color: c.col || '#78dc78',   // a hős-objektumnak is van színe; a közös rajzkód erre támaszkodhat
+    head: 'commando',
     hp:Math.round(c.hp*bal.hp*1.3), maxHp:Math.round(c.hp*bal.hp*1.3),   // jóval szívósabb, mint korábban — ne haljon el könnyen egy egész pálya alatt
     fireCooldown:0, fireRate:c.fireRate,
     bulletDmg:Math.round(c.bulletDmg*bal.dmg*0.75), bulletSpeed:c.bulletSpeed,   // a sebzése marad visszafogottabb, hogy ne vegye el a főhős szerepét
+    /* Képesség-hűtések id szerint, és a visszavonulás állapota. A társ nem hal
+       meg többé: 10% élet alatt kivonul, és a következő hullámmal tér vissza. */
+    abCd: {}, retreating:false, retreatT:0, lastAb:'',
   };
+}
+
+/* A társ visszavonul: nem esik ki a pályáról véglegesen, csak kihátrál a
+   harcból, hogy a következő körben újra ott legyen — és újra tudjon gyógyítani. */
+function companionRetreat(c){
+  if(c.retreating) return;
+  c.retreating = true; c.alive = false; c.retreatT = 0;
+  addParticles(c.x, c.y, '#8a97b3', 22); addRing(c.x, c.y, '#8a97b3', 52, 20, 3);
+  addFloater(c.x, c.y - 26, T('compRetreat'), '#8a97b3', true);
+}
+/* Visszatérés a következő hullámra: a hős mellett bukkan fel, feltöltve.
+   Minden új harc/hullám elején lefut, ezért egy elesett társ sosem marad kint. */
+function companionReturn(){
+  const c = game && game.companion; if(!c) return;
+  if(c.alive && !c.retreating && c.hp > 0) return;
+  const p = game.player; if(!p) return;
+  c.retreating = false; c.alive = true; c.retreatT = 0;
+  c.hp = Math.max(c.hp, Math.round(c.maxHp*0.6));
+  c.invuln = Math.max(c.invuln||0, 60);
+  c.abCd = {};
+  c.x = p.x - 46; c.y = p.y + 46;
+  addParticles(c.x, c.y, '#7dffb0', 20); addRing(c.x, c.y, '#7dffb0', 54, 20, 3);
+  addFloater(c.x, c.y - 26, T('compReturn'), '#7dffb0', true);
 }
 
 function makePlayer(name, color, head){
@@ -5913,8 +6134,9 @@ function waveInterval(){
 }
 // az utolsó rendes hullám kiment-e már (utána a pálya megtisztítása hozza a bosst)
 function isFinalWaveOut(){
-  return game.mode==='story'
-    ? (game.chapter && game.chapterWave >= game.chapter.waveCount)
+  // fejezet van (sztori vagy hódítás) -> a fejezet saját hullámszáma dönt
+  return game.chapter
+    ? (game.chapterWave >= game.chapter.waveCount)
     : (!game.endless && game.wave >= MAX_WAVES);
 }
 
@@ -6018,13 +6240,19 @@ function spawnEnemyType(type, forcedX, forcedY, hpMult=1, rMult=1){
      Ezért a görbe most gyorsuló — az eleje változatlan, a vége meredek.
      A SEBZÉS viszont szándékosan lineáris marad: a hosszabb harc tesz feszültté
      egy pályát, nem az, hogy két találatból meghalsz. */
-  const hpRamp = 1 + dw*0.05 + Math.pow(dw/50, 2)*3;
+  /* Az életgörbe negyzetes tagja a késői hullámokon falat épített: a 40.
+     hullámnál 4,9-szeres életet adott, amit a hős növekedése nem követ.
+     Szelídebb meredekség, hogy a magas hullámok is elérhetők legyenek. */
+  const hpRamp = 1 + dw*0.044 + Math.pow(dw/56, 2)*2.5;
   const scale = hpRamp * (game.chapter ? (game.chapter.enemyScale||1) : 1);
   game.enemies.push({
     type, x, y, r: def.r*rMult,
     hp: Math.round(def.hp*scale*hpMult*dif.hp), maxHp: Math.round(def.hp*scale*hpMult*dif.hp),
-    dmg: Math.round(def.dmg*(1+dw*0.028)*dif.dmg),
-    speed: def.speed*dif.speed, kind: def.kind, color: def.color,
+    dmg: Math.round(def.dmg*(1+dw*0.023)*dif.dmg),
+    /* Az ellenfél sosem lehet gyorsabb a hősnél: a kitérés minden fokozaton
+       maradjon járható út. A típusok közti különbség megmarad (a Felderítő
+       továbbra is a leggyorsabb), csak a plafon van behúzva a hős alá. */
+    speed: Math.min(def.speed*dif.speed, slowestHeroSpeed()*0.94), kind: def.kind, color: def.color,
     range: def.range||0, splits: !!def.splits, isChild: !!(hpMult<1),
     hitFlash:0, atkTimer: Math.random()*60, chargeState:0, chargeAng:0, telegraph:0,
     strafe: Math.random()<0.5?1:-1, strafeTimer: 40+Math.random()*60,
@@ -6115,6 +6343,7 @@ function announceNewElites(){
 }
 
 function spawnBoss(isMini){
+  companionReturn();   // a boss is új harc — a társ ne hiányozzon épp innen
   const dm = game.diff.hp;
   const bd = (!isMini && game.chapter) ? game.chapter.boss : null;   // fejezet-boss adat
   const lvl = game.player.level;
@@ -6130,7 +6359,8 @@ function spawnBoss(isMini){
     /* A boss élete eddig +16-tal nőtt szintenként — 40. szinten ez +640, miközben
        a hős sebzése addigra sokszorosára nő. A mérés szerint minden fejezet-boss
        úgy fogyott 0-ra, hogy a hős 96-100% életen maradt. Most szorzóval nő. */
-    hp: Math.round((bd ? bd.hp*(1 + lvl*0.055) : (isMini ? (220+game.wave*14) : (480+lvl*20)*va.hpMult)) * dm),
+    // a boss élete is szelídebben nő a hős szintjével, hogy ne nyúljon el a harc
+    hp: Math.round((bd ? bd.hp*(1 + lvl*0.048) : (isMini ? (220+game.wave*14) : (480+lvl*20)*va.hpMult)) * dm),
     maxHp: 0, speed: (bd ? bd.speed : (isMini?1.4:va.speed))*game.diff.speed, attackTimer:0, hitFlash:0, frozen:0,
     spiralAng:0,
   };
@@ -6336,6 +6566,37 @@ function update(){
     else if(nearest && best>90 && best<280){ const a=Math.atan2(nearest.y-comp.y,nearest.x-comp.x); comp.x+=Math.cos(a)*1.1; comp.y+=Math.sin(a)*1.1; }
     comp.x = clamp(comp.x, 30, canvas.width-30); comp.y = clamp(comp.y, safeTop+30, canvas.height-safeBottom-30);
     if(comp.fireCooldown>0) comp.fireCooldown--;
+
+    /* --- Képesség-használat ---
+       Eddig a társ csak lőtt. Most képkockánként egyszer megnézi a készletét,
+       és az első olyan képességet veti be, ami kihűlt és amit a helyzet indokol.
+       A lista sorrendje a prioritás, ezért a védekező/gyógyító képességek
+       elöl állnak azoknál az osztályoknál, ahol számítanak. */
+    const kit = companionKit(comp.cls);
+    let kitReady = false;
+    for(const k of kit){
+      const cd = comp.abCd[k.id] || 0;
+      if(cd > 0){ comp.abCd[k.id] = cd - 1; }
+      else kitReady = true;
+    }
+    if(kitReady){
+      // a helyzetkép egyszer, nem képességenként újra
+      let cnt = 0;
+      for(const en of game.enemies){ if(dist(en.x,en.y,comp.x,comp.y) < 200) cnt++; }
+      const ctx = { near: best, count: cnt };
+      for(const k of kit){
+        if((comp.abCd[k.id] || 0) > 0) continue;
+        let ok = false;
+        try { ok = !k.want || !!k.want(comp, p, ctx); } catch(e){ ok = false; }
+        if(!ok) continue;
+        try { k.use(comp, p, ctx); } catch(e){ /* egy hibás képesség ne állítsa meg a társat */ }
+        comp.abCd[k.id] = k.cd;
+        comp.lastAb = k.id;
+        addFloater(comp.x, comp.y - 30, T('compAb_'+k.id), k.heal ? '#8affc1' : '#cfe4ff');
+        break;   // képkockánként egy képesség, hogy ne süssön el mindent egyszerre
+      }
+    }
+
     if(nearest && best<320){
       comp.facing = Math.atan2(nearest.y-comp.y, nearest.x-comp.x);
       if(comp.fireCooldown<=0){
@@ -6352,7 +6613,10 @@ function update(){
         }
       });
     }
-    if(comp.hp<=0){ comp.alive=false; addParticles(comp.x,comp.y,'#8a97b3',20); }
+    /* 10% élet alatt kivonul a harcból — nem hal meg. A következő hullám
+       visszahozza feltöltve, így megint tud gyógyítani, ahelyett hogy a pálya
+       hátralévő részére kiesne. */
+    if(comp.hp <= comp.maxHp*0.10) companionRetreat(comp);
   }
 
   // --- Fireball-ok terjedése ---
@@ -6693,7 +6957,7 @@ function update(){
         const bcol = b.col || '#ff5c7c';
         /* A boss lövedék-sebzése fix 8 volt, akármelyik fejezetben — a 9. fejezetben
            egy 560 életű hősnek ez semmi. Most a nehézségi hullámmal együtt nő. */
-        const bdmg = Math.round(8 * (1 + difficultyWave()*0.05) * dif.dmg);
+        const bdmg = Math.round(8 * (1 + difficultyWave()*0.042) * dif.dmg);
         const pats = b.patterns || ['spread','aimed'];
         const pattern = pats[Math.floor(Math.random()*pats.length)];
         if(pattern==='spread'){
@@ -6770,9 +7034,15 @@ function update(){
         } else if(game.enemies.length + game.pendingSpawns.length >= 60){
           game.waveTimer = 180;   // biztonsági plafon: ne torlódjon kezelhetetlen tömeg
         } else {
-          if(game.mode==='story') game.chapterWave++;
+          /* Minden fejezet-alapú mód számlálója nőjön, ne csak a sztorié.
+             A hódító csatáknak is van fejezetük (menet közben összeállítva),
+             és eddig ott a chapterWave örökre 1 maradt: a kijelző 1/20-on
+             ragadt, a boss a 12. hullámnál jött a 20. helyett, és a
+             nehézség-skála végig az 1. hullám szintjén állt. */
+          if(game.chapter) game.chapterWave++;
           game.wave++; game.waveTimer = waveInterval();
           announceNewElites();   // ha ezzel a hullámmal új szabály lépett életbe
+          companionReturn();     // az elesett társ minden új körben újra beáll
           spawnWave();
         }
       }
@@ -7638,6 +7908,8 @@ function nextChapter(){
   // a barát is "megerősödik" fejezetváltáskor — ha esetleg elesett az előző pályán, itt újra talpra áll
   if(game.companion){
     game.companion.alive = true;
+    game.companion.retreating = false;   // a kivonult társ is talpra áll az új fejezetre
+    game.companion.abCd = {};
     game.companion.hp = Math.min(game.companion.maxHp, Math.max(game.companion.hp,0) + game.companion.maxHp*0.6);
     game.companion.invuln = Math.max(game.companion.invuln||0, 30);
   }
