@@ -276,6 +276,39 @@
   #tableauCanvas{ border-radius:8px; box-shadow:0 14px 40px rgba(0,0,0,0.6); max-width:96vw; }
 
   /* ---- hódító térkép ---- */
+  /* ---- trófeák ---- */
+  #trophyGrid{ width:100%; max-width:520px; margin:0 auto 14px; display:flex; flex-direction:column; gap:7px;
+    max-height:58vh; overflow-y:auto; padding-right:4px; }
+  .trophyCard{ display:flex; align-items:center; gap:11px; padding:9px 11px; border-radius:11px;
+    background:rgba(255,255,255,0.035); border:1px solid rgba(255,255,255,0.07); opacity:0.55; text-align:left; }
+  .trophyCard.got{ opacity:1; background:rgba(232,201,106,0.09); border-color:rgba(232,201,106,0.34); }
+  .trIcon{ font-size:23px; width:32px; text-align:center; flex:0 0 auto; filter:grayscale(1); }
+  .trophyCard.got .trIcon{ filter:none; }
+  .trBody{ flex:1 1 auto; min-width:0; }
+  .trName{ font-size:13px; font-weight:bold; color:var(--text); }
+  .trophyCard.got .trName{ color:var(--gold); }
+  .trDesc{ font-size:11px; color:var(--dim); line-height:1.4; margin-top:1px; }
+  .trRew{ flex:0 0 auto; font-size:10.5px; color:var(--dim); letter-spacing:0.5px; white-space:nowrap; }
+  .trophyCard.got .trRew{ color:var(--gold); }
+
+  /* ---- trófea-értesítő ---- */
+  #trophyToasts{ position:absolute; top:12px; left:50%; transform:translateX(-50%); z-index:60;
+    display:flex; flex-direction:column; gap:8px; pointer-events:none; width:max-content; max-width:92vw; }
+  .trophyToast{ display:flex; align-items:center; gap:11px; padding:10px 16px 10px 13px; border-radius:13px;
+    background:linear-gradient(135deg, rgba(28,34,52,0.97), rgba(16,20,32,0.97));
+    border:1px solid rgba(232,201,106,0.5); box-shadow:0 8px 28px rgba(0,0,0,0.55); text-align:left;
+    animation:trIn 0.45s cubic-bezier(.2,1.3,.4,1) both; }
+  .trophyToast.out{ animation:trOut 0.45s ease both; }
+  .trophyToast .tIcon{ font-size:26px; }
+  .trophyToast .tTop{ font-size:9px; letter-spacing:2px; color:var(--gold); font-weight:bold; }
+  .trophyToast .tName{ font-size:14px; font-weight:bold; color:var(--text); margin-top:1px; }
+  .trophyToast .tRew{ font-size:10.5px; color:var(--dim); margin-top:2px; }
+  @keyframes trIn{ from{ opacity:0; transform:translateY(-18px) scale(0.9); } to{ opacity:1; transform:none; } }
+  @keyframes trOut{ from{ opacity:1; } to{ opacity:0; transform:translateY(-12px); } }
+  @media (prefers-reduced-motion: reduce){
+    .trophyToast, .trophyToast.out{ animation:none; }
+  }
+
   /* ---- futam-összefoglaló a győzelem/halál képernyőn ---- */
   .runSummary{ width:100%; max-width:460px; margin:2px auto 14px; }
   .runSummary h4{ margin:0 0 8px; font-size:10px; letter-spacing:2px; color:var(--gold);
@@ -506,6 +539,7 @@
     <div style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center; margin-top:10px;">
       <button class="bigBtn ghost sndBtn sndSfxBtn"></button>
       <button class="bigBtn ghost sndBtn sndMusBtn"></button>
+      <button class="bigBtn ghost" id="trophyOpenBtn" data-i18n="trophyBtn">🏆 Trófeák</button>
       <button class="bigBtn ghost" id="settingsOpenBtn" data-i18n="settingsBtn">⚙️ Beállítások</button>
       <button class="bigBtn ghost hidden" id="installBtn" data-i18n="installBtn">📲 TELEPÍTÉS</button>
     </div>
@@ -608,6 +642,13 @@
     </div>
   </div>
 
+  <div id="trophyScreen" class="overlay hidden">
+    <h1 class="title" style="font-size:28px;" data-i18n="trophyTitle">TRÓFEÁK</h1>
+    <div class="subtitle" id="trophySub" style="margin-bottom:10px;"></div>
+    <div id="trophyGrid"></div>
+    <button class="bigBtn ghost" id="trophyBackBtn" data-i18n="backPlain">Vissza</button>
+  </div>
+
   <div id="settingsScreen" class="overlay hidden">
     <h1 class="title" style="font-size:28px;" data-i18n="settingsTitle">BEÁLLÍTÁSOK</h1>
 
@@ -686,6 +727,8 @@
     <div class="storyBox" id="bossIntroText"></div>
     <button class="bigBtn red" id="bossStartBtn" data-i18n="bossFightBtn">HARC KEZDÉSE</button>
   </div>
+
+  <div id="trophyToasts"></div>
 
   <div id="winScreen" class="overlay hidden">
     <h1 class="title" style="color:var(--gold); -webkit-text-fill-color:var(--gold);" data-i18n="winTitle">GYŐZELEM</h1>
@@ -1178,6 +1221,31 @@ const TRANSLATIONS = {
     campaignUnknownDesc: 'The map is blank here. You will see it when you get there.',
     campaignGo: (n)=> `▶️ SET OUT: ${n}`,
     campaignAllDone: '👑 The kingdom is yours. From here the conquest map takes over.',
+    trophyTitle: 'TROPHIES', trophyBtn: '🏆 Trophies',
+    trophySub: (n,t)=> `${n} / ${t} earned`,
+    trophyUnlocked: 'TROPHY EARNED',
+    trophyGot: '✓ Earned',
+    trophyManyAtOnce: (n)=> `${n} trophies earned`,
+    trophy_firstBlood_name: 'First Blood',      trophy_firstBlood_desc: 'Finish your first run.',
+    trophy_firstBoss_name: 'Boss Slayer',       trophy_firstBoss_desc: 'Bring down your first boss.',
+    trophy_pinesBehind_name: 'The Pines Behind You', trophy_pinesBehind_desc: 'Clear the first chapter of the road.',
+    trophy_crowned_name: 'Kingmaker',           trophy_crowned_desc: 'Take the Kingdom and earn a crown of your own.',
+    trophy_firstLand_name: 'First Banner',      trophy_firstLand_desc: 'Conquer your first kingdom.',
+    trophy_fiveLands_name: 'Realm Builder',     trophy_fiveLands_desc: 'Hold five kingdoms at once.',
+    trophy_allLands_name: 'Lord of the Realm',  trophy_allLands_desc: 'Conquer all ten kingdoms.',
+    trophy_wave20_name: 'Long Night',           trophy_wave20_desc: 'Reach wave 20.',
+    trophy_wave30_name: 'Unshaken',             trophy_wave30_desc: 'Reach wave 30.',
+    trophy_wave50_name: 'Beyond Counting',      trophy_wave50_desc: 'Reach wave 50.',
+    trophy_nightmare20_name: 'Nightmare Walker', trophy_nightmare20_desc: 'Reach wave 20 on Nightmare.',
+    trophy_butcher_name: 'Butcher',             trophy_butcher_desc: 'Kill 1000 enemies in total.',
+    trophy_slaughter_name: 'Campaigner',        trophy_slaughter_desc: 'Kill 10000 enemies in total.',
+    trophy_rich_name: 'Full Coffers',           trophy_rich_desc: 'Earn 10000 coins in total.',
+    trophy_sixHeroes_name: 'Many Faces',        trophy_sixHeroes_desc: 'Win with six different heroes.',
+    trophy_allHeroes_name: 'Master of Masters', trophy_allHeroes_desc: 'Win at least once with every hero.',
+    trophy_untouched_name: 'Untouched',         trophy_untouched_desc: 'Win a run of five waves or more without taking a single hit.',
+    trophy_veteran_name: 'Veteran',             trophy_veteran_desc: 'Finish 50 runs.',
+    trophy_sealMaster_name: 'Seal Master',      trophy_sealMaster_desc: 'Fire 100 ultimates in total.',
+    trophy_level25_name: 'Proven',              trophy_level25_desc: 'Reach profile level 25.',
     sumTitle: 'THIS RUN',
     sumTime: 'Time', sumKills: 'Kills', sumWave: 'Wave',
     sumUlts: 'Ultimates', sumSeals: 'Seals cast', sumDamage: 'Damage taken',
@@ -1469,6 +1537,31 @@ const TRANSLATIONS = {
     campaignUnknownDesc: 'A térkép itt üres. Majd akkor látod, ha odaérsz.',
     campaignGo: (n)=> `▶️ INDULÁS: ${n}`,
     campaignAllDone: '👑 A királyság a tiéd. Innentől a hódító térkép veszi át.',
+    trophyTitle: 'TRÓFEÁK', trophyBtn: '🏆 Trófeák',
+    trophySub: (n,t)=> `${n} / ${t} megszerezve`,
+    trophyUnlocked: 'TRÓFEA MEGSZEREZVE',
+    trophyGot: '✓ Megvan',
+    trophyManyAtOnce: (n)=> `${n} trófea megszerezve`,
+    trophy_firstBlood_name: 'Első vér',          trophy_firstBlood_desc: 'Fejezd be az első futamodat.',
+    trophy_firstBoss_name: 'Boss-ölő',           trophy_firstBoss_desc: 'Terítsd le az első bosst.',
+    trophy_pinesBehind_name: 'A Fenyves mögötted', trophy_pinesBehind_desc: 'Teljesítsd az út első fejezetét.',
+    trophy_crowned_name: 'Királycsináló',        trophy_crowned_desc: 'Vedd be a Királyságot, és legyen saját koronád.',
+    trophy_firstLand_name: 'Az első zászló',     trophy_firstLand_desc: 'Foglald el az első királyságot.',
+    trophy_fiveLands_name: 'Birodalomépítő',     trophy_fiveLands_desc: 'Legyen egyszerre öt királyságod.',
+    trophy_allLands_name: 'A birodalom ura',     trophy_allLands_desc: 'Foglald el mind a tíz királyságot.',
+    trophy_wave20_name: 'Hosszú éjszaka',        trophy_wave20_desc: 'Juss el a 20. hullámig.',
+    trophy_wave30_name: 'Rendíthetetlen',        trophy_wave30_desc: 'Juss el a 30. hullámig.',
+    trophy_wave50_name: 'Számolatlanul',         trophy_wave50_desc: 'Juss el az 50. hullámig.',
+    trophy_nightmare20_name: 'Rémálomjáró',      trophy_nightmare20_desc: 'Juss el a 20. hullámig Rémálom fokozaton.',
+    trophy_butcher_name: 'Mészáros',             trophy_butcher_desc: 'Ölj meg összesen 1000 ellenfelet.',
+    trophy_slaughter_name: 'Hadjárat',           trophy_slaughter_desc: 'Ölj meg összesen 10000 ellenfelet.',
+    trophy_rich_name: 'Teli kincstár',           trophy_rich_desc: 'Szerezz összesen 10000 aranyat.',
+    trophy_sixHeroes_name: 'Sok arc',            trophy_sixHeroes_desc: 'Nyerj hat különböző hőssel.',
+    trophy_allHeroes_name: 'Mesterek mestere',   trophy_allHeroes_desc: 'Nyerj legalább egyszer minden hőssel.',
+    trophy_untouched_name: 'Érintetlen',         trophy_untouched_desc: 'Nyerj meg egy legalább öt hullámos futamot úgy, hogy egyszer sem sérülsz meg.',
+    trophy_veteran_name: 'Veterán',              trophy_veteran_desc: 'Fejezz be 50 futamot.',
+    trophy_sealMaster_name: 'Pecsétmester',      trophy_sealMaster_desc: 'Süss el összesen 100 ultimate-et.',
+    trophy_level25_name: 'Bizonyított',          trophy_level25_desc: 'Érd el a 25. profilszintet.',
     sumTitle: 'EZ A FUTAM',
     sumTime: 'Idő', sumKills: 'Ölések', sumWave: 'Hullám',
     sumUlts: 'Ultimate', sumSeals: 'Pecsét', sumDamage: 'Kapott seb.',
@@ -2011,6 +2104,15 @@ profile.heroName = profile.heroName || '';                 // a beírt karaktern
 profile.heroBest = profile.heroBest || {};                 // hősönkénti legjobb hullám: id -> hullám
 profile.totalKills = profile.totalKills || 0;              // összes legyőzött ellenfél
 profile.totalRuns = profile.totalRuns || 0;                // lejátszott meccsek száma
+/* Trófeák. A megszerzettek id-listája, mellette néhány élettartam-számláló,
+   amit eddig nem vezettünk. Mind hiányozhat a régi mentésből — ilyenkor
+   nulláról indulnak, a korábbi haladás nem vész el tőlük. */
+profile.trophies = profile.trophies || [];                 // megszerzett trófeák id-listája
+profile.heroWins = profile.heroWins || {};                 // hősönkénti győzelmek: id -> db
+profile.totalCoinsEarned = profile.totalCoinsEarned || 0;  // valaha szerzett pénz (a költés nem csökkenti)
+profile.totalUlts = profile.totalUlts || 0;                // elsütött ultimate-ek
+profile.bestWaveNightmare = profile.bestWaveNightmare || 0;// legjobb hullám Rémálom fokozaton
+profile.noHitRuns = profile.noHitRuns || 0;                // sérülés nélkül befejezett futamok
 /* Játékbeállítások — hangerő, játékérzet, teljesítmény. Régi mentésben nincsenek,
    ezért mindegyiket alapértékkel töltjük fel. */
 const DEFAULT_SETTINGS = { sfxVol:0.8, musVol:0.5, shake:true, dmgNumbers:true, lowFx:false, uiBoost:1, waveDensity:1 };
@@ -4803,7 +4905,7 @@ function renderHeroDetail(){
 }
 
 // ---- Sztori mód: képernyő-router + fejezet-választó + intro ----
-const SCREENS = ['startScreen','heroSelectScreen','mapScreen','storyIntro','pauseScreen','bossIntro','winScreen','deathScreen','ladderScreen','settingsScreen','conquestScreen','tableauScreen'];
+const SCREENS = ['startScreen','heroSelectScreen','mapScreen','storyIntro','pauseScreen','bossIntro','winScreen','deathScreen','ladderScreen','settingsScreen','conquestScreen','tableauScreen','trophyScreen'];
 function showScreen(id){
   SCREENS.forEach(s=>{ const el=document.getElementById(s); if(el) el.classList.toggle('hidden', s!==id); });
   // a térkép animációja csak akkor pörögjön, amíg tényleg látszik
@@ -5388,6 +5490,10 @@ document.getElementById('conquestAttackBtn').addEventListener('click', ()=>{
   cv.addEventListener('touchstart', (e)=>{ e.preventDefault(); pick(e); }, {passive:false});
 })();
 document.getElementById('campaignGoBtn').addEventListener('click', campaignStart);
+document.getElementById('trophyOpenBtn').addEventListener('click', ()=>{
+  checkTrophies(); renderTrophies(); showScreen('trophyScreen');
+});
+document.getElementById('trophyBackBtn').addEventListener('click', ()=> showScreen('startScreen'));
 window.addEventListener('resize', ()=>{
   const el = document.getElementById('conquestScreen');
   if(el && !el.classList.contains('hidden')) renderConquest();
@@ -7455,6 +7561,13 @@ function matchXp(bonus){
     profile.heroBest = profile.heroBest || {};
     if((g.wave||0) > (profile.heroBest[hid]||0)) profile.heroBest[hid] = g.wave;
   }
+  /* Trófea-számlálók. Ezek élettartamra gyűlnek, a költés nem viszi el őket,
+     és a trófeák kizárólag ezekből dolgoznak. */
+  profile.totalCoinsEarned = (profile.totalCoinsEarned||0) + (levelCoins + matchCoins);
+  profile.totalUlts = (profile.totalUlts||0) + (g.ultsUsed||0);
+  if((g.diff && g.diff.key)==='nightmare' && (g.wave||0) > (profile.bestWaveNightmare||0)){
+    profile.bestWaveNightmare = g.wave;
+  }
   saveProfile();
   refreshMenu();
   return { earned: base, up: after>before ? after : 0, coins: levelCoins+matchCoins };
@@ -7467,6 +7580,118 @@ function hideCombatUI(){
   document.getElementById('pauseBtn').classList.add('hidden');
   document.getElementById('menuEmbers').classList.remove('hidden');
 }
+
+/* =========================================================
+   TRÓFEÁK
+   Tartós elismerések a profilhoz kötve, a szokásos localStorage-mentésben.
+   Mindegyik a már meglévő profil-számlálókból dolgozik, így visszamenőleg
+   is helyes: aki eddig is sokat játszott, a bevezetéskor megkapja, ami jár.
+   A jutalom szándékosan szerény — a trófea elismerés, nem gazdasági motor.
+   ========================================================= */
+const TROPHIES = [
+  { id:'firstBlood',  icon:'🩸', xp:60,   coins:40,   test:p=> (p.totalRuns||0) >= 1 },
+  { id:'firstBoss',   icon:'💀', xp:120,  coins:80,   test:p=> (p.storyDone||[]).length >= 1 || (p.bestWaveCampaign||0) >= 12 },
+  { id:'pinesBehind', icon:'🌲', xp:80,   coins:50,   test:p=> (p.storyDone||[]).includes('forest') },
+  { id:'crowned',     icon:'👑', xp:400,  coins:300,  test:p=> (p.storyDone||[]).includes('kingdom') },
+  { id:'firstLand',   icon:'🚩', xp:200,  coins:150,  test:p=> conquestOwnedCount(p) >= 1 },
+  { id:'fiveLands',   icon:'🏰', xp:600,  coins:500,  test:p=> conquestOwnedCount(p) >= 5 },
+  { id:'allLands',    icon:'🗺️', xp:1500, coins:1500, test:p=> conquestOwnedCount(p) >= 10 },
+  { id:'wave20',      icon:'🌊', xp:200,  coins:150,  test:p=> (p.bestWaveCampaign||0) >= 20 },
+  { id:'wave30',      icon:'🌀', xp:450,  coins:350,  test:p=> (p.bestWaveCampaign||0) >= 30 },
+  { id:'wave50',      icon:'⚡', xp:900,  coins:800,  test:p=> (p.bestWaveCampaign||0) >= 50 },
+  { id:'nightmare20', icon:'😱', xp:700,  coins:600,  test:p=> (p.bestWaveNightmare||0) >= 20 },
+  { id:'butcher',     icon:'🗡️', xp:150,  coins:120,  test:p=> (p.totalKills||0) >= 1000 },
+  { id:'slaughter',   icon:'⚔️', xp:600,  coins:500,  test:p=> (p.totalKills||0) >= 10000 },
+  { id:'rich',        icon:'💰', xp:250,  coins:200,  test:p=> (p.totalCoinsEarned||0) >= 10000 },
+  { id:'sixHeroes',   icon:'🎭', xp:400,  coins:300,  test:p=> heroWinCount(p) >= 6 },
+  { id:'allHeroes',   icon:'🏆', xp:1200, coins:1000, test:p=> heroWinCount(p) >= Object.keys(CLASSES).length },
+  { id:'untouched',   icon:'🛡️', xp:500,  coins:400,  test:p=> (p.noHitRuns||0) >= 1 },
+  { id:'veteran',     icon:'🎖️', xp:300,  coins:250,  test:p=> (p.totalRuns||0) >= 50 },
+  { id:'sealMaster',  icon:'✨', xp:350,  coins:280,  test:p=> (p.totalUlts||0) >= 100 },
+  { id:'level25',     icon:'⭐', xp:0,    coins:600,  test:p=> profileLevel() >= 25 },
+];
+const TROPHY_BY_ID = Object.fromEntries(TROPHIES.map(t=>[t.id,t]));
+
+function conquestOwnedCount(p){
+  const owned = (p && p.conquest && p.conquest.owned) || [];
+  return owned.filter(id=>id!=='home').length;
+}
+function heroWinCount(p){
+  const w = (p && p.heroWins) || {};
+  return Object.keys(w).filter(id=>(w[id]||0) > 0).length;
+}
+function trophyEarned(id){ return (profile.trophies||[]).includes(id); }
+function trophyTxt(id, field){
+  const key = 'trophy_'+id+'_'+field;
+  return T(key);
+}
+
+/* Végigméri az összes trófeát, és kiosztja, ami már teljesült.
+   Bármikor hívható — ami megvan, azt nem adja oda kétszer. */
+function checkTrophies(){
+  profile.trophies = profile.trophies || [];
+  const fresh = [];
+  for(const t of TROPHIES){
+    if(profile.trophies.includes(t.id)) continue;
+    let ok = false;
+    try { ok = !!t.test(profile); } catch(e){ ok = false; }
+    if(!ok) continue;
+    profile.trophies.push(t.id);
+    if(t.coins) profile.coins = (profile.coins||0) + t.coins;
+    fresh.push(t);
+  }
+  if(!fresh.length) return [];
+  // az XP-t utólag adjuk, hogy a szintlépés jutalma is rendesen lefusson
+  saveProfile();
+  const xpSum = fresh.reduce((a,t)=>a+(t.xp||0), 0);
+  if(xpSum) awardXp(xpSum);
+  saveProfile();
+  /* Egy régóta játszó profil a bevezetéskor egyszerre sok trófeát kap meg.
+     Húsz egymás utáni értesítés fél percig tartana — ilyenkor egy összevont
+     értesítés megy ki helyette. Menet közben, egyesével már a részletes jön. */
+  if(fresh.length > 3){
+    showTrophyToast({ icon:'🏆', xp:xpSum,
+      coins: fresh.reduce((a,t)=>a+(t.coins||0), 0),
+      _name: T('trophyManyAtOnce', fresh.length) });
+  } else {
+    fresh.forEach((t,i)=> setTimeout(()=>showTrophyToast(t), i*1400));
+  }
+  if(typeof refreshMenu==='function') refreshMenu();
+  return fresh;
+}
+
+/* Rövid, magától eltűnő értesítés a képernyő tetején. */
+function showTrophyToast(t){
+  const host = document.getElementById('trophyToasts'); if(!host) return;
+  const el = document.createElement('div');
+  el.className = 'trophyToast';
+  el.innerHTML = `<div class="tIcon">${t.icon}</div>` +
+    `<div><div class="tTop">${T('trophyUnlocked')}</div>` +
+    `<div class="tName">${t._name || trophyTxt(t.id,'name')}</div>` +
+    `<div class="tRew">+${t.xp} XP${t.coins?` · +${t.coins} 💰`:''}</div></div>`;
+  host.appendChild(el);
+  // legfeljebb három látszik egyszerre — a régebbi kimegy, hogy ne lógjon le a képernyőről
+  while(host.children.length > 3) host.removeChild(host.firstChild);
+  try { SFX.levelup && SFX.levelup(); } catch(e){}
+  setTimeout(()=>{ el.classList.add('out'); setTimeout(()=>el.remove(), 500); }, 3600);
+}
+
+/* A trófea-képernyő: ami megvan, színesen és a leírásával; ami nincs, halványan. */
+function renderTrophies(){
+  const el = document.getElementById('trophyGrid'); if(!el) return;
+  const have = profile.trophies || [];
+  const sub = document.getElementById('trophySub');
+  if(sub) sub.textContent = T('trophySub', have.length, TROPHIES.length);
+  el.innerHTML = TROPHIES.map(t=>{
+    const got = have.includes(t.id);
+    return `<div class="trophyCard${got?' got':''}">` +
+      `<div class="trIcon">${got ? t.icon : '🔒'}</div>` +
+      `<div class="trBody"><div class="trName">${trophyTxt(t.id,'name')}</div>` +
+      `<div class="trDesc">${trophyTxt(t.id,'desc')}</div></div>` +
+      `<div class="trRew">${got ? T('trophyGot') : `+${t.xp} XP`}</div></div>`;
+  }).join('');
+}
+
 /* ---- Futam-összefoglaló: mennyi ideig tartott, mit vittél véghez ----
    A számlálók a game objektumban élnek, és a futam-mentésben is utaznak,
    így egy folytatott menet végén sem nullázódnak le. */
@@ -7504,6 +7729,14 @@ function winGame(){
   const story = game.mode==='story';
   const conquest = game.mode==='conquest';
   if(story) markChapterCleared(game.chapterIndex);
+  /* Győzelem-alapú trófea-számlálók: melyik hőssel nyertél már, és
+     sikerült-e egyetlen sérülés nélkül végigvinni egy komoly futamot. */
+  const hid = (game.player && game.player.cls) || chosenClass;
+  profile.heroWins = profile.heroWins || {};
+  profile.heroWins[hid] = (profile.heroWins[hid]||0) + 1;
+  if((game.damageTaken||0) <= 0 && (game.bestWave||game.wave||1) >= 5){
+    profile.noHitRuns = (profile.noHitRuns||0) + 1;
+  }
   const r = matchXp(story?260:150);
   questProgress('win', 1);
   const endlessBtnEl = document.getElementById('endlessBtn');
@@ -7564,6 +7797,7 @@ function winGame(){
     document.getElementById('restartBtnWin').textContent = T('newGameBtn');
   }
   renderRunSummary('winSummary');
+  checkTrophies();
   document.getElementById('winScreen').classList.remove('hidden');
   hideCombatUI();
 }
@@ -7582,6 +7816,7 @@ function deathGame(){
   document.getElementById('deathText').innerHTML = msg +
     T('rewardLine', r.earned, r.coins) + (r.up?T('profileUpLine', r.up):'');
   renderRunSummary('deathSummary');
+  checkTrophies();
   document.getElementById('deathScreen').classList.remove('hidden');
   hideCombatUI();
 }
@@ -7898,6 +8133,9 @@ function draw(){
   // villanások + kromatikus perem-lüktetés
   drawScreenFx(ctx, w, h);
 
+  // ---- honnan jön a veszély: jelzők a képernyő szélén ----
+  if(game.state==='playing') drawOffscreenMarkers(ctx, w, h);
+
   // ---- alacsony élet: lüktető vörös keret, hogy tényleg észrevedd ----
   const hpFrac = clamp(p.hp / p.maxHp, 0, 1);
   if(game.state==='playing' && hpFrac < 0.25 && p.hp > 0){
@@ -7919,6 +8157,95 @@ function draw(){
   }
 
   updateAbilityBar();
+}
+
+
+/* =========================================================
+   KÉPERNYŐN KÍVÜLI VESZÉLY-JELZŐK
+   Felülnézetes túlélőben az a legbosszantóbb, ha olyan találat ér, aminek a
+   forrását nem is láttad. A pálya szélén kis nyilak mutatják, merről közelít,
+   ami számít: a boss mindig, a távolról lövők (sniper, torony) mindig, a
+   közelharcosok csak akkor, ha már majdnem beértek. A közönséges, még messze
+   lévő tömeget NEM jelezzük — abból káosz lenne, nem segítség.
+   ========================================================= */
+const OFFSCREEN_PAD = 26;        // ilyen messze a képernyő szélétől ül a nyíl
+const OFFSCREEN_NEAR = 300;      // ennyin belül a közelharcost is jelezzük
+const OFFSCREEN_MAX = 9;         // ennél több nyíl már zaj
+
+function offscreenSide(x, y, w, h, pad){
+  // a pálya-széltől befelé tolt téglalapra vetítjük a pontot
+  const cx = clamp(x, pad, w-pad), cy = clamp(y, pad, h-pad);
+  return { x:cx, y:cy, off:(cx!==x || cy!==y) };
+}
+function drawDangerArrow(g, x, y, ang, col, scale, alpha, boss){
+  g.save();
+  g.globalAlpha = alpha;
+  g.translate(x, y); g.rotate(ang);
+  const L = 13*scale, W2 = 8.5*scale;
+  // sötét alávetés, hogy világos talajon is látszódjon
+  g.fillStyle = 'rgba(6,8,14,0.55)';
+  g.beginPath(); g.moveTo(L+2.5,0); g.lineTo(-L*0.62-2.5,W2+2); g.lineTo(-L*0.62-2.5,-W2-2); g.closePath(); g.fill();
+  // maga a nyíl — lapos kitöltés: képkockánkénti gradiens-objektum túl drága lenne
+  g.fillStyle = col;
+  g.beginPath(); g.moveTo(L,0); g.lineTo(-L*0.62,W2); g.lineTo(-L*0.28,0); g.lineTo(-L*0.62,-W2); g.closePath(); g.fill();
+  g.lineWidth = 1.2; g.strokeStyle = 'rgba(255,255,255,0.55)'; g.stroke();
+  if(boss){
+    // a boss nyila kap egy koronát, hogy egy pillantásból más legyen
+    g.rotate(-ang);
+    g.fillStyle = col; g.beginPath();
+    g.moveTo(-6*scale, -11*scale); g.lineTo(-3*scale, -16*scale); g.lineTo(0, -12.5*scale);
+    g.lineTo(3*scale, -16*scale); g.lineTo(6*scale, -11*scale); g.closePath(); g.fill();
+  }
+  g.restore();
+}
+function drawOffscreenMarkers(g, w, h){
+  if(!game || !game.player) return;
+  const p = game.player;
+  const pad = OFFSCREEN_PAD;
+  const lite = !!SETTINGS.lowFx;
+  const t = Date.now();
+
+  // összegyűjtjük, mi érdemel jelzőt — a bosszal kezdve
+  const marks = [];
+  if(game.boss && game.boss.hp > 0){
+    const s = offscreenSide(game.boss.x, game.boss.y, w, h, pad);
+    if(s.off) marks.push({ x:s.x, y:s.y, wx:game.boss.x, wy:game.boss.y,
+                           col:(game.boss.col || '#ff5c7c'), scale:1.45, boss:true, prio:1e9 });
+  }
+  /* A szűrés a forró útvonalon van: minden képkockán, minden ellenfélre lefut.
+     Ezért előbb a legolcsóbb teszt (bent van-e a képernyőn — négy összehasonlítás),
+     és csak a kiesőkre számolunk távolságot, azt is négyzetesen, gyök nélkül. */
+  const NEAR2 = OFFSCREEN_NEAR * OFFSCREEN_NEAR;
+  for(const e of game.enemies){
+    if(e.dead) continue;
+    if(e.x >= pad && e.x <= w-pad && e.y >= pad && e.y <= h-pad) continue;   // látszik, nem kell nyíl
+    const def = ENEMY_DEFS[e.type];
+    const ranged = def && (def.kind==='ranged');
+    const dx = e.x-p.x, dy = e.y-p.y, d2 = dx*dx + dy*dy;
+    // a távolról lövő mindig fontos; a többi csak ha már a nyakadon van
+    if(!ranged && d2 > NEAR2) continue;
+    const s = offscreenSide(e.x, e.y, w, h, pad);
+    marks.push({ x:s.x, y:s.y, wx:e.x, wy:e.y, col:(def && def.color) || '#ff8a5c',
+                 scale: ranged ? 1.05 : 0.85, boss:false, prio: ranged ? 1e6 - d2 : -d2 });
+  }
+  if(!marks.length) return;
+  marks.sort((a,b)=> b.prio - a.prio);
+
+  for(let i=0; i<Math.min(marks.length, OFFSCREEN_MAX); i++){
+    const m = marks[i];
+    const ang = Math.atan2(m.wy - m.y, m.wx - m.x);
+    const dx2 = m.wx - p.x, dy2 = m.wy - p.y;
+    const d = Math.sqrt(dx2*dx2 + dy2*dy2);   // legfeljebb 9 nyílra fut le
+    // minél közelebb van, annál erősebb a jelzés
+    const near = clamp(1 - (d - 200) / 500, 0.35, 1);
+    let alpha = 0.45 + near*0.5;
+    let scale = m.scale;
+    if(m.boss && !lite){
+      const pulse = 0.5 + 0.5*Math.sin(t/240);
+      alpha = 0.7 + pulse*0.3; scale *= (1 + pulse*0.1);
+    }
+    drawDangerArrow(g, m.x, m.y, ang, m.col, scale, alpha, m.boss);
+  }
 }
 
 /* ---- Dinamikus képességsáv + ultimate + buff-tálca ---- */
