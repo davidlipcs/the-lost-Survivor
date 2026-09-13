@@ -319,6 +319,110 @@
     .abIcon .key{ display:none; }
     #pauseBtn{ width:calc(46px*var(--ui-scale)); height:calc(46px*var(--ui-scale)); font-size:calc(21px*var(--ui-scale)); }
   }
+
+  /* =========================================================
+     v17 — VIZUÁLIS RÉTEG: HUD-üveg, sávok fénysávval, gombok fény-söpréssel,
+     kártya-lélegzés, boss/győzelem/halál címek berobbanása. Csökkentett mozgásnál
+     az összes új animáció kikapcsol.
+     ========================================================= */
+  .panel{ background: linear-gradient(180deg, rgba(22,29,46,0.92), rgba(9,12,19,0.88));
+    border:1px solid rgba(110,231,255,0.28);
+    box-shadow: 0 8px 26px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08), 0 0 0 1px rgba(0,0,0,0.35); }
+  #hpBarBg, #xpBarBg{ background:#0f141f; border-color:#1f2738; box-shadow: inset 0 2px 4px rgba(0,0,0,0.65); }
+  #hpBarFill{ position:relative; background: linear-gradient(180deg, #ff9fb3 0%, var(--accent2) 45%, #d63d5c 100%);
+    box-shadow: 0 0 10px rgba(255,92,124,0.55), inset 0 1px 0 rgba(255,255,255,0.35); }
+  #xpBarFill{ position:relative; background: linear-gradient(180deg, #ffe9a8, var(--gold) 55%, #d9a53f);
+    box-shadow:0 0 8px rgba(255,209,102,0.5); }
+  #hpBarFill::after, #xpBarFill::after{ content:''; position:absolute; inset:0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.35) 50%, transparent 100%);
+    background-size:200% 100%; animation: barSheen 2.8s linear infinite; }
+  @keyframes barSheen{ 0%{ background-position:200% 0; } 100%{ background-position:-200% 0; } }
+  #waveNum{ text-shadow: 0 0 14px rgba(110,231,255,0.7), 0 0 30px rgba(110,231,255,0.35); display:inline-block; }
+  #waveNum.pop{ animation: wavePop .6s cubic-bezier(.2,1.4,.4,1); }
+  @keyframes wavePop{ 0%{ transform:scale(1.6); color:#fff; text-shadow:0 0 26px #fff, 0 0 50px rgba(110,231,255,0.8); } 100%{ transform:scale(1); } }
+  #pauseBtn{ background: linear-gradient(180deg, rgba(22,29,46,0.95), rgba(9,12,19,0.9));
+    box-shadow:0 6px 18px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08); }
+  .abIcon{ background: linear-gradient(180deg, rgba(22,29,46,0.95), rgba(9,12,19,0.92)); box-shadow: 0 4px 12px rgba(0,0,0,0.45); }
+  .abIcon.unlocked{ box-shadow: 0 0 12px rgba(110,231,255,0.4), inset 0 1px 0 rgba(255,255,255,0.12), 0 4px 12px rgba(0,0,0,0.45); }
+  .abIcon.unlocked:not(:has(.cd)){ animation: abIdle 2.4s ease-in-out infinite; }
+  @keyframes abIdle{ 0%,100%{ box-shadow:0 0 10px rgba(110,231,255,0.35), 0 4px 12px rgba(0,0,0,0.45); }
+    50%{ box-shadow:0 0 18px rgba(110,231,255,0.7), 0 4px 12px rgba(0,0,0,0.45); } }
+  .abIcon .cd{ background: rgba(0,0,0,0.6); text-shadow:0 1px 2px #000; }
+  #ultBtn{ background: linear-gradient(180deg, rgba(22,29,46,0.95), rgba(9,12,19,0.92)); box-shadow:0 6px 18px rgba(0,0,0,0.5); }
+  #ultBtn.ready{ animation: ultPulse 1.2s ease-in-out infinite; }
+  @keyframes ultPulse{ 0%,100%{ box-shadow:0 0 14px rgba(255,209,102,0.45); transform:scale(1); }
+    50%{ box-shadow:0 0 30px rgba(255,209,102,0.9), 0 0 60px rgba(255,209,102,0.35); transform:scale(1.06); } }
+  #buffTray .buff{ background:rgba(22,29,46,0.9); border-color:rgba(110,231,255,0.35); box-shadow:0 3px 10px rgba(0,0,0,0.4); }
+  #levelUpBanner:not(.hidden){ animation: luPop .75s cubic-bezier(.2,1.5,.4,1); }
+  #levelUpBanner .lu2{ text-shadow: 0 0 20px var(--gold), 0 0 46px rgba(255,209,102,0.6); }
+  #levelUpBanner .lu1{ text-shadow: 0 0 12px rgba(255,209,102,0.6); }
+  @keyframes luPop{ 0%{ transform:translate(-50%,-50%) scale(0.4); opacity:0; filter:blur(6px); }
+    60%{ transform:translate(-50%,-50%) scale(1.12); opacity:1; filter:blur(0); } 100%{ transform:translate(-50%,-50%) scale(1); } }
+
+  /* menü-hátterek: lassan hömpölygő fényködök a statikus háttér helyett */
+  .overlay{ background:
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.014) 0px, rgba(255,255,255,0.014) 1px, transparent 1px, transparent 3px),
+      radial-gradient(ellipse 60% 45% at 28% 18%, rgba(110,231,255,0.11), transparent 70%),
+      radial-gradient(ellipse 55% 45% at 76% 78%, rgba(255,140,60,0.10), transparent 70%),
+      radial-gradient(circle at 50% 40%, rgba(20,26,40,0.97), rgba(6,8,12,0.99));
+    background-size: auto, 170% 170%, 170% 170%, auto;
+    animation: overlayDrift 22s ease-in-out infinite alternate; }
+  @keyframes overlayDrift{ 0%{ background-position: 0 0, 0% 0%, 100% 100%, 0 0; } 100%{ background-position: 0 0, 100% 70%, 0% 30%, 0 0; } }
+  h1.title{ animation: titleGlow 4.5s ease-in-out infinite alternate; }
+  @keyframes titleGlow{ from{ text-shadow:0 0 40px rgba(110,231,255,0.3), 0 0 80px rgba(255,140,60,0.12); }
+    to{ text-shadow:0 0 60px rgba(110,231,255,0.55), 0 0 110px rgba(255,140,60,0.28); } }
+  .titleDivider{ animation: dividerGlow 3s ease-in-out infinite alternate; }
+  @keyframes dividerGlow{ from{ box-shadow:0 0 8px rgba(255,209,102,0.5); } to{ box-shadow:0 0 18px rgba(255,209,102,0.95); } }
+  button.bigBtn{ overflow:hidden; transition: transform .14s cubic-bezier(.2,1.4,.4,1), box-shadow .2s, filter .2s; }
+  button.bigBtn::after{ content:''; position:absolute; top:0; left:-70%; width:50%; height:100%; pointer-events:none;
+    background:linear-gradient(100deg, transparent, rgba(255,255,255,0.45), transparent); transform:skewX(-20deg); }
+  button.bigBtn:hover::after{ animation: btnSheen .7s ease-out; }
+  @keyframes btnSheen{ 0%{ left:-70%; } 100%{ left:140%; } }
+  button.bigBtn:hover{ filter:brightness(1.08); }
+  button.bigBtn:active{ transform: translateY(1px) scale(0.97); filter:brightness(0.95); }
+  button.bigBtn.ghost:hover{ border-color:rgba(110,231,255,0.5); box-shadow:0 0 14px rgba(110,231,255,0.2); }
+  .classCard{ transition: transform .18s cubic-bezier(.2,1.4,.4,1), box-shadow .18s, border-color .18s; }
+  .classCard:hover{ transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.5), 0 0 18px color-mix(in srgb, var(--ccol,#6ee7ff) 35%, transparent); }
+  .classCard.selected{ animation: cardSelected 2.4s ease-in-out infinite; }
+  @keyframes cardSelected{ 0%,100%{ box-shadow:0 0 14px var(--ccol,#fff); }
+    50%{ box-shadow:0 0 26px var(--ccol,#fff), 0 0 48px color-mix(in srgb, var(--ccol,#fff) 40%, transparent); } }
+  .classCard::before{ content:''; position:absolute; top:0; left:0; right:0; height:78px; pointer-events:none;
+    background: radial-gradient(ellipse at 50% 35%, color-mix(in srgb, var(--ccol,#6ee7ff) 45%, transparent), transparent 70%);
+    opacity:.5; animation: portraitBreath 3.4s ease-in-out infinite; }
+  .classCard .cPortrait{ position:relative; }
+  @keyframes portraitBreath{ 0%,100%{ opacity:.35; transform:scale(1); } 50%{ opacity:.75; transform:scale(1.08); } }
+  #heroDetailPanel{ box-shadow:0 0 22px color-mix(in srgb, var(--hdcol,#2a3348) 40%, transparent), 0 10px 30px rgba(0,0,0,0.45); }
+  .abCell{ transition: transform .15s cubic-bezier(.2,1.4,.4,1), box-shadow .15s; }
+  .abCell:hover{ transform: translateY(-3px) scale(1.05); box-shadow:0 8px 18px rgba(0,0,0,0.45); }
+  .abCell.equipped{ box-shadow:0 0 12px rgba(110,231,255,0.5), inset 0 0 0 1px rgba(110,231,255,0.25); }
+  .headOpt{ transition: transform .15s, box-shadow .15s; }
+  .headOpt:hover{ transform:scale(1.08); }
+  .headOpt.selected{ box-shadow:0 0 14px rgba(255,255,255,0.55), 0 0 28px rgba(110,231,255,0.35); }
+  .diffBtn{ transition: transform .15s, box-shadow .15s; }
+  .diffBtn:hover{ transform:translateY(-2px); }
+  .diffBtn.selected{ box-shadow: 0 0 12px var(--diffcol,#fff), inset 0 0 12px color-mix(in srgb, var(--diffcol,#fff) 22%, transparent); }
+  .toggleBtn.on{ box-shadow:0 0 10px rgba(110,231,255,0.5); }
+  #winScreen .title, #deathScreen .title, #bossIntro .title{ animation: bigTitleIn .85s cubic-bezier(.2,1.4,.4,1); }
+  @keyframes bigTitleIn{ 0%{ transform:scale(1.9); letter-spacing:14px; filter:blur(8px); }
+    100%{ transform:scale(1); letter-spacing:2px; filter:blur(0); } }
+  #deathScreen{ animation: deathPulse 2.2s ease-in-out infinite alternate; }
+  @keyframes deathPulse{ from{ box-shadow: inset 0 0 90px rgba(255,40,70,0.25); } to{ box-shadow: inset 0 0 170px rgba(255,40,70,0.5); } }
+  #winScreen{ box-shadow: inset 0 0 130px rgba(255,209,102,0.22); }
+  #bossIntro{ animation: bossPulse 1.6s ease-in-out infinite alternate; }
+  @keyframes bossPulse{ from{ box-shadow: inset 0 0 100px rgba(255,92,124,0.22); } to{ box-shadow: inset 0 0 180px rgba(255,92,124,0.45); } }
+  /* késleltetés és fill-mode nélkül: ha egy környezet nem futtatja az animációt, a tartalom akkor is látszik */
+  .storyBox{ animation: fadeUp .6s ease-out; }
+  .overlay .bigBtn{ animation: fadeUp .55s ease-out; }
+  @keyframes fadeUp{ from{ opacity:0; transform:translateY(14px); } to{ opacity:1; transform:translateY(0); } }
+  .ember{ box-shadow:0 0 8px 2px rgba(255,209,102,0.75); }
+  .ember.dust{ background:var(--accent); box-shadow:0 0 5px 1px rgba(110,231,255,0.5); }
+  #previewCanvas{ box-shadow:0 0 26px rgba(110,231,255,0.18), 0 10px 26px rgba(0,0,0,0.45); }
+  @media (prefers-reduced-motion: reduce){
+    .overlay, h1.title, .titleDivider, .classCard.selected, .classCard::before, #ultBtn.ready, .abIcon.unlocked,
+    #hpBarFill::after, #xpBarFill::after, #deathScreen, #bossIntro, .storyBox, .overlay .bigBtn,
+    #levelUpBanner:not(.hidden), #waveNum.pop, #winScreen .title, #deathScreen .title, #bossIntro .title{ animation:none !important; }
+  }
 </style>
 </head>
 <body>
@@ -663,6 +767,13 @@ function generateGroundTexture(w, h){
     const grad = tx.createRadialGradient(w/2, h*0.35, 0, w/2, h*0.35, Math.max(w,h)*0.78);
     grad.addColorStop(0, '#233a24'); grad.addColorStop(0.55, '#1a2c1c'); grad.addColorStop(1, '#0e1810');
     tx.fillStyle = grad; tx.fillRect(0,0,w,h);
+    // lombkorona-árnyékfoltok és néhány fénypászma a fák között
+    for(let i=0;i<Math.round((w*h)/60000)+3;i++){ const x=Math.random()*w, y=Math.random()*h, r=60+Math.random()*120;
+      const sg=tx.createRadialGradient(x,y,0,x,y,r); sg.addColorStop(0,'rgba(0,0,0,0.22)'); sg.addColorStop(1,'rgba(0,0,0,0)'); tx.fillStyle=sg; tx.beginPath(); tx.arc(x,y,r,0,Math.PI*2); tx.fill(); }
+    tx.save(); tx.globalCompositeOperation='lighter';
+    for(let i=0;i<3;i++){ const x=Math.random()*w; const lg=tx.createLinearGradient(x,0,x+140,h); lg.addColorStop(0,'rgba(200,240,160,0)'); lg.addColorStop(0.5,'rgba(200,240,160,0.05)'); lg.addColorStop(1,'rgba(200,240,160,0)');
+      tx.fillStyle=lg; tx.beginPath(); tx.moveTo(x,0); tx.lineTo(x+70,0); tx.lineTo(x+210,h); tx.lineTo(x+140,h); tx.closePath(); tx.fill(); }
+    tx.restore();
     const tuftCount = Math.round((w*h)/2400);
     for(let i=0;i<tuftCount;i++){
       const x=Math.random()*w, y=Math.random()*h;
@@ -718,12 +829,16 @@ function generateGroundTexture(w, h){
     const grad = tx.createRadialGradient(w/2, h*0.35, 0, w/2, h*0.35, Math.max(w,h)*0.78);
     grad.addColorStop(0, '#1b2733'); grad.addColorStop(0.55, '#121a24'); grad.addColorStop(1, '#080c12');
     tx.fillStyle = grad; tx.fillRect(0,0,w,h);
-    const poolCount = Math.round((w*h)/26000);
+    const poolCount = Math.round((w*h)/42000);
     for(let i=0;i<poolCount;i++){
-      const x=Math.random()*w, y=Math.random()*h, r=18+Math.random()*46;
-      tx.beginPath(); tx.ellipse(x,y,r,r*0.45,Math.random()*Math.PI,0,Math.PI*2);
-      tx.fillStyle='rgba(70,130,170,0.13)'; tx.fill();
-      tx.lineWidth=1.2; tx.strokeStyle='rgba(120,190,230,0.14)'; tx.stroke();
+      const x=Math.random()*w, y=Math.random()*h, r=22+Math.random()*50, ang=Math.random()*Math.PI;
+      // nedves, sötét mélyedés, világosabb szegéllyel és egy fény-csillanással
+      tx.save(); tx.translate(x,y); tx.rotate(ang);
+      const pg = tx.createRadialGradient(0,0,0,0,0,r);
+      pg.addColorStop(0,'rgba(10,30,50,0.55)'); pg.addColorStop(0.7,'rgba(40,90,130,0.35)'); pg.addColorStop(0.92,'rgba(110,180,220,0.22)'); pg.addColorStop(1,'rgba(110,180,220,0)');
+      tx.beginPath(); tx.ellipse(0,0,r,r*0.45,0,0,Math.PI*2); tx.fillStyle=pg; tx.fill();
+      tx.beginPath(); tx.ellipse(-r*0.3,-r*0.12,r*0.32,r*0.08,0,0,Math.PI*2); tx.fillStyle='rgba(200,235,255,0.16)'; tx.fill();
+      tx.restore();
     }
     const oreCount = Math.round((w*h)/6000);
     for(let i=0;i<oreCount;i++){
@@ -790,6 +905,14 @@ function generateGroundTexture(w, h){
     grad.addColorStop(0, '#181c22'); grad.addColorStop(0.55, '#111419'); grad.addColorStop(1, '#08090c');
     tx.fillStyle = grad; tx.fillRect(0,0,w,h);
     tx.strokeStyle = 'rgba(0,0,0,0.4)'; tx.lineWidth = 1.4;
+    // kövezet-lapok: eltérő tónusú tömbök, a fugák sötétebbek
+    for(let y=0;y<h;y+=72){ for(let x=((y/72)|0)%2?-48:0;x<w;x+=96){
+      tx.fillStyle = `rgba(${Math.random()<0.5?'255,255,255':'0,0,0'},${0.02+Math.random()*0.035})`;
+      tx.fillRect(x+2,y+2,92,68);
+    } }
+    tx.strokeStyle='rgba(0,0,0,0.35)'; tx.lineWidth=2;
+    for(let y=0;y<h;y+=72){ tx.beginPath(); tx.moveTo(0,y); tx.lineTo(w,y); tx.stroke(); }
+    tx.strokeStyle = 'rgba(0,0,0,0.4)'; tx.lineWidth = 1.4;
     const crackCount = Math.round((w*h)/34000);
     for(let i=0;i<crackCount;i++){
       let x = Math.random()*w, y = Math.random()*h;
@@ -815,6 +938,17 @@ function generateGroundTexture(w, h){
     for(let x=0;x<w;x+=48){ tx.moveTo(x,0); tx.lineTo(x,h); }
     for(let y=0;y<h;y+=48){ tx.moveTo(0,y); tx.lineTo(w,y); }
     tx.stroke();
+  }
+  // rögzített fényforrás bal-felülről: lágy fény-tócsa a talajon (az árnyékok ezzel ellentétesen esnek)
+  const lp = tx.createRadialGradient(w*0.3,h*0.26,0, w*0.3,h*0.26, Math.max(w,h)*0.72);
+  lp.addColorStop(0,'rgba(255,244,214,0.10)'); lp.addColorStop(0.45,'rgba(255,244,214,0.035)'); lp.addColorStop(1,'rgba(0,0,0,0)');
+  tx.fillStyle = lp; tx.fillRect(0,0,w,h);
+  // finom foltosság, hogy a talaj ne legyen "festett" egyszínű
+  for(let i=0;i<Math.round((w*h)/9000);i++){
+    const x=Math.random()*w, y=Math.random()*h, r=14+Math.random()*40;
+    const bg=tx.createRadialGradient(x,y,0,x,y,r); const dark=Math.random()<0.6;
+    bg.addColorStop(0, dark?'rgba(0,0,0,0.10)':'rgba(255,255,255,0.035)'); bg.addColorStop(1,'rgba(0,0,0,0)');
+    tx.fillStyle=bg; tx.beginPath(); tx.arc(x,y,r,0,Math.PI*2); tx.fill();
   }
   const vg = tx.createRadialGradient(w/2,h/2,Math.min(w,h)*0.32, w/2,h/2, Math.max(w,h)*0.74);
   vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,0.55)');
@@ -1743,9 +1877,9 @@ document.getElementById('langToggleBtn').addEventListener('click', ()=>{
 // lebegő szikrák a menü mögé — véletlenszerű méret/sebesség/késleltetés mindegyiknek
 (function spawnMenuEmbers(){
   const holder = document.getElementById('menuEmbers');
-  const N = 16;
+  const N = 30;
   for(let i=0;i<N;i++){
-    const e = document.createElement('div'); e.className='ember';
+    const e = document.createElement('div'); e.className = i<18 ? 'ember' : 'ember dust';
     const size = 2+Math.random()*3;
     e.style.width = size+'px'; e.style.height = size+'px';
     e.style.left = (Math.random()*100)+'%';
@@ -2808,6 +2942,565 @@ function assignKey(target, key){
 /* =========================================================
    RAJZOLÓ KÖNYVTÁR — fejek felülnézetből (forward = +x)
    ========================================================= */
+/* =========================================================
+   VFX RÉTEG (v17) — tisztán vizuális állapot és segédek.
+   Semmi itt nem érinti a játékmenetet: a fizika, az AI és a sebzés az
+   update()-ben marad, ez a réteg csak rárajzol. Minden ide tartozó mező
+   "_"-vel kezdődik vagy a VFX objektumban él, és sosem kerül mentésbe.
+   Rögzített fényforrás bal-felülről: az árnyékok mindig jobbra-le esnek,
+   a fény-perem mindig a bal-felső élen ül — ettől áll össze a pálya egy térré.
+   ========================================================= */
+const LIGHT = { x:-0.55, y:-0.83, sx:0.42, sy:0.62 };
+const VFX = {
+  t:0, rings:[], flashes:[], deaths:[], debris:[], puffs:[], chroma:0,
+  ambient:{ theme:null, motes:[], fog:[], w:0, h:0 },
+  fogSprites:{}, glowSprites:{}, enemySprites:{},
+  obstacleLayer:null, obstacleKey:'', _obstRef:null,
+};
+function fxLight(){ return !!SETTINGS.lowFx || (!!game && game.enemies.length > 55); }
+function rgba(hex, a){ const [r,g,b]=hexToRgb(hex); return `rgba(${r},${g},${b},${a})`; }
+function rgbaAny(col, a){
+  if(col && col[0]==='#') return rgba(col,a);
+  const m = col ? col.match(/[\d.]+/g) : null;
+  if(m && m.length>=3) return `rgba(${m[0]},${m[1]},${m[2]},${a})`;
+  return col;
+}
+function resetVfx(){
+  VFX.rings.length=0; VFX.flashes.length=0; VFX.deaths.length=0; VFX.debris.length=0; VFX.puffs.length=0; VFX.chroma=0;
+  VFX.ambient.theme=null;   // a köd/porszemcsék a fejezet témájához újragenerálódnak
+}
+/* --- lökéshullám-gyűrű: képességek, robbanások, boss-belépés --- */
+function addRing(x,y,color,maxR,life,width,fill){
+  if(VFX.rings.length>=70) VFX.rings.shift();
+  VFX.rings.push({x,y,color,maxR,life,maxLife:life,width:width||3,fill:!!fill});
+}
+/* --- teljes képernyős színvillanás (képernyő-koordinátában rajzolódik) --- */
+function addFlash(color,alpha,life){
+  if(VFX.flashes.length>=6) VFX.flashes.shift();
+  VFX.flashes.push({color,alpha,life,maxLife:life});
+}
+/* --- "kromatikus" perem-lüktetés: a képernyő széle rövid időre színesen szétcsúszik --- */
+function addChroma(v){ VFX.chroma = Math.min(1, VFX.chroma + v); }
+/* --- lágy por-/füstpamacs (növekvő, halványuló korong) --- */
+function addPuff(x,y,color,n,sz,spread){
+  if(fxLight()) n = Math.max(1, Math.round(n/2));
+  for(let i=0;i<n;i++){
+    if(VFX.puffs.length>=180) VFX.puffs.shift();
+    const a=Math.random()*PI2, s=(spread||1)*(0.3+Math.random()*1.1);
+    VFX.puffs.push({ x, y, vx:Math.cos(a)*s, vy:Math.sin(a)*s-0.15, r:(sz||6)*(0.6+Math.random()*0.8),
+      grow:0.3+Math.random()*0.4, life:30+Math.random()*20, maxLife:50, color });
+  }
+}
+/* --- "ütés": képesség-/ult-aktiválás, boss-belépés — gyűrű + villanás + perem-lüktetés --- */
+function vfxPunch(x,y,color,strength){
+  const s = strength||1;
+  addRing(x,y,color,90*s,22+Math.round(8*s),4);
+  if(s>=1.5) addRing(x,y,'#ffffff',60*s,16,2);
+  addFlash(color, Math.min(0.28, 0.05*s), 10);
+  addChroma(0.22*s);
+  addPuff(x,y,color,Math.round(4*s),9,2);
+}
+/* --- törmelék: kis darabok, amik felrepülnek, pattannak, elfekszenek --- */
+function addDebris(x,y,color,n,sz,opts){
+  opts = opts||{};
+  if(fxLight()) n = Math.max(2, Math.round(n*0.5));
+  const pieces=[];
+  for(let i=0;i<n;i++){
+    const a=Math.random()*PI2, s=(opts.speed||3)*(0.4+Math.random()*1.0);
+    pieces.push({ dx:0, dy:0, vx:Math.cos(a)*s, vy:Math.sin(a)*s, rot:Math.random()*PI2, vr:(Math.random()-0.5)*0.4,
+      sz:sz*(0.5+Math.random()*0.9), sides:3+Math.floor(Math.random()*3), z:0, vz:1.5+Math.random()*2.5 });
+  }
+  if(VFX.debris.length>=40) VFX.debris.shift();
+  VFX.debris.push({ x,y,color,pieces,t:0,life:opts.life||46,maxLife:opts.life||46,
+    gravity:opts.gravity!==undefined?opts.gravity:0.28, shape:opts.shape||'shard' });
+}
+/* --- típusfüggő halál-animáció: az ellenfél nem eltűnik, hanem szétesik/összerogy/robban --- */
+function addDeathAnim(en){
+  const kind = en.type;
+  const face = (game&&game.player) ? Math.atan2(game.player.y-en.y, game.player.x-en.x) : 0;
+  const d = { kind, x:en.x, y:en.y, r:en.r, color:en.color, face, t:0, life:34, maxLife:34, type:en.type, isChild:en.isChild };
+  if(kind==='tank'){
+    d.life=d.maxLife=52;
+    addDebris(en.x,en.y,shade(en.color,-0.2),9,en.r*0.34,{speed:3.4,life:60,gravity:0.3});
+    addPuff(en.x,en.y,'#8a7a66',8,en.r*0.5,2.2); addShake(3,7);
+    addRing(en.x,en.y,'rgba(255,255,255,0.7)',en.r*2.2,16,2);
+  } else if(kind==='bomber'){
+    d.life=d.maxLife=26;
+    addRing(en.x,en.y,'#ffb347',en.r*4.5,20,6); addRing(en.x,en.y,'#ffffff',en.r*2.2,12,3);
+    addFlash('#ff8c3c',0.10,10); addPuff(en.x,en.y,'#3a2a26',8,en.r*0.7,2.6);
+    addDebris(en.x,en.y,'#ff4d4d',6,en.r*0.3,{speed:4.5,life:36}); addChroma(0.2);
+  } else if(kind==='turret'){
+    d.life=d.maxLife=48;
+    addDebris(en.x,en.y,'#5a5a72',7,en.r*0.32,{speed:2.8,life:56,gravity:0.32});
+    addPuff(en.x,en.y,'#2a2a34',10,en.r*0.55,1.8); addParticles(en.x,en.y,'#ffe066',12);
+    addRing(en.x,en.y,'#ffb347',en.r*2.4,18,3);
+  } else if(kind==='swarmling'){
+    d.life=d.maxLife=22;
+    addDebris(en.x,en.y,en.color,5,en.r*0.5,{speed:2.4,life:30,gravity:0.18,shape:'blob'});
+  } else if(kind==='medic'){
+    d.life=d.maxLife=40; addRing(en.x,en.y,'#8affc1',en.r*3,26,3);
+  } else if(kind==='scout'){
+    d.life=d.maxLife=24; addDebris(en.x,en.y,en.color,4,en.r*0.4,{speed:3.6,life:28,gravity:0.1});
+  } else {
+    addDebris(en.x,en.y,en.color,6,en.r*0.38,{speed:3,life:40,gravity:0.22});
+  }
+  if(VFX.deaths.length>=40) VFX.deaths.shift();
+  VFX.deaths.push(d);
+}
+function addBossDeath(b){
+  const col=b.col||'#ff5c7c';
+  addRing(b.x,b.y,col,b.r*6,40,8); addRing(b.x,b.y,'#ffffff',b.r*3.4,24,4); addRing(b.x,b.y,col,b.r*2,60,14,true);
+  addFlash('#ffffff',0.35,18); addFlash(col,0.25,30); addChroma(1);
+  addDebris(b.x,b.y,shade(col,-0.5),16,b.r*0.3,{speed:5,life:70,gravity:0.25});
+  addPuff(b.x,b.y,shade(col,-0.6),18,b.r*0.6,3);
+  addShake(14,26);
+}
+/* --- a vizuális állapot léptetése: fix lépésenként, csak futó játékban --- */
+function tickVfx(){
+  VFX.t++;
+  for(const r of VFX.rings) r.life--;
+  if(VFX.rings.length) VFX.rings = VFX.rings.filter(r=>r.life>0);
+  for(const f of VFX.flashes) f.life--;
+  if(VFX.flashes.length) VFX.flashes = VFX.flashes.filter(f=>f.life>0);
+  for(const d of VFX.deaths) d.t++;
+  if(VFX.deaths.length) VFX.deaths = VFX.deaths.filter(d=>d.t<d.life);
+  for(const db of VFX.debris){
+    db.t++;
+    for(const pc of db.pieces){
+      pc.dx+=pc.vx; pc.dy+=pc.vy; pc.vx*=0.93; pc.vy*=0.93; pc.rot+=pc.vr;
+      pc.z+=pc.vz; pc.vz-=db.gravity;
+      if(pc.z<0){ pc.z=0; pc.vz*=-0.35; pc.vx*=0.6; pc.vy*=0.6; pc.vr*=0.5; }
+    }
+  }
+  if(VFX.debris.length) VFX.debris = VFX.debris.filter(db=>db.t<db.life);
+  for(const pf of VFX.puffs){ pf.x+=pf.vx; pf.y+=pf.vy; pf.vx*=0.95; pf.vy*=0.95; pf.r+=pf.grow; pf.life--; }
+  if(VFX.puffs.length) VFX.puffs = VFX.puffs.filter(pf=>pf.life>0);
+  VFX.chroma *= 0.86; if(VFX.chroma<0.01) VFX.chroma=0;
+  if(game){
+    for(const en of game.enemies){ if(en._knock>0) en._knock--; }
+    if(game.boss){ const b=game.boss; if(b._knock>0) b._knock--; if(b._introT>0) b._introT--; }
+    const p=game.player; if(p && p._muzzle>0) p._muzzle--;
+    const c=game.companion; if(c && c._muzzle>0) c._muzzle--;
+  }
+}
+
+/* --- olcsó fény-korong sprite: egyszer legenerálva, utána csak drawImage (nincs elmosás képkockánként) --- */
+function glowSprite(color, R){
+  const key = color+'|'+Math.round(R);
+  let s = VFX.glowSprites[key]; if(s) return s;
+  const S = Math.ceil(R)+2, c=document.createElement('canvas'); c.width=c.height=S*2;
+  const g=c.getContext('2d'); const gr=g.createRadialGradient(S,S,0,S,S,S);
+  gr.addColorStop(0, rgbaAny(color,0.85)); gr.addColorStop(0.45, rgbaAny(color,0.32)); gr.addColorStop(1, rgbaAny(color,0));
+  g.fillStyle=gr; g.fillRect(0,0,S*2,S*2);
+  s = { c, S }; VFX.glowSprites[key]=s; return s;
+}
+function fogSprite(rgb){
+  let s = VFX.fogSprites[rgb]; if(s) return s;
+  const S=128, c=document.createElement('canvas'); c.width=c.height=S*2;
+  const g=c.getContext('2d'); const gr=g.createRadialGradient(S,S,0,S,S,S);
+  // több lépcső, hogy a ködfolt széle sose látsszon "korongnak"
+  gr.addColorStop(0,`rgba(${rgb},0.5)`); gr.addColorStop(0.3,`rgba(${rgb},0.26)`); gr.addColorStop(0.6,`rgba(${rgb},0.09)`); gr.addColorStop(0.85,`rgba(${rgb},0.02)`); gr.addColorStop(1,`rgba(${rgb},0)`);
+  g.fillStyle=gr; g.fillRect(0,0,S*2,S*2);
+  s = { c, S }; VFX.fogSprites[rgb]=s; return s;
+}
+
+/* =========================================================
+   LÉGKÖR-RÉTEG: lassan gomolygó köd + témafüggő porszemcsék a talaj fölött,
+   enyhe parallaxszal a játékos mozgására. Fejezetenként más: hópehely a
+   szentélyben, parázs a hamuban, csillagpor a kapunál, virágpor az erdőben.
+   ========================================================= */
+const AMBIENT_THEME = {
+  ruins:  { fog:'200,205,215', fogA:0.07, mote:'#c9ccd4', moteA:0.35, n:34, mode:'drift' },
+  forest: { fog:'150,200,140', fogA:0.08, mote:'#e2f5b0', moteA:0.45, n:40, mode:'float' },
+  farm:   { fog:'220,190,120', fogA:0.06, mote:'#f0d890', moteA:0.35, n:30, mode:'drift' },
+  kingdom:{ fog:'200,200,210', fogA:0.06, mote:'#e8e8f0', moteA:0.3,  n:28, mode:'drift' },
+  cave:   { fog:'80,140,180',  fogA:0.07, mote:'#8fe0ff', moteA:0.55, n:30, mode:'glint' },
+  ash:    { fog:'120,110,105', fogA:0.09, mote:'#ff9a4a', moteA:0.65, n:44, mode:'rise' },
+  frost:  { fog:'210,235,255', fogA:0.08, mote:'#ffffff', moteA:0.6,  n:52, mode:'fall' },
+  void:   { fog:'120,70,200',  fogA:0.09, mote:'#d7c2ff', moteA:0.55, n:46, mode:'spiral' },
+};
+function ensureAmbient(w,h){
+  const theme = (game && game.chapter && game.chapter.groundTheme) || 'ruins';
+  const A = VFX.ambient;
+  if(A.theme===theme && A.w===w && A.h===h) return;
+  A.theme=theme; A.w=w; A.h=h; A.motes=[]; A.fog=[];
+  const cfg = AMBIENT_THEME[theme]||AMBIENT_THEME.ruins;
+  for(let i=0;i<cfg.n;i++) A.motes.push(newMote(cfg,w,h,true));
+  for(let i=0;i<5;i++) A.fog.push({ x:Math.random()*w, y:Math.random()*h, s:(0.45+Math.random()*0.6)*Math.max(w,h)*0.55,
+    vx:(Math.random()-0.5)*0.25, vy:(Math.random()-0.5)*0.12, a:cfg.fogA*(0.6+Math.random()*0.8), ph:Math.random()*PI2 });
+}
+function newMote(cfg,w,h,anywhere){
+  let y = Math.random()*h;
+  if(!anywhere){ if(cfg.mode==='fall') y=-8; else if(cfg.mode==='rise') y=h+8; }
+  return { x:Math.random()*w, y, sz:0.8+Math.random()*(cfg.mode==='fall'?2.2:1.6), ph:Math.random()*PI2,
+    sp:0.3+Math.random()*0.7, a:cfg.moteA*(0.5+Math.random()*0.5) };
+}
+function drawAmbient(g,w,h,time,light){
+  ensureAmbient(w,h);
+  const A=VFX.ambient, cfg=AMBIENT_THEME[A.theme]||AMBIENT_THEME.ruins;
+  const p = game && game.player; const px = p ? (p.x-w/2) : 0, py = p ? (p.y-h/2) : 0;
+  const fs = fogSprite(cfg.fog);
+  g.save();
+  for(const f of A.fog){
+    f.x += f.vx + Math.sin(time/4000+f.ph)*0.08; f.y += f.vy;
+    if(f.x < -f.s) f.x = w+f.s; else if(f.x > w+f.s) f.x = -f.s;
+    if(f.y < -f.s) f.y = h+f.s; else if(f.y > h+f.s) f.y = -f.s;
+    g.globalAlpha = f.a*(0.75+0.25*Math.sin(time/2600+f.ph));
+    g.drawImage(fs.c, f.x - f.s - px*0.05, f.y - f.s*0.7 - py*0.05, f.s*2, f.s*1.4);
+  }
+  g.fillStyle = cfg.mote;
+  const step = light ? 2 : 1;
+  for(let i=0;i<A.motes.length;i+=step){
+    const m=A.motes[i];
+    let a = m.a;
+    if(cfg.mode==='drift'){ m.x += m.sp*0.25*Math.cos(m.ph+time/3000); m.y += m.sp*0.12*Math.sin(m.ph+time/2600); a*=0.6+0.4*Math.sin(time/700+m.ph); }
+    else if(cfg.mode==='float'){ m.y -= m.sp*0.15; m.x += Math.sin(time/900+m.ph)*0.3; a*=0.6+0.4*Math.sin(time/600+m.ph); }
+    else if(cfg.mode==='fall'){ m.y += m.sp*0.7; m.x += Math.sin(time/700+m.ph)*0.4; }
+    else if(cfg.mode==='rise'){ m.y -= m.sp*0.55; m.x += Math.sin(time/500+m.ph)*0.35; a*=0.4+0.6*Math.abs(Math.sin(time/230+m.ph)); }
+    else if(cfg.mode==='glint'){ const s=Math.sin(time/900+m.ph); a*=Math.max(0,s)*Math.max(0,s)*Math.max(0,s); }
+    else if(cfg.mode==='spiral'){ const ang=time/9000+m.ph; m.x += Math.cos(ang)*0.25; m.y += Math.sin(ang)*0.25; a*=0.5+0.5*Math.sin(time/800+m.ph*3); }
+    if(m.x<-10) m.x=w+10; else if(m.x>w+10) m.x=-10;
+    if(m.y<-10) m.y=h+10; else if(m.y>h+10) m.y=-10;
+    g.globalAlpha = a;
+    g.beginPath(); g.arc(m.x - px*0.03, m.y - py*0.03, m.sz, 0, PI2); g.fill();
+  }
+  g.restore();
+}
+
+/* =========================================================
+   VFX RAJZOLÓK — a draw() hívja őket a megfelelő rétegben
+   ========================================================= */
+function drawPuffs(g){
+  if(!VFX.puffs.length) return;
+  for(const pf of VFX.puffs){
+    g.globalAlpha = clamp(pf.life/pf.maxLife,0,1)*0.42;
+    g.beginPath(); g.arc(pf.x,pf.y,pf.r,0,PI2); g.fillStyle=pf.color; g.fill();
+  }
+  g.globalAlpha = 1;
+}
+function drawDebris(g){
+  if(!VFX.debris.length) return;
+  for(const db of VFX.debris){
+    const a = clamp((db.life-db.t)/14, 0, 1);
+    for(const pc of db.pieces){
+      const x = db.x+pc.dx, y = db.y+pc.dy;
+      // talaj-árnyék a darab alatt (a magasság szerint távolodik)
+      g.globalAlpha = a*0.3; g.fillStyle='#000';
+      g.beginPath(); g.ellipse(x+pc.z*0.25, y+pc.sz*0.3, pc.sz*0.8, pc.sz*0.35, 0,0,PI2); g.fill();
+      g.globalAlpha = a; g.fillStyle = db.color;
+      g.save(); g.translate(x, y-pc.z); g.rotate(pc.rot);
+      if(db.shape==='blob'){ g.beginPath(); g.ellipse(0,0,pc.sz,pc.sz*0.7,0,0,PI2); g.fill(); }
+      else { g.beginPath(); for(let i=0;i<pc.sides;i++){ const an=i/pc.sides*PI2; const rr2=pc.sz*(i%2?0.7:1); i?g.lineTo(Math.cos(an)*rr2,Math.sin(an)*rr2):g.moveTo(Math.cos(an)*rr2,Math.sin(an)*rr2); } g.closePath(); g.fill();
+        g.fillStyle='rgba(255,255,255,0.25)'; g.beginPath(); g.arc(-pc.sz*0.25,-pc.sz*0.25,pc.sz*0.3,0,PI2); g.fill(); }
+      g.restore();
+    }
+  }
+  g.globalAlpha = 1;
+}
+function drawRings(g){
+  if(!VFX.rings.length) return;
+  for(const r of VFX.rings){
+    const k = 1 - r.life/r.maxLife;          // 0→1
+    const ease = 1 - Math.pow(1-k, 3);
+    const rad = r.maxR*ease;
+    g.globalAlpha = (1-k)*(r.fill?0.35:0.9);
+    g.beginPath(); g.arc(r.x,r.y,rad,0,PI2);
+    if(r.fill){ g.fillStyle=r.color; g.fill(); }
+    else { g.lineWidth = r.width*(1-k*0.6); g.strokeStyle=r.color; g.stroke(); }
+  }
+  g.globalAlpha = 1;
+}
+function drawDeaths(g, p){
+  if(!VFX.deaths.length) return;
+  for(const d of VFX.deaths){
+    const k = d.t/d.life, a = 1-k;
+    const sp = enemySprite({type:d.type, r:d.r, isChild:d.isChild}, 'n');
+    g.save(); g.translate(d.x,d.y); g.rotate(d.face);
+    if(d.kind==='tank'){         // összerogy: lelapul és elsötétül
+      g.globalAlpha = a*0.9; g.scale(1+k*0.35, Math.max(0.08, 1-k*1.1));
+      g.drawImage(sp.c, -sp.S, -sp.S, sp.S*2, sp.S*2);
+      g.globalAlpha = a*0.6*k; g.fillStyle='#000'; g.beginPath(); g.arc(0,0,d.r*1.1,0,PI2); g.fill();
+    } else if(d.kind==='bomber'){ // felfújódik és eltűnik a villanásban
+      g.globalAlpha = a; const s=1+k*1.6; g.scale(s,s);
+      g.drawImage(sp.c, -sp.S, -sp.S, sp.S*2, sp.S*2);
+      g.globalCompositeOperation='lighter'; g.globalAlpha=a*0.8; g.fillStyle='#ffb347'; g.beginPath(); g.arc(0,0,d.r*1.2,0,PI2); g.fill();
+    } else if(d.kind==='scout'){  // előre kicsúszik és elnyúlva szertefoszlik
+      g.globalAlpha = a*0.8; g.translate(k*d.r*2.2, 0); g.scale(1+k*1.4, Math.max(0.1,1-k));
+      g.drawImage(sp.c, -sp.S, -sp.S, sp.S*2, sp.S*2);
+    } else if(d.kind==='medic'){  // felemelkedik és halványul, zöld kereszt-fénnyel
+      g.globalAlpha = a*0.85; g.translate(0,-k*d.r*1.6); g.scale(1-k*0.3, 1-k*0.3);
+      g.drawImage(sp.c, -sp.S, -sp.S, sp.S*2, sp.S*2);
+      g.globalCompositeOperation='lighter'; g.globalAlpha=a*0.5; g.fillStyle='#8affc1';
+      g.fillRect(-d.r*0.15,-d.r*0.6,d.r*0.3,d.r*1.2); g.fillRect(-d.r*0.6,-d.r*0.15,d.r*1.2,d.r*0.3);
+    } else if(d.kind==='swarmling'){ // szétfröccsen
+      g.globalAlpha = a*0.8; g.scale(1+k*0.8, Math.max(0.1,1-k*0.9));
+      g.drawImage(sp.c, -sp.S, -sp.S, sp.S*2, sp.S*2);
+    } else if(d.kind==='turret'){  // megbillen és füstöl
+      g.globalAlpha = a; g.rotate(k*0.5); g.scale(1, 1-k*0.35);
+      g.drawImage(sp.c, -sp.S, -sp.S, sp.S*2, sp.S*2);
+    } else {                       // általános: hátrabillen, zsugorodik, fakul
+      g.globalAlpha = a*0.9; g.translate(-k*d.r*0.6,0); g.rotate(k*0.6); g.scale(Math.max(0.1,1-k*0.7), Math.max(0.1,1-k*0.9));
+      g.drawImage(sp.c, -sp.S, -sp.S, sp.S*2, sp.S*2);
+    }
+    g.restore();
+  }
+  g.globalAlpha = 1; g.globalCompositeOperation='source-over';
+}
+/* képernyő-koordinátás rétegek: villanás + kromatikus perem */
+function drawScreenFx(g,w,h){
+  for(const f of VFX.flashes){
+    g.globalAlpha = f.alpha * (f.life/f.maxLife);
+    g.fillStyle = f.color; g.fillRect(0,0,w,h);
+  }
+  g.globalAlpha = 1;
+  if(VFX.chroma>0.02){
+    const c = VFX.chroma, off = 6+c*10, rad0 = Math.min(w,h)*0.28, rad1 = Math.max(w,h)*0.72;
+    g.save(); g.globalCompositeOperation='lighter';
+    const g1 = g.createRadialGradient(w/2-off,h/2,rad0, w/2-off,h/2,rad1); g1.addColorStop(0,'rgba(110,231,255,0)'); g1.addColorStop(1,`rgba(110,231,255,${0.28*c})`);
+    g.fillStyle=g1; g.fillRect(0,0,w,h);
+    const g2 = g.createRadialGradient(w/2+off,h/2,rad0, w/2+off,h/2,rad1); g2.addColorStop(0,'rgba(255,60,90,0)'); g2.addColorStop(1,`rgba(255,60,90,${0.28*c})`);
+    g.fillStyle=g2; g.fillRect(0,0,w,h);
+    g.restore();
+  }
+}
+/* egyszerű, olcsó "villám" — 4 szegmensű, képkockánként véletlenszerűen tört vonal */
+function drawBolt(g, x1,y1,x2,y2, col, width){
+  const dx=x2-x1, dy=y2-y1, L=Math.hypot(dx,dy)||1, nx=-dy/L, ny=dx/L;
+  g.strokeStyle=col; g.lineWidth=width; g.lineCap='round'; g.beginPath(); g.moveTo(x1,y1);
+  for(let i=1;i<5;i++){ const t=i/5, j=(Math.random()-0.5)*L*0.16; g.lineTo(x1+dx*t+nx*j, y1+dy*t+ny*j); }
+  g.lineTo(x2,y2); g.stroke();
+}
+
+/* =========================================================
+   AKADÁLYOK ÉS PÁLYA-KELLÉKEK (v17). Helyszín szerinti téma (a fenyves köve
+   mohás, a bánya sziklája érccsillámos, a szentély tömbje jég, a kapué
+   obszidián), 2.5D-s kiemelés oldallappal és vetett árnyékkal, valamint
+   törés-vizuál a rombolhatókon. A statikus akadályok egyszer, egy külön
+   rétegre sülnek ki (getObstacleLayer), utána képkockánként egy drawImage.
+   ========================================================= */
+const OBST_THEME = {
+  ruins:   { top:'#5f6676', top2:'#3e4453', side:'#252932', line:'rgba(0,0,0,0.32)', barrel:'wood',   wall:'concrete' },
+  kingdom: { top:'#9a9ca8', top2:'#6b6e7a', side:'#3d404a', line:'rgba(0,0,0,0.35)', barrel:'wood',   wall:'block' },
+  cave:    { top:'#4e5a6a', top2:'#2f3844', side:'#171d24', line:'rgba(0,0,0,0.3)',  barrel:'urn',    wall:'boulder' },
+  ash:     { top:'#4a3f42', top2:'#2a2226', side:'#140f13', line:'rgba(0,0,0,0.35)', barrel:'drum',   wall:'charred' },
+  frost:   { top:'#c6e6f6', top2:'#7fb4d0', side:'#3f7292', line:'rgba(255,255,255,0.35)', barrel:'icebarrel', wall:'ice' },
+  forest:  { top:'#66745f', top2:'#3f4a3a', side:'#232a20', line:'rgba(0,0,0,0.3)',  barrel:'wood',   wall:'mossy' },
+  farm:    { top:'#9a7444', top2:'#6a4c2a', side:'#3a2916', line:'rgba(0,0,0,0.3)',  barrel:'wood',   wall:'crate' },
+  void:    { top:'#3a2a52', top2:'#1e1530', side:'#0b0712', line:'rgba(190,150,255,0.35)', barrel:'urn', wall:'obsidian' },
+};
+function obstTheme(){ return (game && game.chapter && game.chapter.groundTheme) || 'ruins'; }
+// determinisztikus "véletlen" a pozícióból — a szikla formája nem villódzik újrarajzoláskor
+function seedRand(o){ let s = Math.floor((o.nx!==undefined?o.nx*1000:o.x)*7919 + (o.ny!==undefined?o.ny*1000:o.y)*104729) | 0; return ()=>{ s = (s*1103515245 + 12345) & 0x7fffffff; return s/0x7fffffff; }; }
+function obstacleTopPath(g,o,wallStyle){
+  if(o.destructible){ rr(g,-o.r,-o.r,o.r*2,o.r*2,o.r*0.25); return; }
+  if(o.kind==='wall'){
+    if(wallStyle==='boulder' || wallStyle==='mossy'){   // szabálytalan szikla
+      const rnd = seedRand(o); g.beginPath();
+      for(let i=0;i<9;i++){ const a=i/9*PI2, rad=o.r*(0.82+rnd()*0.22); const px=Math.cos(a)*rad, py=Math.sin(a)*rad*0.82; i?g.lineTo(px,py):g.moveTo(px,py); }
+      g.closePath(); return;
+    }
+    if(wallStyle==='obsidian'){ g.beginPath(); for(let i=0;i<6;i++){ const a=i/6*PI2+Math.PI/6; const px=Math.cos(a)*o.r, py=Math.sin(a)*o.r*0.8; i?g.lineTo(px,py):g.moveTo(px,py); } g.closePath(); return; }
+    rr(g,-o.r,-o.r*0.68,o.r*2,o.r*1.36,o.r*0.12); return;
+  }
+  if(o.kind==='haybale'){ g.beginPath(); g.ellipse(0,0,o.r,o.r*0.82,0,0,PI2); return; }
+  g.beginPath(); g.arc(0,0,o.r,0,PI2);
+}
+function obstacleHeight(o){ return o.kind==='wall' ? o.r*0.5 : (o.destructible ? o.r*0.42 : o.r*0.38); }
+function drawObstacleShadow(g,o,theme){
+  const T = OBST_THEME[theme]||OBST_THEME.ruins;
+  g.save(); g.translate(o.x,o.y);
+  if(o.kind==='pine'){ g.beginPath(); g.ellipse(o.r*0.5, o.r*0.7, o.r*1.05, o.r*0.45, 0,0,PI2); }
+  else if(o.kind==='bush'){ g.beginPath(); g.ellipse(o.r*0.3, o.r*0.4, o.r*0.98, o.r*0.55, 0,0,PI2); }
+  else { const H=obstacleHeight(o); g.translate(H*LIGHT.sx*1.5+H*0.25, H*LIGHT.sy*1.5+H*0.25); obstacleTopPath(g,o,T.wall); }
+  g.fillStyle='rgba(0,0,0,0.42)'; g.shadowColor='rgba(0,0,0,0.55)'; g.shadowBlur=10; g.fill(); g.restore();
+}
+/* 2.5D kiemelés: az oldallap a felső lapból lefelé "kihúzva", lépésenként */
+function extrudeTop(g,o,H,side,wallStyle){
+  g.fillStyle=side;
+  for(let i=H;i>0;i-=2){ g.save(); g.translate(0,i); obstacleTopPath(g,o,wallStyle); g.fill(); g.restore(); }
+  g.save(); g.translate(0,H*0.5); obstacleTopPath(g,o,wallStyle); g.fillStyle='rgba(0,0,0,0.25)'; g.fill(); g.restore();
+}
+function topGradient(g,o,c1,c2){
+  const gr = g.createLinearGradient(-o.r*0.9,-o.r*0.9,o.r*0.9,o.r*0.9); gr.addColorStop(0,c1); gr.addColorStop(1,c2); return gr;
+}
+function drawWallBlock(g,o,T,theme){
+  const H=obstacleHeight(o), r=o.r, st=T.wall;
+  extrudeTop(g,o,H,T.side,st);
+  obstacleTopPath(g,o,st); g.fillStyle=topGradient(g,o,T.top,T.top2); g.fill();
+  g.lineWidth=1.5; g.strokeStyle='rgba(0,0,0,0.45)'; g.stroke();
+  g.save(); obstacleTopPath(g,o,st); g.clip();
+  // fény-perem a bal-felső élen
+  g.save(); g.translate(r*0.08,r*0.08); obstacleTopPath(g,o,st); g.lineWidth=r*0.12; g.strokeStyle='rgba(255,255,255,0.22)'; g.stroke(); g.restore();
+  const rnd = seedRand(o);
+  if(st==='concrete'){
+    g.strokeStyle=T.line; g.lineWidth=1;
+    for(let ry=-r*0.5; ry<r*0.65; ry+=r*0.34){ g.beginPath(); g.moveTo(-r,ry); g.lineTo(r,ry); g.stroke(); }
+    g.strokeStyle='rgba(0,0,0,0.45)'; g.lineWidth=1.2; g.beginPath(); g.moveTo(-r*0.3,-r*0.68); g.lineTo(-r*0.1,-r*0.2); g.lineTo(-r*0.35,r*0.3); g.lineTo(-r*0.15,r*0.68); g.stroke();
+    g.strokeStyle='rgba(190,110,60,0.6)'; g.lineWidth=1.5; g.beginPath(); g.moveTo(r*0.55,-r*0.68); g.lineTo(r*0.62,-r*0.2); g.stroke();
+    g.fillStyle='rgba(0,0,0,0.18)'; for(let i=0;i<4;i++){ g.beginPath(); g.arc((rnd()-0.5)*r*1.6,(rnd()-0.5)*r*1.1,r*0.08+rnd()*r*0.08,0,PI2); g.fill(); }
+  } else if(st==='block'){
+    g.strokeStyle=T.line; g.lineWidth=1.6;
+    g.beginPath(); g.moveTo(-r,0); g.lineTo(r,0); g.moveTo(-r*0.3,-r*0.68); g.lineTo(-r*0.3,0); g.moveTo(r*0.35,0); g.lineTo(r*0.35,r*0.68); g.stroke();
+    g.fillStyle='rgba(255,255,255,0.06)'; g.fillRect(-r,-r*0.68,r*2,r*0.3);
+  } else if(st==='boulder'){
+    g.fillStyle='rgba(0,0,0,0.22)'; for(let i=0;i<3;i++){ g.beginPath(); g.ellipse((rnd()-0.5)*r*1.2,(rnd()-0.5)*r*0.9,r*0.22,r*0.14,rnd()*3,0,PI2); g.fill(); }
+    g.fillStyle='#8fe0ff'; g.shadowColor='#8fe0ff'; g.shadowBlur=6; for(let i=0;i<4;i++){ g.beginPath(); g.arc((rnd()-0.5)*r*1.3,(rnd()-0.5)*r*0.9,1.2+rnd()*1.2,0,PI2); g.fill(); } g.shadowBlur=0;
+  } else if(st==='charred'){
+    g.strokeStyle='rgba(255,140,50,0.75)'; g.shadowColor='#ff8c3c'; g.shadowBlur=6; g.lineWidth=1.3;
+    g.beginPath(); g.moveTo(-r*0.7,-r*0.3); g.lineTo(-r*0.2,-r*0.1); g.lineTo(-r*0.35,r*0.35); g.moveTo(r*0.2,-r*0.6); g.lineTo(r*0.4,r*0.1); g.lineTo(r*0.75,r*0.3); g.stroke(); g.shadowBlur=0;
+    g.fillStyle='rgba(0,0,0,0.3)'; for(let i=0;i<5;i++){ g.beginPath(); g.arc((rnd()-0.5)*r*1.7,(rnd()-0.5)*r*1.2,r*0.06+rnd()*r*0.1,0,PI2); g.fill(); }
+  } else if(st==='ice'){
+    g.strokeStyle='rgba(255,255,255,0.55)'; g.lineWidth=1.2;
+    g.beginPath(); g.moveTo(-r*0.6,-r*0.5); g.lineTo(-r*0.2,0); g.lineTo(r*0.3,-r*0.2); g.lineTo(r*0.7,r*0.4); g.moveTo(-r*0.2,0); g.lineTo(-r*0.4,r*0.55); g.stroke();
+    const gl = g.createLinearGradient(-r,-r,r*0.4,r*0.2); gl.addColorStop(0,'rgba(255,255,255,0.45)'); gl.addColorStop(1,'rgba(255,255,255,0)');
+    g.fillStyle=gl; g.fillRect(-r,-r,r*2,r*2);
+  } else if(st==='mossy'){
+    g.fillStyle='rgba(95,150,80,0.75)'; for(let i=0;i<4;i++){ g.beginPath(); g.ellipse((rnd()-0.5)*r*1.3,(rnd()-0.5)*r*0.9,r*0.25+rnd()*r*0.15,r*0.14+rnd()*r*0.1,rnd()*3,0,PI2); g.fill(); }
+    g.fillStyle='rgba(0,0,0,0.2)'; g.beginPath(); g.ellipse(r*0.3,r*0.35,r*0.3,r*0.16,0.4,0,PI2); g.fill();
+  } else if(st==='crate'){
+    g.strokeStyle=T.line; g.lineWidth=1.4; for(let ry=-r*0.68; ry<r*0.68; ry+=r*0.34){ g.beginPath(); g.moveTo(-r,ry); g.lineTo(r,ry); g.stroke(); }
+    g.strokeStyle='rgba(255,220,160,0.25)'; g.lineWidth=1; g.beginPath(); g.moveTo(-r*0.9,-r*0.6); g.lineTo(r*0.9,r*0.6); g.moveTo(r*0.9,-r*0.6); g.lineTo(-r*0.9,r*0.6); g.stroke();
+    g.fillStyle='#c9cbd0'; for(const [x,y] of [[-0.85,-0.55],[0.85,-0.55],[-0.85,0.55],[0.85,0.55]]){ g.beginPath(); g.arc(x*r,y*r,r*0.05,0,PI2); g.fill(); }
+  } else if(st==='obsidian'){
+    g.strokeStyle='rgba(200,160,255,0.45)'; g.lineWidth=1.2;
+    g.beginPath(); g.moveTo(0,0); for(let i=0;i<6;i++){ const a=i/6*PI2+Math.PI/6; g.moveTo(0,0); g.lineTo(Math.cos(a)*r,Math.sin(a)*r*0.8); } g.stroke();
+    g.fillStyle='#c9a6ff'; g.shadowColor='#c9a6ff'; g.shadowBlur=8; g.beginPath(); g.arc(0,0,r*0.1,0,PI2); g.fill(); g.shadowBlur=0;
+  }
+  g.restore();
+  if(st==='obsidian'){ g.strokeStyle='rgba(190,150,255,0.7)'; g.lineWidth=1.5; g.shadowColor='#c9a6ff'; g.shadowBlur=10; obstacleTopPath(g,o,st); g.stroke(); g.shadowBlur=0; }
+  if(st==='ice'){ g.strokeStyle='rgba(255,255,255,0.7)'; g.lineWidth=1.2; obstacleTopPath(g,o,st); g.stroke(); }
+}
+function drawPropBarrel(g,r,style){
+  const H=r*0.38;
+  const side = style==='drum' ? '#3a2a28' : (style==='urn' ? '#2a2f38' : '#3a2616');
+  for(let i=H;i>0;i-=2){ g.beginPath(); g.arc(0,i,r,0,PI2); g.fillStyle=side; g.fill(); }
+  const gr = g.createRadialGradient(-r*0.4,-r*0.4,r*0.1,0,0,r*1.2);
+  if(style==='drum'){ gr.addColorStop(0,'#8a6a66'); gr.addColorStop(0.6,'#5a3e3c'); gr.addColorStop(1,'#2e1e1e'); }
+  else if(style==='urn'){ gr.addColorStop(0,'#7d8794'); gr.addColorStop(0.6,'#4d5663'); gr.addColorStop(1,'#242a33'); }
+  else if(style==='icebarrel'){ gr.addColorStop(0,'#a8c8dc'); gr.addColorStop(0.6,'#6f8a9c'); gr.addColorStop(1,'#3a4a58'); }
+  else { gr.addColorStop(0,'#b08652'); gr.addColorStop(0.6,'#7d5a33'); gr.addColorStop(1,'#3f2c18'); }
+  g.beginPath(); g.arc(0,0,r,0,PI2); g.fillStyle=gr; g.fill(); g.lineWidth=1.5; g.strokeStyle='rgba(0,0,0,0.5)'; g.stroke();
+  if(style==='urn'){ g.strokeStyle='rgba(0,0,0,0.4)'; g.lineWidth=r*0.16; g.beginPath(); g.arc(0,0,r*0.65,0,PI2); g.stroke();
+    g.fillStyle='#0f1318'; g.beginPath(); g.arc(0,0,r*0.42,0,PI2); g.fill(); }
+  else { const hoop = style==='drum' ? '#8a7a70' : '#8c95a0';
+    g.strokeStyle=hoop; g.lineWidth=r*0.12; g.beginPath(); g.arc(0,0,r*0.72,0,PI2); g.stroke(); g.beginPath(); g.arc(0,0,r*0.34,0,PI2); g.stroke();
+    g.strokeStyle='rgba(0,0,0,0.35)'; g.lineWidth=1; for(let i=0;i<8;i++){ const a=i/8*PI2; g.beginPath(); g.moveTo(Math.cos(a)*r*0.36,Math.sin(a)*r*0.36); g.lineTo(Math.cos(a)*r*0.7,Math.sin(a)*r*0.7); g.stroke(); } }
+  if(style==='icebarrel'){ g.fillStyle='rgba(230,245,255,0.55)'; g.beginPath(); g.ellipse(-r*0.2,-r*0.3,r*0.5,r*0.3,-0.5,0,PI2); g.fill(); }
+  if(style==='drum'){ g.fillStyle='rgba(150,80,40,0.5)'; g.beginPath(); g.ellipse(r*0.3,r*0.2,r*0.3,r*0.18,0.6,0,PI2); g.fill(); }
+  g.fillStyle='rgba(255,255,255,0.18)'; g.beginPath(); g.ellipse(-r*0.35,-r*0.35,r*0.28,r*0.16,-0.7,0,PI2); g.fill();
+}
+function drawPine(g,r,theme){
+  const snow = theme==='frost';
+  g.fillStyle='#2e1e10'; g.beginPath(); g.ellipse(r*0.05,r*0.5,r*0.22,r*0.14,0,0,PI2); g.fill();
+  g.fillStyle='#4a3420'; g.fillRect(-r*0.1,r*0.05,r*0.2,r*0.6);
+  const tiers=[[1.0,0],[0.78,-0.2],[0.55,-0.4],[0.32,-0.58]];
+  tiers.forEach(([s,off],i)=>{
+    const y0 = -r*1.15 + off*r*0.6, y1 = r*0.2 + off*r*0.9;
+    const gr = g.createLinearGradient(-r*0.75*s,0,r*0.75*s,0); gr.addColorStop(0,'#2c6b3c'); gr.addColorStop(0.5,'#1f4a2c'); gr.addColorStop(1,'#12301b');
+    g.fillStyle=gr; g.beginPath(); g.moveTo(0,y0);
+    for(let k=1;k<=4;k++){ const t=k/4; g.lineTo(r*0.75*s*t, y0+(y1-y0)*t - (k%2?r*0.05:0)); }
+    for(let k=3;k>=0;k--){ const t=k/4; g.lineTo(-r*0.75*s*t, y0+(y1-y0)*t - (k%2?r*0.05:0)); }
+    g.closePath(); g.fill();
+    g.strokeStyle='rgba(0,0,0,0.3)'; g.lineWidth=1; g.stroke();
+    if(snow){ g.fillStyle='rgba(235,248,255,0.85)'; g.beginPath(); g.moveTo(0,y0); g.lineTo(r*0.35*s,y0+(y1-y0)*0.45); g.lineTo(-r*0.35*s,y0+(y1-y0)*0.45); g.closePath(); g.fill(); }
+  });
+  g.fillStyle='rgba(120,200,120,0.18)'; g.beginPath(); g.moveTo(0,-r*1.5); g.lineTo(-r*0.5,r*0.1); g.lineTo(0,r*0.1); g.closePath(); g.fill();
+}
+function drawBush(g,r,theme){
+  const cold = theme==='frost';
+  const blobs=[[0,0.05,1],[-0.45,0.3,0.7],[0.45,0.25,0.7],[-0.1,-0.4,0.62],[0.3,-0.3,0.55]];
+  blobs.forEach(([dx,dy,rf])=>{
+    const gr=g.createRadialGradient(dx*r-rf*r*0.3,dy*r-rf*r*0.3,r*0.05,dx*r,dy*r,rf*r*0.78);
+    gr.addColorStop(0,cold?'#7aa79a':'#4f8f52'); gr.addColorStop(0.7,cold?'#3f6a63':'#2f5c34'); gr.addColorStop(1,cold?'#243c3a':'#1d3a22');
+    g.fillStyle=gr; g.beginPath(); g.arc(dx*r,dy*r,rf*r*0.78,0,PI2); g.fill();
+  });
+  g.fillStyle=cold?'rgba(220,245,255,0.5)':'rgba(170,230,120,0.35)';
+  for(const [x,y] of [[-0.3,-0.2],[0.15,-0.45],[0.4,0.05],[-0.05,0.3]]){ g.beginPath(); g.arc(x*r,y*r,r*0.07,0,PI2); g.fill(); }
+}
+function drawHaybale(g,r){
+  const H=r*0.32;
+  for(let i=H;i>0;i-=2){ g.beginPath(); g.ellipse(0,i,r,r*0.82,0,0,PI2); g.fillStyle='#6e5220'; g.fill(); }
+  const gr=g.createRadialGradient(-r*0.35,-r*0.35,r*0.1,0,0,r*1.1); gr.addColorStop(0,'#e0c068'); gr.addColorStop(0.6,'#c9a24a'); gr.addColorStop(1,'#8a6a2a');
+  g.beginPath(); g.ellipse(0,0,r,r*0.82,0,0,PI2); g.fillStyle=gr; g.fill(); g.lineWidth=1.5; g.strokeStyle='rgba(0,0,0,0.4)'; g.stroke();
+  g.strokeStyle='#8a6a2a'; g.lineWidth=r*0.08;
+  g.beginPath(); g.ellipse(0,0,r*0.62,r*0.5,0,0,PI2); g.stroke(); g.beginPath(); g.ellipse(0,0,r*0.3,r*0.24,0,0,PI2); g.stroke();
+  g.strokeStyle='rgba(255,240,180,0.35)'; g.lineWidth=1; for(let i=0;i<12;i++){ const a=i/12*PI2; g.beginPath(); g.moveTo(Math.cos(a)*r*0.3,Math.sin(a)*r*0.24); g.lineTo(Math.cos(a)*r*0.95,Math.sin(a)*r*0.78); g.stroke(); }
+}
+/* rombolható fedezék: deszka-torlasz, ahogy fogy az élete, repedések és szilánkok jelennek meg */
+function drawCover(g,o,hpFrac){
+  const r=o.r, H=obstacleHeight(o), base=o.dcol||'#6b563a';
+  extrudeTop(g,o,H,shade(base,-0.55),'');
+  rr(g,-r,-r,r*2,r*2,r*0.25); g.fillStyle=topGradient(g,o,shade(base,0.2),shade(base,-0.25)); g.fill();
+  g.lineWidth=2; g.strokeStyle=shade(base,-0.5); g.stroke();
+  g.save(); rr(g,-r,-r,r*2,r*2,r*0.25); g.clip();
+  g.strokeStyle=shade(base,-0.55); g.lineWidth=1.5;
+  g.beginPath(); g.moveTo(-r,-r*0.2); g.lineTo(r,-r*0.2); g.moveTo(-r,r*0.35); g.lineTo(r,r*0.35); g.stroke();
+  g.fillStyle='rgba(255,255,255,0.12)'; g.fillRect(-r,-r,r*2,r*0.25);
+  g.fillStyle='#c9cbd0'; for(const [x,y] of [[-0.8,-0.55],[0.8,-0.55],[-0.8,0.7],[0.8,0.7]]){ g.beginPath(); g.arc(x*r,y*r,r*0.06,0,PI2); g.fill(); }
+  const dmg = 1-hpFrac;
+  if(dmg>0.15){ g.strokeStyle='rgba(0,0,0,0.6)'; g.lineWidth=1.6; g.beginPath(); g.moveTo(-r*0.3,-r*0.9); g.lineTo(r*0.05,-r*0.2); g.lineTo(-r*0.25,r*0.4); g.lineTo(r*0.1,r*0.95); g.stroke(); }
+  if(dmg>0.45){ g.beginPath(); g.moveTo(r*0.7,-r*0.9); g.lineTo(r*0.35,-r*0.3); g.lineTo(r*0.75,r*0.2); g.moveTo(-r*0.9,r*0.1); g.lineTo(-r*0.45,r*0.25); g.stroke();
+    g.fillStyle='rgba(0,0,0,0.35)'; g.beginPath(); g.moveTo(r*0.6,r*0.5); g.lineTo(r*1,r*0.3); g.lineTo(r*1,r*1); g.closePath(); g.fill(); }
+  if(dmg>0.7){ g.fillStyle='rgba(0,0,0,0.45)'; g.beginPath(); g.moveTo(-r*1,-r*1); g.lineTo(-r*0.4,-r*1); g.lineTo(-r*1,-r*0.3); g.closePath(); g.fill();
+    g.beginPath(); g.arc(r*0.1,r*0.1,r*0.22,0,PI2); g.fill(); }
+  g.restore();
+}
+function drawObstacleBody(g,o,theme,hpFrac){
+  const T = OBST_THEME[theme]||OBST_THEME.ruins;
+  g.save(); g.translate(o.x,o.y);
+  if(o.kind==='pine') drawPine(g,o.r,theme);
+  else if(o.kind==='bush') drawBush(g,o.r,theme);
+  else if(o.kind==='haybale') drawHaybale(g,o.r);
+  else if(o.destructible) drawCover(g,o,hpFrac);
+  else if(o.kind==='barrel') drawPropBarrel(g,o.r,T.barrel);
+  else drawWallBlock(g,o,T,theme);
+  g.restore();
+}
+function getObstacleLayer(w,h){
+  const theme = obstTheme();
+  const key = w+'x'+h+'|'+theme+'|'+game.obstacles.length;
+  if(VFX.obstacleLayer && VFX.obstacleKey===key && VFX._obstRef===game.obstacles) return VFX.obstacleLayer;
+  const c = document.createElement('canvas'); c.width=w; c.height=h; const g=c.getContext('2d');
+  const statics = game.obstacles.filter(o=>!o.destructible);
+  statics.forEach(o=>drawObstacleShadow(g,o,theme));
+  statics.slice().sort((a,b)=>a.y-b.y).forEach(o=>drawObstacleBody(g,o,theme,1));
+  VFX.obstacleLayer=c; VFX.obstacleKey=key; VFX._obstRef=game.obstacles; return c;
+}
+/* robbanó hordó (interaktív pálya-elem): piros fémhordó, veszély-csík, lüktető parázs */
+function drawExplosiveBarrel(g,bar,t){
+  const r=bar.r, H=r*0.36;
+  g.save(); g.translate(bar.x,bar.y);
+  g.beginPath(); g.arc(H*LIGHT.sx*1.5+H*0.3, H*LIGHT.sy*1.5+H*0.3, r, 0, PI2); g.fillStyle='rgba(0,0,0,0.4)'; g.fill();
+  for(let i=H;i>0;i-=2){ g.beginPath(); g.arc(0,i,r,0,PI2); g.fillStyle='#4a1a14'; g.fill(); }
+  const gr=g.createRadialGradient(-r*0.4,-r*0.4,r*0.1,0,0,r*1.2); gr.addColorStop(0,'#e0665a'); gr.addColorStop(0.55,'#b8412e'); gr.addColorStop(1,'#5a1e16');
+  g.beginPath(); g.arc(0,0,r,0,PI2); g.fillStyle=gr; g.fill(); g.lineWidth=2; g.strokeStyle='#2a1410'; g.stroke();
+  g.save(); g.beginPath(); g.arc(0,0,r,0,PI2); g.clip();
+  g.fillStyle='#f0c040'; g.fillRect(-r,-r*0.3,r*2,r*0.2);
+  g.fillStyle='#1a0e0a'; for(let x=-r;x<r;x+=r*0.4){ g.beginPath(); g.moveTo(x,-r*0.3); g.lineTo(x+r*0.2,-r*0.3); g.lineTo(x+r*0.1,-r*0.1); g.lineTo(x-r*0.1,-r*0.1); g.closePath(); g.fill(); }
+  g.restore();
+  g.strokeStyle='rgba(0,0,0,0.4)'; g.lineWidth=r*0.1; g.beginPath(); g.arc(0,0,r*0.7,0,PI2); g.stroke();
+  g.fillStyle='#1a0e0a'; g.font=`bold ${Math.round(r)}px Trebuchet MS`; g.textAlign='center'; g.textBaseline='middle';
+  g.fillText('☢', 0, r*0.16);
+  g.fillStyle='rgba(255,255,255,0.2)'; g.beginPath(); g.ellipse(-r*0.35,-r*0.4,r*0.3,r*0.15,-0.7,0,PI2); g.fill();
+  const pulse=0.5+0.5*Math.sin(t/420); g.strokeStyle=`rgba(255,120,60,${0.25+0.35*pulse})`; g.lineWidth=2; g.beginPath(); g.arc(0,0,r+3+pulse*2,0,PI2); g.stroke();
+  g.restore();
+}
+/* rejtett láda: faláda fém sarkokkal, a benne rejlő zsákmány színével átitatva, lüktető kérdőjellel */
+function drawCrate(g,cr,t){
+  const r=cr.r, H=r*0.45, base = cr.loot==='heal'?'#3a6b4a':(cr.loot==='ult'?'#6b5a2a':'#5a4632');
+  g.save(); g.translate(cr.x,cr.y);
+  g.save(); g.translate(H*LIGHT.sx*1.5+H*0.3, H*LIGHT.sy*1.5+H*0.3); rr(g,-r,-r,r*2,r*2,r*0.2); g.fillStyle='rgba(0,0,0,0.4)'; g.fill(); g.restore();
+  for(let i=H;i>0;i-=2){ g.save(); g.translate(0,i); rr(g,-r,-r,r*2,r*2,r*0.2); g.fillStyle=shade(base,-0.55); g.fill(); g.restore(); }
+  rr(g,-r,-r,r*2,r*2,r*0.2); const gr=g.createLinearGradient(-r,-r,r,r); gr.addColorStop(0,shade(base,0.3)); gr.addColorStop(1,shade(base,-0.3)); g.fillStyle=gr; g.fill();
+  g.lineWidth=1.5; g.strokeStyle='#20160e'; g.stroke();
+  g.strokeStyle='rgba(255,255,255,0.22)'; g.lineWidth=1.2; g.beginPath(); g.moveTo(-r*0.9,-r*0.9); g.lineTo(r*0.9,r*0.9); g.moveTo(r*0.9,-r*0.9); g.lineTo(-r*0.9,r*0.9); g.stroke();
+  g.fillStyle='#8c95a0'; for(const [x,y] of [[-0.8,-0.8],[0.8,-0.8],[-0.8,0.8],[0.8,0.8]]){ rr(g,x*r-r*0.14,y*r-r*0.14,r*0.28,r*0.28,r*0.05); g.fill(); }
+  const pulse=0.6+0.4*Math.sin(t/300);
+  g.save(); g.shadowColor='#ffd166'; g.shadowBlur=8*pulse; g.fillStyle='#ffd166'; g.font=`bold ${Math.round(r*1.15)}px Trebuchet MS`; g.textAlign='center'; g.textBaseline='middle';
+  g.fillText('?',0,r*0.08); g.restore();
+  g.restore();
+}
+
 function eyeGlow(g, x, y, r, col){
   g.beginPath(); g.arc(x,y,r,0,PI2); g.fillStyle=col; g.shadowColor=col; g.shadowBlur=r*2.2; g.fill(); g.shadowBlur=0;
 }
@@ -3148,31 +3841,279 @@ function drawHeroAccent(g, cls, skinIdx, R, t){
   g.restore();
 }
 
-function drawPlayer(g, p){
-  const { skin } = heroSkinData(p.cls, p.skin);
-  const bodyCol = p.invuln>0 ? '#fff' : skin.col;
-  if(p.hidden){ g.save(); g.globalAlpha = 0.45; }
-  // fegyvercső (célzás irány jól látható)
-  withRot(g, p.x, p.y, p.facing, ()=>{
-    g.fillStyle='#20242e'; rr(g, p.r*0.3, -p.r*0.16, p.r*1.25, p.r*0.32, p.r*0.08); g.fill();
-    g.fillStyle='#3a4150'; rr(g, p.r*0.3, -p.r*0.16, p.r*0.55, p.r*0.32, p.r*0.08); g.fill();
-  });
-  // kinézet-kiegészítő (vállvért / köpeny / glória / stb.) a törzs mögött
-  withRot(g, p.x, p.y, p.facing, ()=> drawHeroAccent(g, p.cls, p.skin, p.r, Date.now()));
-  // törzs — hősönként EGYEDI sziluett, a választott kinézet palettájával
-  withRot(g, p.x, p.y, p.facing, ()=>{
-    drawHeroBodyPath(g, p.cls, p.r);
-    g.fillStyle = bodyCol;
-    g.shadowColor = skin.glow||skin.col; g.shadowBlur = p.surgeActive>0 ? 26 : 14; g.fill(); g.shadowBlur=0;
-    g.lineWidth=2; g.strokeStyle='rgba(255,255,255,0.85)'; g.stroke();
-    g.beginPath(); g.arc(-p.r*0.28,-p.r*0.28,p.r*0.5,0,PI2); g.fillStyle='rgba(255,255,255,0.12)'; g.fill();
-  });
-  // fej
-  drawPlayerHead(g, p.x, p.y, p.r*0.72, p.facing, p.head, skin.col);
+/* =========================================================
+   HŐS-FIGURA (v17) — végtagok, a testhez kötött fegyver, lépésciklus,
+   dőlés kanyarban, lélegzés álláskor, hátrarúgás lövéskor, torkolattűz,
+   rögzített fényirány szerinti árnyalás. A sziluett (drawHeroBodyPath)
+   és a kinézet-kiegészítő (drawHeroAccent) változatlanul ráépül.
+   A CLASS_VIS CSAK a rajz méretét szorozza — a hitbox (p.r) és a
+   mozgás érintetlen, a játékmenet nem változik.
+   ========================================================= */
+const CLASS_VIS = { tank:1.2, berserker:1.12, grandmaster:1.06, godlike:1.06, engineer:1.05, sealbearer:1.0,
+  support:0.98, mage:0.97, necromancer:0.98, hunter:0.95, sniper:0.92, assassin:0.86 };
+// a sziluett fél-szélessége (R-ben) — a lábak és a vállak ehhez igazodnak
+const CLASS_HW = { tank:1.05, sniper:0.42, berserker:1.0, mage:0.9, assassin:0.3, support:1.0, necromancer:1.0,
+  hunter:0.95, engineer:0.82, sealbearer:1.1, grandmaster:0.7, godlike:0.95 };
+const HERO_WEAPON = { tank:'shield', sniper:'sniper', berserker:'axe', mage:'staff', assassin:'daggers', support:'staff',
+  necromancer:'staff', hunter:'bow', engineer:'blaster', sealbearer:'staff', grandmaster:'sword', godlike:'orbs' };
+// hol fogja a hátsó (grip) és az elülső (fore) kéz az adott fegyvert (R-egységben, +x = előre)
+const WEAPON_HANDS = {
+  rifle:   { grip:[0.45,0.18], fore:[1.0,-0.02] },
+  sniper:  { grip:[0.45,0.2],  fore:[1.15,-0.02] },
+  shield:  { grip:[0.5,0.45],  fore:[0.62,-0.35] },
+  axe:     { grip:[0.35,0.3],  fore:[0.8,0.05] },
+  staff:   { grip:[0.3,0.3],   fore:[0.8,-0.05] },
+  daggers: { grip:[0.5,0.55],  fore:[0.5,-0.55] },
+  bow:     { grip:[0.9,0.0],   fore:[0.4,0.05] },
+  blaster: { grip:[0.45,0.2],  fore:[0.9,-0.05] },
+  sword:   { grip:[0.35,0.2],  fore:[0.55,0.05] },
+  orbs:    { grip:[0.7,0.5],   fore:[0.7,-0.5] },
+};
+function drawMuzzleFlash(g,x,y,r,core,glow){
+  g.save(); g.globalCompositeOperation='lighter';
+  g.fillStyle=glow; g.globalAlpha=0.75; g.beginPath();
+  for(let i=0;i<8;i++){ const a=i/8*PI2+(i%2?0.2:0); const rad=(i%2===0)?r:r*0.42; const px=x+Math.cos(a)*rad, py=y+Math.sin(a)*rad; i?g.lineTo(px,py):g.moveTo(px,py); }
+  g.closePath(); g.fill();
+  g.fillStyle=core; g.globalAlpha=0.95; g.beginPath(); g.arc(x,y,r*0.38,0,PI2); g.fill();
+  g.restore();
+}
+/* Fegyver a helyi (már elforgatott) térben: +x előre. rc = hátrarúgás 0..1, mz = torkolattűz-keret. */
+function drawHeroWeapon(g, kind, R, skin, rc, mz, t){
+  const dark='#1c2029', steel='#8a95a3', steelHi='#d5dde6', wood='#6b4a2e', woodHi='#8f6a44';
+  const gl = skin.glow||skin.accent, a0 = g.globalAlpha;
+  g.save(); g.translate(-rc*R*0.22, 0);
+  if(kind==='rifle' || kind==='sniper'){
+    const L = kind==='sniper' ? R*1.95 : R*1.45;
+    g.fillStyle=dark; rr(g, R*0.25,-R*0.15, L-R*0.25, R*0.3, R*0.06); g.fill();
+    g.fillStyle='#2f3542'; rr(g, R*0.25,-R*0.15, R*0.5, R*0.3, R*0.06); g.fill();
+    g.fillStyle=steel; rr(g, L-R*0.55,-R*0.07, R*0.6, R*0.14, R*0.04); g.fill();
+    g.fillStyle=dark; rr(g, R*0.6, R*0.1, R*0.22, R*0.3, R*0.04); g.fill();
+    if(kind==='sniper'){ g.fillStyle='#20242e'; rr(g, R*0.6,-R*0.32, R*0.55, R*0.16, R*0.06); g.fill();
+      g.fillStyle=gl; g.beginPath(); g.arc(R*1.15,-R*0.24,R*0.06,0,PI2); g.fill(); }
+    g.fillStyle=skin.accent; rr(g, R*0.9,-R*0.16, R*0.12, R*0.32, R*0.03); g.fill();
+    if(mz>0) drawMuzzleFlash(g, L+R*0.05, 0, R*(0.45+mz*0.1), '#fff7d6', gl);
+  } else if(kind==='blaster'){
+    g.fillStyle=dark; rr(g, R*0.3,-R*0.22, R*1.1, R*0.44, R*0.12); g.fill();
+    g.fillStyle='#2f3542'; rr(g, R*0.4,-R*0.14, R*0.6, R*0.28, R*0.08); g.fill();
+    g.strokeStyle=gl; g.lineWidth=R*0.05;
+    for(let i=0;i<3;i++){ g.globalAlpha=a0*(0.6+0.4*Math.sin(t/120+i)); g.beginPath(); g.arc(R*(0.65+i*0.22),0,R*0.2,-1.2,1.2); g.stroke(); }
+    g.globalAlpha=a0; g.fillStyle=steel; rr(g, R*1.3,-R*0.1, R*0.35, R*0.2, R*0.05); g.fill();
+    if(mz>0) drawMuzzleFlash(g, R*1.7, 0, R*(0.5+mz*0.1), '#e0ffff', gl);
+  } else if(kind==='axe'){
+    g.strokeStyle=wood; g.lineWidth=R*0.13; g.lineCap='round'; g.beginPath(); g.moveTo(R*0.15,R*0.35); g.lineTo(R*1.15,-R*0.1); g.stroke();
+    g.strokeStyle=woodHi; g.lineWidth=R*0.05; g.beginPath(); g.moveTo(R*0.2,R*0.3); g.lineTo(R*1.1,-R*0.1); g.stroke();
+    g.fillStyle=steel;
+    g.beginPath(); g.moveTo(R*1.1,-R*0.1); g.quadraticCurveTo(R*1.55,-R*0.55,R*1.05,-R*0.75); g.quadraticCurveTo(R*1.25,-R*0.35,R*0.95,-R*0.2); g.closePath(); g.fill();
+    g.beginPath(); g.moveTo(R*1.1,-R*0.1); g.quadraticCurveTo(R*1.55,R*0.35,R*1.05,R*0.55); g.quadraticCurveTo(R*1.25,R*0.15,R*0.95,0); g.closePath(); g.fill();
+    g.strokeStyle=skin.accent; g.lineWidth=R*0.05; g.beginPath(); g.moveTo(R*1.05,-R*0.75); g.quadraticCurveTo(R*1.55,-R*0.55,R*1.1,-R*0.1); g.quadraticCurveTo(R*1.55,R*0.35,R*1.05,R*0.55); g.stroke();
+    if(mz>0) drawMuzzleFlash(g, R*1.35, -R*0.1, R*(0.35+mz*0.08), '#fff', gl);
+  } else if(kind==='sword'){
+    const sg = g.createLinearGradient(0,-R*0.1,0,R*0.1); sg.addColorStop(0,steelHi); sg.addColorStop(0.5,steel); sg.addColorStop(1,'#5a6470');
+    g.fillStyle=sg; g.beginPath(); g.moveTo(R*0.55,-R*0.1); g.lineTo(R*1.75,-R*0.07); g.lineTo(R*1.95,0); g.lineTo(R*1.75,R*0.07); g.lineTo(R*0.55,R*0.1); g.closePath(); g.fill();
+    g.strokeStyle='rgba(255,255,255,0.7)'; g.lineWidth=R*0.03; g.beginPath(); g.moveTo(R*0.6,0); g.lineTo(R*1.8,0); g.stroke();
+    g.fillStyle=skin.accent; rr(g, R*0.45,-R*0.3, R*0.12, R*0.6, R*0.04); g.fill();
+    g.fillStyle=dark; rr(g, R*0.12,-R*0.07, R*0.34, R*0.14, R*0.04); g.fill();
+    g.fillStyle=gl; g.beginPath(); g.arc(R*0.1,0,R*0.08,0,PI2); g.fill();
+    if(mz>0) drawMuzzleFlash(g, R*1.9, 0, R*(0.35+mz*0.08), '#fff', gl);
+  } else if(kind==='staff'){
+    g.strokeStyle=wood; g.lineWidth=R*0.12; g.lineCap='round'; g.beginPath(); g.moveTo(-R*0.25,R*0.4); g.lineTo(R*1.35,-R*0.15); g.stroke();
+    g.strokeStyle=woodHi; g.lineWidth=R*0.04; g.beginPath(); g.moveTo(-R*0.2,R*0.36); g.lineTo(R*1.3,-R*0.15); g.stroke();
+    const pulse = 0.85+0.15*Math.sin(t/180);
+    g.strokeStyle=skin.accent; g.lineWidth=R*0.05; g.beginPath(); g.arc(R*1.45,-R*0.2,R*0.3,0.7,PI2-0.7); g.stroke();
+    g.save(); g.shadowColor=gl; g.shadowBlur=R*0.6*pulse; g.fillStyle=gl; g.beginPath(); g.arc(R*1.45,-R*0.2,R*0.2*pulse,0,PI2); g.fill(); g.restore();
+    g.fillStyle='rgba(255,255,255,0.8)'; g.beginPath(); g.arc(R*1.4,-R*0.26,R*0.07,0,PI2); g.fill();
+    if(mz>0) drawMuzzleFlash(g, R*1.45, -R*0.2, R*(0.4+mz*0.1), '#fff', gl);
+  } else if(kind==='daggers'){
+    for(const s of [-1,1]){
+      g.fillStyle=steel; g.beginPath(); g.moveTo(R*0.6,s*R*0.55-R*0.06); g.lineTo(R*1.35,s*R*0.5); g.lineTo(R*0.6,s*R*0.55+R*0.06); g.closePath(); g.fill();
+      g.fillStyle=dark; rr(g, R*0.36, s*R*0.55-R*0.06, R*0.24, R*0.12, R*0.03); g.fill();
+      g.strokeStyle=skin.accent; g.lineWidth=R*0.03; g.beginPath(); g.moveTo(R*0.62,s*R*0.55); g.lineTo(R*1.3,s*R*0.5); g.stroke();
+    }
+    if(mz>0){ drawMuzzleFlash(g, R*1.3, -R*0.5, R*(0.3+mz*0.06), '#fff', gl); drawMuzzleFlash(g, R*1.3, R*0.5, R*(0.3+mz*0.06), '#fff', gl); }
+  } else if(kind==='bow'){
+    g.strokeStyle=wood; g.lineWidth=R*0.11; g.lineCap='round'; g.beginPath(); g.moveTo(R*0.55,-R*0.85); g.quadraticCurveTo(R*1.35,0,R*0.55,R*0.85); g.stroke();
+    g.strokeStyle=woodHi; g.lineWidth=R*0.04; g.beginPath(); g.moveTo(R*0.57,-R*0.8); g.quadraticCurveTo(R*1.32,0,R*0.57,R*0.8); g.stroke();
+    const pull = rc*R*0.35;
+    g.strokeStyle='#e8ecf3'; g.lineWidth=R*0.03; g.beginPath(); g.moveTo(R*0.55,-R*0.85); g.lineTo(R*0.45-pull,0); g.lineTo(R*0.55,R*0.85); g.stroke();
+    g.strokeStyle=steel; g.lineWidth=R*0.05; g.beginPath(); g.moveTo(R*0.45-pull,0); g.lineTo(R*1.5-pull,0); g.stroke();
+    g.fillStyle=skin.accent; g.beginPath(); g.moveTo(R*1.55-pull,0); g.lineTo(R*1.32-pull,-R*0.09); g.lineTo(R*1.32-pull,R*0.09); g.closePath(); g.fill();
+    if(mz>0) drawMuzzleFlash(g, R*1.4, 0, R*(0.3+mz*0.06), '#fff', gl);
+  } else if(kind==='shield'){
+    g.strokeStyle=dark; g.lineWidth=R*0.12; g.lineCap='round'; g.beginPath(); g.moveTo(R*0.4,R*0.45); g.lineTo(R*1.0,R*0.55); g.stroke();
+    g.fillStyle=steel; g.beginPath(); g.arc(R*1.1,R*0.57,R*0.2,0,PI2); g.fill();
+    g.fillStyle=steelHi; for(let i=0;i<6;i++){ const a=i/6*PI2; g.beginPath(); g.arc(R*1.1+Math.cos(a)*R*0.2,R*0.57+Math.sin(a)*R*0.2,R*0.05,0,PI2); g.fill(); }
+    const sg = g.createLinearGradient(R*0.7,-R*0.8,R*1.1,R*0.8); sg.addColorStop(0,shade(skin.col,0.3)); sg.addColorStop(0.5,skin.col); sg.addColorStop(1,shade(skin.col,-0.4));
+    g.fillStyle=sg; rr(g, R*0.72,-R*0.85, R*0.34, R*1.7, R*0.14); g.fill();
+    g.lineWidth=R*0.06; g.strokeStyle=shade(skin.col,-0.55); g.stroke();
+    g.fillStyle=skin.accent; rr(g, R*0.82,-R*0.6, R*0.14, R*1.2, R*0.05); g.fill();
+    g.fillStyle=steelHi; for(const yy of [-0.65,0,0.65]){ g.beginPath(); g.arc(R*0.89,yy*R,R*0.045,0,PI2); g.fill(); }
+    if(mz>0) drawMuzzleFlash(g, R*1.15, -R*0.3, R*(0.35+mz*0.08), '#fff', gl);
+  } else if(kind==='orbs'){
+    const pulse=0.8+0.2*Math.sin(t/150);
+    for(const s of [-1,1]){
+      g.save(); g.shadowColor=gl; g.shadowBlur=R*0.7; g.fillStyle=gl; g.globalAlpha=a0*0.9; g.beginPath(); g.arc(R*0.85,s*R*0.5,R*0.17*pulse,0,PI2); g.fill(); g.restore();
+      g.fillStyle='#fff'; g.beginPath(); g.arc(R*0.85,s*R*0.5,R*0.06,0,PI2); g.fill();
+    }
+    if(mz>0) drawMuzzleFlash(g, R*1.2, 0, R*(0.45+mz*0.1), '#fff', gl);
+  }
+  g.restore();
+}
+/* Kinézetenként eltérő sziluett-részlet: köpeny (1,5), vállszegecs (2,5), heveder (3), kopott foltok (4), gallérfény (5).
+   A "back" réteg a törzs mögé, az "front" a törzsre kerül. */
+function drawHeroTrim(g, cls, skinIdx, R, skin, t, moveAmt, layer){
+  const s = skinIdx||0, accent=skin.accent, glow=skin.glow||skin.accent, a0=g.globalAlpha;
+  if(layer==='back'){
+    if(s===1 || s===5){
+      const len = R*(1.15+0.55*moveAmt), wav = Math.sin(t/140)*R*0.12*(0.3+moveAmt);
+      g.fillStyle = s===5 ? shade(accent,-0.15) : shade(skin.col,-0.3); g.globalAlpha=a0*0.92;
+      g.beginPath(); g.moveTo(-R*0.1,-R*0.6); g.quadraticCurveTo(-len*0.6, -R*0.55+wav, -len, wav*0.5);
+      g.quadraticCurveTo(-len*0.6, R*0.55+wav, -R*0.1, R*0.6); g.closePath(); g.fill();
+      g.globalAlpha=a0; g.strokeStyle=accent; g.lineWidth=R*0.05; g.beginPath(); g.moveTo(-len*0.95, wav*0.5); g.quadraticCurveTo(-len*0.6, R*0.55+wav, -R*0.1, R*0.6); g.stroke();
+    }
+  } else {
+    if(s===2 || s===5){
+      for(const sd of [-1,1]){
+        g.fillStyle = s===5 ? accent : shade(accent,-0.1);
+        g.beginPath(); g.ellipse(-R*0.15, sd*R*0.72, R*0.32, R*0.2, 0,0,PI2); g.fill();
+        g.fillStyle='rgba(255,255,255,0.35)'; g.beginPath(); g.arc(-R*0.22, sd*R*0.7, R*0.06,0,PI2); g.fill();
+      }
+    }
+    if(s===3){
+      g.strokeStyle=shade(skin.col,-0.55); g.lineWidth=R*0.16; g.beginPath(); g.moveTo(-R*0.55,-R*0.6); g.lineTo(R*0.35,R*0.6); g.stroke();
+      g.fillStyle=accent; rr(g,-R*0.16,-R*0.1,R*0.3,R*0.2,R*0.04); g.fill();
+    }
+    if(s===4){
+      g.fillStyle='rgba(0,0,0,0.22)';
+      for(const [px,py,pr] of [[0.2,-0.3,0.2],[-0.35,0.25,0.16],[0.05,0.45,0.12]]){ g.beginPath(); g.arc(px*R,py*R,pr*R,0,PI2); g.fill(); }
+    }
+    if(s===5){
+      g.strokeStyle=glow; g.lineWidth=R*0.06; g.globalAlpha=a0*0.8; g.beginPath(); g.arc(-R*0.15,0,R*0.85,Math.PI*0.6,Math.PI*1.4); g.stroke(); g.globalAlpha=a0;
+    }
+  }
+}
+/* Fej: nyak-árnyék a törzsön, a régi fej-stílus, majd a rögzített fényirány szerinti fény/árnyék (NEM forog a fejjel). */
+function drawHeadLayered(g, x, y, hr, facing, style, accent){
+  g.beginPath(); g.ellipse(x+hr*LIGHT.sx*0.6, y+hr*0.4, hr*1.05, hr*0.8, 0,0,PI2); g.fillStyle='rgba(0,0,0,0.38)'; g.fill();
+  drawPlayerHead(g,x,y,hr,facing,style,accent);
+  const hl = g.createRadialGradient(x+LIGHT.x*hr*0.45, y+LIGHT.y*hr*0.45, 0, x, y, hr*1.05);
+  hl.addColorStop(0,'rgba(255,255,255,0.30)'); hl.addColorStop(0.45,'rgba(255,255,255,0.05)'); hl.addColorStop(0.82,'rgba(0,0,0,0)'); hl.addColorStop(1,'rgba(0,0,0,0.4)');
+  g.beginPath(); g.arc(x,y,hr,0,PI2); g.fillStyle=hl; g.fill();
+}
+/* A teljes figura. e: player / companion / előnézeti objektum. opt.name: név kiírása. */
+function drawHeroFigure(g, e, opt){
+  opt = opt||{};
+  const { skin } = heroSkinData(e.cls, e.skin);
+  const vis = CLASS_VIS[e.cls]||1, hw = CLASS_HW[e.cls]||1;
+  const R = e.r * vis;
+  const t = Date.now();
+  const light = fxLight();
+  // ---- animációs állapot (csak "_" mezők, sosem mentődnek) ----
+  const vx = (e.vx!==undefined) ? e.vx : (e._vx||0), vy = (e.vy!==undefined) ? e.vy : (e._vy||0);
+  const spd = Math.hypot(vx,vy);
+  e._spd = (e._spd===undefined) ? spd : e._spd + (spd - e._spd)*0.25;
+  const moveAmt = clamp(e._spd/2.2, 0, 1);
+  e._ph = (e._ph||0) + 0.10 + e._spd*0.07;
+  const mvAng = spd>0.1 ? Math.atan2(vy,vx) : e.facing;
+  const rel = Math.sin(mvAng - e.facing) * moveAmt;
+  e._lean = (e._lean||0) + (rel*0.2 - (e._lean||0))*0.15;
+  if(!(e._recoil>0.02)) e._recoil = 0; else e._recoil *= 0.74;
+  const rc = e._recoil||0, mz = e._muzzle||0;
+  const breath = opt.preview ? 0 : Math.sin(t/520)*0.025*(1-moveAmt);
+  const bob = Math.sin(e._ph*2)*0.045*moveAmt;
+  const sc = 1 + breath + bob;
+  const dashing = (e.dashing||0)>0;
+  const bodyCol = e.invuln>0 ? '#ffffff' : skin.col;
+  const glow = skin.glow||skin.col;
+  const wkind = HERO_WEAPON[e.cls]||'rifle', hands = WEAPON_HANDS[wkind]||WEAPON_HANDS.rifle;
+  // fényirány a helyi, elforgatott térben (a világban rögzített marad)
+  const f = e.facing + e._lean;
+  const lx = LIGHT.x*Math.cos(f) + LIGHT.y*Math.sin(f), ly = -LIGHT.x*Math.sin(f) + LIGHT.y*Math.cos(f);
+
+  if(e.hidden){ g.save(); g.globalAlpha = 0.45; }
+  // ---- sprint-utóképek (dash) ----
+  if(!opt.preview){
+    if(dashing){ if(!e._ghosts) e._ghosts=[]; e._ghosts.push({x:e.x,y:e.y,f:e.facing,a:0.45}); if(e._ghosts.length>6) e._ghosts.shift(); }
+    if(e._ghosts && e._ghosts.length){
+      for(const gh of e._ghosts){ gh.a -= 0.05; if(gh.a<=0) continue;
+        g.save(); g.globalAlpha=gh.a; g.translate(gh.x,gh.y); g.rotate(gh.f); g.scale(1.1,0.9);
+        drawHeroBodyPath(g, e.cls, R); g.fillStyle=glow; g.fill(); g.restore(); }
+      e._ghosts = e._ghosts.filter(gh=>gh.a>0);
+      if(dashing && !light){   // sebességvonalak a mozgás ellenében
+        g.save(); g.strokeStyle=rgbaAny(glow,0.55); g.lineWidth=1.5; g.lineCap='round';
+        for(let i=0;i<7;i++){ const a=mvAng+Math.PI+(i-3)*0.28; const r0=R*1.3+Math.random()*R*0.6, r1=r0+R*(1.2+Math.random()*1.4);
+          g.beginPath(); g.moveTo(e.x+Math.cos(a)*r0,e.y+Math.sin(a)*r0); g.lineTo(e.x+Math.cos(a)*r1,e.y+Math.sin(a)*r1); g.stroke(); }
+        g.restore();
+      }
+    }
+  }
+  // ---- talaj-árnyék ----
+  g.beginPath(); g.ellipse(e.x+R*LIGHT.sx*0.55, e.y+R*0.62, R*1.05*hw*0.9+R*0.2, R*0.42, 0,0,PI2);
+  g.fillStyle='rgba(0,0,0,0.42)'; g.fill();
+  // ---- pajzs-/löket-aura a test mögött ----
+  const baseA = g.globalAlpha;   // láthatatlanság/rejtőzés esetén a hívó már lehalkította — ahhoz térünk vissza, nem 1-hez
+  if(e.surgeActive>0 && !light){ const gs=glowSprite(glow,R*2.4); g.globalAlpha=baseA*(0.35+0.15*Math.sin(t/90)); g.drawImage(gs.c,e.x-gs.S,e.y-gs.S,gs.S*2,gs.S*2); g.globalAlpha=baseA; }
+
+  g.save(); g.translate(e.x,e.y); g.rotate(f); g.scale(sc*(dashing?1.16:1), sc*(dashing?0.9:1)); g.translate(-rc*R*0.1,0);
+  // hátsó réteg: köpeny
+  drawHeroTrim(g, e.cls, e.skin, R, skin, t, moveAmt, 'back');
+  // lábak: két talp, felváltva előre-hátra; álláskor középen
+  const legCol = shade(skin.col,-0.45), footCol = shade(skin.col,-0.62);
+  for(const sd of [-1,1]){
+    const step = Math.sin(e._ph + (sd>0?0:Math.PI))*R*0.4*moveAmt;
+    const fx = -R*0.05 + step, fy = sd*(hw*R*0.82 + R*0.24);
+    g.strokeStyle=legCol; g.lineWidth=R*0.24; g.lineCap='round'; g.beginPath(); g.moveTo(-R*0.1, sd*R*0.35); g.lineTo(fx, fy); g.stroke();
+    g.fillStyle=footCol; rr(g, fx-R*0.24, fy-R*0.15, R*0.5, R*0.3, R*0.1); g.fill();
+    g.strokeStyle='rgba(0,0,0,0.35)'; g.lineWidth=1; g.stroke();
+    g.fillStyle='rgba(255,255,255,0.16)'; rr(g, fx-R*0.16, fy-R*0.11, R*0.24, R*0.09, R*0.03); g.fill();
+  }
+  // kinézet-kiegészítő (vállvért / köpeny / glória …) a törzs mögött — változatlan
+  drawHeroAccent(g, e.cls, e.skin, R, t);
+  // törzs: sziluett + fényirány szerinti gradiens + perem + fénypont
+  drawHeroBodyPath(g, e.cls, R);
+  const grad = g.createRadialGradient(lx*R*0.45, ly*R*0.45, R*0.05, 0, 0, R*1.35);
+  grad.addColorStop(0, e.invuln>0?'#ffffff':shade(bodyCol,0.38)); grad.addColorStop(0.5, bodyCol); grad.addColorStop(1, e.invuln>0?'#dddddd':shade(bodyCol,-0.48));
+  g.fillStyle = grad;
+  if(!light){ g.shadowColor = glow; g.shadowBlur = e.surgeActive>0 ? 26 : 12; }
+  g.fill(); g.shadowBlur=0;
+  g.lineWidth=1.6; g.strokeStyle='rgba(255,255,255,0.75)'; g.stroke();
+  // fény-perem a megvilágított oldalon (clip + eltolt vastag körvonal)
+  g.save(); drawHeroBodyPath(g, e.cls, R); g.clip();
+  g.translate(-lx*R*0.14, -ly*R*0.14); drawHeroBodyPath(g, e.cls, R); g.lineWidth=R*0.22; g.strokeStyle='rgba(255,255,255,0.22)'; g.stroke();
+  g.restore();
+  // elülső réteg: szegecsek / heveder / foltok
+  drawHeroTrim(g, e.cls, e.skin, R, skin, t, moveAmt, 'front');
+  // karok: a vállból a fegyver fogásáig — a fegyver így a testhez tartozik
+  const armCol = shade(skin.col,-0.3), handCol = shade(skin.accent,0.1);
+  const gx=hands.grip[0]*R - rc*R*0.22, gy=hands.grip[1]*R, fxh=hands.fore[0]*R - rc*R*0.22, fyh=hands.fore[1]*R;
+  g.strokeStyle=armCol; g.lineWidth=R*0.22; g.lineCap='round';
+  g.beginPath(); g.moveTo(-R*0.05, hw*R*0.6); g.lineTo(gx, gy); g.stroke();
+  drawHeroWeapon(g, wkind, R, skin, rc, mz, t);
+  g.beginPath(); g.moveTo(-R*0.05, -hw*R*0.6); g.lineTo(fxh, fyh); g.stroke();
+  g.fillStyle=handCol; g.beginPath(); g.arc(gx,gy,R*0.14,0,PI2); g.fill(); g.beginPath(); g.arc(fxh,fyh,R*0.14,0,PI2); g.fill();
+  g.fillStyle='rgba(0,0,0,0.25)'; g.beginPath(); g.arc(gx+R*0.03,gy+R*0.04,R*0.09,0,PI2); g.fill(); g.beginPath(); g.arc(fxh+R*0.03,fyh+R*0.04,R*0.09,0,PI2); g.fill();
+  g.restore();
+  // fej (rétegzett): kicsit hátrébb ül a törzsön, hogy a fegyver és a vállak látsszanak; lövéskor hátrabillen
+  const hb = 0.1 + rc*0.08;
+  drawHeadLayered(g, e.x - Math.cos(e.facing)*R*hb, e.y - Math.sin(e.facing)*R*hb, R*0.64*sc, e.facing, e.head||'commando', skin.col);
+  // pajzs-buborék
+  if(e.shieldActive>0){
+    const a = clamp(e.shieldActive/90,0,1);
+    g.save(); g.globalAlpha=a; g.beginPath(); g.arc(e.x,e.y,R+10,0,PI2);
+    const sg=g.createRadialGradient(e.x,e.y,R*0.6,e.x,e.y,R+10); sg.addColorStop(0,'rgba(110,231,255,0)'); sg.addColorStop(0.85,'rgba(110,231,255,0.12)'); sg.addColorStop(1,'rgba(180,240,255,0.45)');
+    g.fillStyle=sg; g.fill(); g.lineWidth=2.5; g.strokeStyle='rgba(170,240,255,0.9)'; g.stroke();
+    g.rotate(0); g.setLineDash([6,10]); g.lineWidth=1.2; g.strokeStyle='rgba(255,255,255,0.5)'; g.beginPath(); g.arc(e.x,e.y,R+14,t/400,t/400+PI2); g.stroke(); g.setLineDash([]);
+    g.restore();
+  }
   // név
-  g.font='12px Trebuchet MS'; g.fillStyle='rgba(255,255,255,0.7)'; g.textAlign='center';
-  g.fillText(p.name, p.x, p.y - p.r - 16);
-  if(p.hidden) g.restore();
+  if(opt.name && e.name){
+    g.font='bold 11px Trebuchet MS'; g.textAlign='center'; g.textBaseline='alphabetic';
+    g.lineWidth=3; g.strokeStyle='rgba(4,6,10,0.8)'; g.strokeText(e.name, e.x, e.y - R - 18);
+    g.fillStyle='rgba(255,255,255,0.85)'; g.fillText(e.name, e.x, e.y - R - 18);
+  }
+  if(e.hidden) g.restore();
+}
+function drawPlayer(g, p){
+  drawHeroFigure(g, p, { name:true, preview: !(game && (p===game.player || p===game.companion)) });
 }
 
 // --- 9 megkülönböztethető ellenfél-fej ---
@@ -3248,9 +4189,8 @@ function drawEnemyFaceAt0(g, en, R){
 }
 
 // --- típusonként ELTÉRŐ test-sziluett: alakról egy pillantás alatt felismerhető ---
-/* A törzs sziluettje az origó körül, forgatás nélkül — sprite-ba rajzolható. */
-function drawEnemyShapeAt0(g, en, R, fill){
-  g.fillStyle = fill; g.lineWidth = R>20 ? 4 : 2; g.strokeStyle = 'rgba(0,0,0,0.35)';
+/* Csak az útvonal, kitöltés nélkül — a sprite-sütés és a clip is ezt használja. */
+function enemyShapePath(g, en, R){
   if(en.type==='scout'){          // keskeny nyíl-ék: a gyors bekerítő
     g.beginPath(); g.moveTo(R*1.25,0); g.lineTo(-R*0.85,R*0.9); g.lineTo(-R*0.45,0); g.lineTo(-R*0.85,-R*0.9); g.closePath();
   } else if(en.type==='tank'){    // nagy nyolcszög-páncél: a lassú kolosszus
@@ -3278,19 +4218,234 @@ function drawEnemyShapeAt0(g, en, R, fill){
   } else {                        // grunt: az alap kör-katona
     g.beginPath(); g.arc(0,0,R,0,PI2);
   }
+}
+function drawEnemyShapeAt0(g, en, R, fill){
+  g.fillStyle = fill; g.lineWidth = R>20 ? 4 : 2; g.strokeStyle = 'rgba(0,0,0,0.35)';
+  enemyShapePath(g, en, R);
   g.fill(); g.stroke();
 }
 
-// --- boss fej: démoni ---
+/* =========================================================
+   ELLENFÉL-SPRITE-OK (v17). A gazdag test (gradiens, plasztika, fény-perem,
+   páncél-részletek, arc) típusonként és állapotonként EGYSZER sül ki egy
+   kis vászonra, 2x felbontáson; utána képkockánként egyetlen drawImage.
+   Így a részletgazdagabb rajz OLCSÓBB lett, mint a régi útvonal+elmosás.
+   Variánsok: 'n' normál, 'f' találat-villanás, 'z' lefagyasztva.
+   ========================================================= */
+function enemySprite(en, variant){
+  const key = en.type+'|'+variant+'|'+Math.round(en.r*2);
+  let sp = VFX.enemySprites[key]; if(sp) return sp;
+  const R = en.r, E = Math.ceil(R*2.0)+3;
+  const c = document.createElement('canvas'); c.width=c.height=E*4;
+  const g = c.getContext('2d'); g.translate(E*2,E*2); g.scale(2,2);
+  bakeEnemyBody(g, en, R, variant);
+  sp = { c, S:E }; VFX.enemySprites[key]=sp; return sp;
+}
+function bakeEnemyBody(g, en, R, variant){
+  const base = variant==='f' ? shade(en.color,0.6) : (variant==='z' ? '#bfe9ff' : en.color);
+  const grad = g.createRadialGradient(-R*0.4,-R*0.4,R*0.05, 0,0,R*1.4);
+  grad.addColorStop(0, shade(base,0.42)); grad.addColorStop(0.5, base); grad.addColorStop(1, shade(base,-0.52));
+  g.lineWidth = R>20 ? 3 : 2; g.strokeStyle='rgba(0,0,0,0.5)';
+  enemyShapePath(g,en,R); g.fillStyle=grad; g.fill(); g.stroke();
+  // plasztika: árnyék a fénnyel ellentétes oldalon + fény-perem a bal-felső élen
+  g.save(); enemyShapePath(g,en,R); g.clip();
+  const sh = g.createRadialGradient(R*0.55,R*0.55,R*0.1, R*0.2,R*0.2,R*1.7); sh.addColorStop(0,'rgba(0,0,0,0.38)'); sh.addColorStop(1,'rgba(0,0,0,0)');
+  g.fillStyle=sh; g.fillRect(-R*2,-R*2,R*4,R*4);
+  g.save(); g.translate(R*0.13,R*0.13); enemyShapePath(g,en,R); g.lineWidth=R*0.16; g.strokeStyle='rgba(255,255,255,0.3)'; g.stroke(); g.restore();
+  // típus-textúra
+  if(en.type==='tank'){
+    g.strokeStyle='rgba(0,0,0,0.35)'; g.lineWidth=R*0.06;
+    for(let i=0;i<8;i++){ const a=i/8*PI2+Math.PI/8; g.beginPath(); g.moveTo(Math.cos(a)*R*0.5,Math.sin(a)*R*0.5); g.lineTo(Math.cos(a)*R*1.1,Math.sin(a)*R*1.1); g.stroke(); }
+    g.fillStyle='rgba(255,255,255,0.28)'; for(let i=0;i<8;i++){ const a=i/8*PI2; g.beginPath(); g.arc(Math.cos(a)*R*0.92,Math.sin(a)*R*0.92,R*0.06,0,PI2); g.fill(); }
+  } else if(en.type==='grunt'){
+    g.strokeStyle='rgba(0,0,0,0.3)'; g.lineWidth=R*0.12; g.beginPath(); g.arc(0,0,R*0.62,Math.PI*0.6,Math.PI*1.4); g.stroke();
+    g.fillStyle='rgba(255,255,255,0.18)'; rr(g,-R*0.95,-R*0.12,R*0.35,R*0.24,R*0.06); g.fill();
+  } else if(en.type==='charger'){
+    g.strokeStyle='rgba(0,0,0,0.32)'; g.lineWidth=R*0.08;
+    for(const yy of [-0.45,0,0.45]){ g.beginPath(); g.moveTo(-R*0.6,yy*R); g.lineTo(R*0.4,yy*R*0.55); g.stroke(); }
+  } else if(en.type==='sniper'){
+    g.strokeStyle='rgba(0,0,0,0.3)'; g.lineWidth=R*0.06; g.beginPath(); g.moveTo(-R*1.0,0); g.lineTo(R*1.0,0); g.stroke();
+  } else if(en.type==='turret'){
+    g.strokeStyle='rgba(0,0,0,0.4)'; g.lineWidth=R*0.07; g.strokeRect(-R*0.7,-R*0.7,R*1.4,R*1.4);
+    g.fillStyle='rgba(255,255,255,0.25)'; for(const [x,y] of [[-0.75,-0.75],[0.75,-0.75],[-0.75,0.75],[0.75,0.75]]){ g.beginPath(); g.arc(x*R,y*R,R*0.08,0,PI2); g.fill(); }
+  } else if(en.type==='medic'){
+    g.fillStyle='rgba(255,255,255,0.22)'; rr(g,-R*0.7,-R*0.7,R*1.4,R*0.45,R*0.1); g.fill();
+  } else if(en.type==='bomber'){
+    g.strokeStyle='rgba(255,90,60,0.5)'; g.lineWidth=R*0.08; g.beginPath(); g.arc(0,0,R*0.55,0,PI2); g.stroke();
+  }
+  g.restore();
+  drawEnemyFaceAt0(g,en,R);
+  if(variant==='f'){ g.fillStyle='rgba(255,255,255,0.4)'; enemyShapePath(g,en,R); g.fill(); g.lineWidth=R*0.12; g.strokeStyle='rgba(255,255,255,0.9)'; g.stroke(); }
+  if(variant==='z'){
+    g.fillStyle='rgba(150,215,255,0.42)'; enemyShapePath(g,en,R); g.fill();
+    g.strokeStyle='rgba(255,255,255,0.75)'; g.lineWidth=R*0.06; g.lineCap='round';
+    g.beginPath(); g.moveTo(-R*0.6,-R*0.2); g.lineTo(-R*0.1,R*0.1); g.lineTo(R*0.3,-R*0.3); g.moveTo(-R*0.1,R*0.1); g.lineTo(R*0.05,R*0.65); g.stroke();
+  }
+}
+/* Egy ellenfél kirajzolása képkockánként: árnyék, aura-sprite, típusfüggő mozgás-transzformáció,
+   hőkölés találatkor, test-sprite, HP-csík. Nincs útvonal-rajzolás és nincs elmosás. */
+function drawEnemyLive(g, en, p, lightFx, nowT){
+  const R = en.r;
+  const face = Math.atan2(p.y-en.y, p.x-en.x);
+  const variant = en.frozen>0 ? 'z' : (en.hitFlash>0 ? 'f' : 'n');
+  const sp = enemySprite(en, variant);
+  const moving = en.frozen<=0;
+  if(en._ph===undefined) en._ph = Math.random()*PI2;
+  if(moving) en._ph += (en.type==='tank'?0.085:(en.type==='scout'?0.3:(en.type==='turret'?0:0.16)));
+  let sx=1, sy=1, tilt=0, ox=0, oy=0;
+  if(en.type==='tank'){
+    const s=Math.abs(Math.sin(en._ph)); sy=1+0.09*s; sx=1-0.05*s; tilt=Math.sin(en._ph)*0.05;
+    const sn=Math.sin(en._ph);
+    if(!lightFx && sn>0.985 && !en._stepped){ en._stepped=true; addPuff(en.x-Math.cos(face)*R*0.5, en.y+R*0.45,'#6a6058',2,R*0.32,1.1); }
+    if(sn<0) en._stepped=false;
+  } else if(en.type==='scout'){
+    tilt=Math.sin(en._ph)*0.2; sx=1.08; sy=0.94;
+    if(!lightFx && moving){ if(!en._tr) en._tr=[]; if((VFX.t&1)===0){ en._tr.push({x:en.x,y:en.y,f:face}); if(en._tr.length>3) en._tr.shift(); } }
+  } else if(en.type==='charger'){
+    if(en.chargeState>0){ sx=1.42; sy=0.76; }
+    else if(en.telegraph>0){ ox=(Math.random()-0.5)*3.2; oy=(Math.random()-0.5)*3.2; sx=0.9; sy=1.12; }
+    else { tilt=Math.sin(en._ph)*0.14; sy=1+0.05*Math.sin(en._ph*2); }
+  } else if(en.type==='bomber'){
+    const d=dist(en.x,en.y,p.x,p.y); const rate=0.12+(1-clamp(d/420,0,1))*0.55;
+    en._beat=(en._beat||0)+rate; const b=Math.max(0,Math.sin(en._beat)); sx=sy=1+0.14*b*b;
+  } else if(en.type==='medic'){
+    oy=Math.sin(nowT/300+en._ph)*2.5; sx=1+0.03*Math.sin(nowT/300); sy=1-0.03*Math.sin(nowT/300);
+  } else if(en.type==='turret'){
+    const rcl = en.atkTimer<6 ? (6-en.atkTimer)*0.8 : 0; ox=-Math.cos(face)*rcl; oy=-Math.sin(face)*rcl;
+  } else if(en.type==='swarmling'){
+    tilt=Math.sin(en._ph*1.5)*0.3; sx=1+0.08*Math.sin(en._ph*3); sy=1-0.08*Math.sin(en._ph*3);
+  } else if(en.type==='sniper'){
+    tilt=Math.sin(en._ph*0.5)*0.03;
+  } else { sy=1+0.06*Math.sin(en._ph*2); tilt=Math.sin(en._ph)*0.06; }
+  if(en._knock>0){ const k=en._knock*1.3; ox+=Math.cos(en._kdir||0)*k; oy+=Math.sin(en._kdir||0)*k; sx*=0.92; sy*=1.06; }
+
+  // rohamozó figyelmeztetés: szűkülő, egyre vörösebb célgyűrű + irányjelző ék
+  if(en.telegraph>0){
+    const k = clamp(en.telegraph/24,0,1);
+    g.beginPath(); g.arc(en.x,en.y,R+6+k*14,0,PI2); g.strokeStyle=`rgba(255,${60+Math.round(k*80)},60,${0.55+0.35*(1-k)})`; g.lineWidth=3; g.setLineDash([4,4]); g.stroke(); g.setLineDash([]);
+    g.save(); g.translate(en.x,en.y); g.rotate(face); g.fillStyle='rgba(255,80,60,0.5)'; g.beginPath(); g.moveTo(R+8,-R*0.5); g.lineTo(R+8+R*0.9,0); g.lineTo(R+8,R*0.5); g.closePath(); g.fill(); g.restore();
+  }
+  // rohamozás: sebességvonalak mögötte
+  if(en.chargeState>0 && !lightFx){
+    g.save(); g.strokeStyle='rgba(255,200,120,0.5)'; g.lineWidth=1.5; g.lineCap='round';
+    for(let i=0;i<4;i++){ const a=en.chargeAng+Math.PI+(i-1.5)*0.3; const r0=R*1.2, r1=R*(2.4+Math.random()*1.2);
+      g.beginPath(); g.moveTo(en.x+Math.cos(a)*r0,en.y+Math.sin(a)*r0); g.lineTo(en.x+Math.cos(a)*r1,en.y+Math.sin(a)*r1); g.stroke(); }
+    g.restore();
+  }
+  // scout utókép
+  if(en._tr && en._tr.length && !lightFx){
+    for(let i=0;i<en._tr.length;i++){ const tr=en._tr[i]; g.save(); g.globalAlpha=0.08+i*0.07; g.translate(tr.x,tr.y); g.rotate(tr.f); g.scale(0.92,0.92);
+      g.drawImage(sp.c,-sp.S,-sp.S,sp.S*2,sp.S*2); g.restore(); }
+  }
+  // talaj-árnyék (rögzített fényirány)
+  g.beginPath(); g.ellipse(en.x+R*LIGHT.sx*0.6+ox*0.5, en.y+R*0.55+oy*0.5, R*0.95*sx, R*0.4*sy, 0,0,PI2);
+  g.fillStyle='rgba(0,0,0,0.4)'; g.fill();
+  // lüktető, típus-színű aura — sprite, nem elmosás
+  const pulse = 0.55 + 0.25*Math.sin(nowT/260 + en.x*0.05);
+  const gs = glowSprite(en.color, R*1.75);
+  g.globalAlpha = pulse*(lightFx?0.3:0.5);
+  g.drawImage(gs.c, en.x-gs.S+ox, en.y-gs.S+oy, gs.S*2, gs.S*2);
+  g.globalAlpha = 1;
+  // test
+  g.save(); g.translate(en.x+ox, en.y+oy); g.rotate(face+tilt); g.scale(sx,sy);
+  g.drawImage(sp.c, -sp.S, -sp.S, sp.S*2, sp.S*2);
+  g.restore();
+  // bombázó gyújtózsinór-szikra
+  if(en.type==='bomber' && !lightFx){ const bx=en.x-Math.cos(face)*R*0.85+ox, by=en.y-Math.sin(face)*R*0.85+oy;
+    g.fillStyle=(VFX.t&2)?'#ffd24a':'#fff'; g.beginPath(); g.arc(bx,by,2.2,0,PI2); g.fill(); }
+  // hp-csík (lekerekített, sötét kerettel, elszíneződik ahogy fogy)
+  const hf = clamp(en.hp/en.maxHp,0,1), bw=Math.max(26, R*1.9), bx=en.x-bw/2, by=en.y-R-12;
+  g.fillStyle='rgba(6,8,12,0.75)'; rr(g,bx-1,by-1,bw+2,6,3); g.fill();
+  g.fillStyle = hf>0.5 ? '#ff5c7c' : (hf>0.25 ? '#ff8a5c' : '#ffd166'); rr(g,bx,by,bw*hf,4,2); g.fill();
+  g.fillStyle='rgba(255,255,255,0.25)'; rr(g,bx,by,bw*hf,1.5,1); g.fill();
+}
+
+// --- boss (v17): rétegzett test, típus-specifikus háttérréteg, rúna-gyűrűk, belépő-animáció ---
+function drawBossTendrils(g,R,col,t,light){   // Árnyék: hullámzó csápok + füst
+  g.save(); g.lineCap='round';
+  for(let i=0;i<8;i++){
+    const a = i/8*PI2 + Math.sin(t/900+i)*0.2, len = R*(1.5+0.35*Math.sin(t/300+i*1.7));
+    const wav = Math.sin(t/220+i)*R*0.35;
+    g.strokeStyle = rgbaAny(shade(col,-0.6), 0.75); g.lineWidth = R*0.22;
+    g.beginPath(); g.moveTo(Math.cos(a)*R*0.6, Math.sin(a)*R*0.6);
+    g.quadraticCurveTo(Math.cos(a)*R*1.1 - Math.sin(a)*wav, Math.sin(a)*R*1.1 + Math.cos(a)*wav, Math.cos(a)*len, Math.sin(a)*len); g.stroke();
+    g.strokeStyle = rgbaAny(col,0.35); g.lineWidth = R*0.07; g.stroke();
+    if(!light){ g.fillStyle=col; g.beginPath(); g.arc(Math.cos(a)*len, Math.sin(a)*len, R*0.07, 0, PI2); g.fill(); }
+  }
+  g.restore();
+}
+function drawBossShards(g,R,col,t,light){     // Jég: keringő jégtűk + dér
+  g.save(); g.rotate(t/2600);
+  for(let i=0;i<8;i++){
+    const a=i/8*PI2, r0=R*1.05, r1=R*(1.6+0.15*Math.sin(t/400+i));
+    g.fillStyle='rgba(225,245,255,0.85)'; g.beginPath();
+    g.moveTo(Math.cos(a-0.13)*r0, Math.sin(a-0.13)*r0); g.lineTo(Math.cos(a)*r1, Math.sin(a)*r1); g.lineTo(Math.cos(a+0.13)*r0, Math.sin(a+0.13)*r0); g.closePath(); g.fill();
+    g.strokeStyle=rgbaAny(col,0.9); g.lineWidth=1.5; g.stroke();
+  }
+  g.restore();
+  if(!light){ g.fillStyle='rgba(255,255,255,0.8)'; for(let i=0;i<10;i++){ const a=i/10*PI2+t/1500, r=R*(1.2+0.5*Math.abs(Math.sin(t/700+i*2)));
+    g.beginPath(); g.arc(Math.cos(a)*r,Math.sin(a)*r,1.5,0,PI2); g.fill(); } }
+}
+function drawBossFlames(g,R,col,t,light){     // Láng: lobogó tűznyelvek a perem körül
+  g.save(); g.globalCompositeOperation='lighter';
+  for(let i=0;i<12;i++){
+    const a=i/12*PI2 + t/1800, fl = 0.5+0.5*Math.abs(Math.sin(t/110+i*1.3)), r0=R*0.85, r1=R*(1.45+0.85*fl);
+    const fg = g.createLinearGradient(Math.cos(a)*r0,Math.sin(a)*r0,Math.cos(a)*r1,Math.sin(a)*r1);
+    fg.addColorStop(0,'rgba(255,110,30,0.95)'); fg.addColorStop(0.55,'rgba(255,200,80,0.75)'); fg.addColorStop(1,'rgba(255,240,180,0)');
+    g.fillStyle=fg; g.beginPath();
+    g.moveTo(Math.cos(a-0.3)*r0, Math.sin(a-0.3)*r0); g.quadraticCurveTo(Math.cos(a-0.06)*r1*0.85, Math.sin(a-0.06)*r1*0.85, Math.cos(a)*r1, Math.sin(a)*r1);
+    g.quadraticCurveTo(Math.cos(a+0.06)*r1*0.85, Math.sin(a+0.06)*r1*0.85, Math.cos(a+0.3)*r0, Math.sin(a+0.3)*r0); g.closePath(); g.fill();
+  }
+  g.restore();
+  if(!light && (VFX.t%3===0)) addPuff(Math.cos(t/300)*R*0.5, Math.sin(t/300)*R*0.5, '#ff9a4a', 0, 3, 1);
+}
+function drawBossCape(g,R,col,t,face){        // Király: bíbor köpeny a háta mögött
+  g.save(); g.rotate(face);
+  const wav = Math.sin(t/260)*R*0.15;
+  g.fillStyle='#7a1a2e'; g.beginPath(); g.moveTo(-R*0.3,-R*0.8); g.quadraticCurveTo(-R*1.5,-R*0.6+wav,-R*1.7,wav*0.5); g.quadraticCurveTo(-R*1.5,R*0.6+wav,-R*0.3,R*0.8); g.closePath(); g.fill();
+  g.strokeStyle='#e8c96a'; g.lineWidth=R*0.06; g.beginPath(); g.moveTo(-R*1.65,wav*0.5); g.quadraticCurveTo(-R*1.5,R*0.6+wav,-R*0.3,R*0.8); g.stroke();
+  g.restore();
+}
 function drawBoss(g, b, face){
-  const R=b.r;
-  const col = b.col || '#ff5c7c';
+  const col = b.col || '#ff5c7c', t = Date.now(), light = fxLight();
+  const R = b.r;
+  const intro = b._introT>0 ? b._introT/70 : 0;   // 1 → 0
+  const scaleIn = intro>0 ? (1 - intro*intro)*(1 + Math.sin((1-intro)*Math.PI)*0.16) : 1;
+  const hover = Math.sin(t/900)*3;
+  let ox=0, oy=hover;
+  if(b._knock>0){ ox+=Math.cos(b._kdir||0)*b._knock*1.5; oy+=Math.sin(b._kdir||0)*b._knock*1.5; }
+  // talaj-árnyék
+  g.beginPath(); g.ellipse(b.x+R*LIGHT.sx*0.5, b.y+R*0.72, R*1.15*scaleIn, R*0.46*scaleIn, 0,0,PI2); g.fillStyle='rgba(0,0,0,0.45)'; g.fill();
+  if(scaleIn<=0.02) return;
+  g.save(); g.translate(b.x+ox, b.y+oy); g.scale(scaleIn, scaleIn);
   // aura
-  g.beginPath(); g.arc(b.x,b.y,R,0,PI2);
-  g.fillStyle = b.hitFlash>0 ? '#fff' : (b.frozen>0 ? '#bfe9ff' : (b.isMini ? shade(col,-0.6) : shade(col,-0.78)));
-  g.shadowColor=col; g.shadowBlur=28; g.fill(); g.shadowBlur=0;
-  g.lineWidth=3; g.strokeStyle=col; g.stroke();
-  withRot(g, b.x, b.y, face, ()=>{
+  const gs = glowSprite(col, R*2.3); g.globalAlpha = (light?0.35:0.5)+0.15*Math.sin(t/260); g.drawImage(gs.c,-gs.S,-gs.S,gs.S*2,gs.S*2); g.globalAlpha=1;
+  // típus-réteg a test mögött
+  if(b.type==='frost') drawBossShards(g,R,col,t,light);
+  else if(b.type==='flame') drawBossFlames(g,R,col,t,light);
+  else if(b.type==='king') drawBossCape(g,R,col,t,face);
+  else drawBossTendrils(g,R,col,t,light);
+  // rúna-gyűrűk
+  g.save(); g.rotate(t/1400); g.strokeStyle=rgbaAny(col,0.55); g.lineWidth=2; g.setLineDash([R*0.25,R*0.18]); g.beginPath(); g.arc(0,0,R*1.35,0,PI2); g.stroke(); g.setLineDash([]); g.restore();
+  g.save(); g.rotate(-t/2100); g.strokeStyle=rgbaAny(col,0.3); g.lineWidth=1.2; g.beginPath(); g.arc(0,0,R*1.55,0,PI2); g.stroke();
+  g.fillStyle=col; for(let i=0;i<6;i++){ const a=i/6*PI2; g.beginPath(); g.arc(Math.cos(a)*R*1.55,Math.sin(a)*R*1.55,R*0.06,0,PI2); g.fill(); } g.restore();
+  // törzs
+  const flash = b.hitFlash>0, frozen = b.frozen>0 && !b.surrendered;
+  // találatkor nem vakít fehérre (gyors tüzelésnél folyton fehér lenne), csak felvilágosodik és fehér peremet kap
+  const bodyBase = flash ? shade(col,0.35) : (frozen ? '#bfe9ff' : (b.isMini ? shade(col,-0.55) : shade(col,-0.72)));
+  const grad = g.createRadialGradient(-R*0.4,-R*0.45,R*0.1, 0,0,R*1.1);
+  grad.addColorStop(0, flash?'#ffffff':(frozen?'#e6f6ff':shade(col,-0.25))); grad.addColorStop(0.55, bodyBase); grad.addColorStop(1, flash?shade(col,-0.1):shade(col,-0.9));
+  g.beginPath(); g.arc(0,0,R,0,PI2); g.fillStyle=grad; g.fill();
+  g.lineWidth=flash?5:3; g.strokeStyle=flash?'#ffffff':col; if(!light){ g.shadowColor=col; g.shadowBlur=18; } g.stroke(); g.shadowBlur=0;
+  // lüktető belső erezet
+  g.save(); g.beginPath(); g.arc(0,0,R,0,PI2); g.clip();
+  g.strokeStyle=rgbaAny(col, 0.35+0.2*Math.sin(t/200)); g.lineWidth=R*0.05; g.lineCap='round';
+  for(let i=0;i<5;i++){ const a=i/5*PI2+t/3000; g.beginPath(); g.moveTo(Math.cos(a)*R*0.2,Math.sin(a)*R*0.2);
+    g.quadraticCurveTo(Math.cos(a+0.5)*R*0.6,Math.sin(a+0.5)*R*0.6,Math.cos(a+0.2)*R*1.05,Math.sin(a+0.2)*R*1.05); g.stroke(); }
+  const rim = g.createRadialGradient(-R*0.3,-R*0.3,R*0.5,0,0,R); rim.addColorStop(0,'rgba(255,255,255,0)'); rim.addColorStop(1,'rgba(0,0,0,0.35)');
+  g.fillStyle=rim; g.fillRect(-R,-R,R*2,R*2);
+  g.restore();
+  withRot(g, 0, 0, face, ()=>{
     // korona-tüskék hátul/körben
     g.fillStyle=shade(col,-0.85);
     for(let i=0;i<7;i++){ const a=Math.PI*0.5 + (i-3)*0.5; g.beginPath();
@@ -3298,17 +4453,28 @@ function drawBoss(g, b, face){
       g.lineTo(Math.cos(a)*R*1.15,Math.sin(a)*R*1.15);
       g.lineTo(Math.cos(a+0.12)*R*0.7,Math.sin(a+0.12)*R*0.7); g.closePath(); g.fill(); }
     // előre görbülő szarvak (a boss típusa szerint eltérő árnyalat)
-    g.fillStyle = b.type==='frost' ? '#e6f4ff' : (b.type==='flame' ? '#ffe0b0' : '#e8e2ea');
+    const hg = g.createLinearGradient(R*0.1,0,R*1.25,0);
+    const hc = b.type==='frost' ? '#e6f4ff' : (b.type==='flame' ? '#ffe0b0' : (b.type==='king' ? '#f4dc8a' : '#e8e2ea'));
+    hg.addColorStop(0, shade(hc,-0.35)); hg.addColorStop(1, hc);
+    g.fillStyle = hg;
     for(const s of [-1,1]){ g.beginPath(); g.moveTo(R*0.1,s*R*0.5); g.quadraticCurveTo(R*1.2,s*R*0.7,R*1.25,s*R*0.15);
       g.quadraticCurveTo(R*0.9,s*R*0.4,R*0.35,s*R*0.2); g.closePath(); g.fill(); }
+    if(b.type==='king'){   // korona a fej tetején
+      g.fillStyle='#ffd166'; g.beginPath(); g.moveTo(-R*0.55,-R*0.45); g.lineTo(-R*0.85,-R*0.9); g.lineTo(-R*0.6,-R*0.65); g.lineTo(-R*0.45,-R*1.05); g.lineTo(-R*0.3,-R*0.65);
+      g.lineTo(-R*0.05,-R*1.05); g.lineTo(R*0.1,-R*0.65); g.lineTo(R*0.25,-R*0.9); g.lineTo(R*0.05,-R*0.4); g.closePath(); g.fill();
+      g.fillStyle='#ff5c7c'; g.beginPath(); g.arc(-R*0.25,-R*0.55,R*0.07,0,PI2); g.fill();
+    }
     // ragyogó szemek
-    g.save(); g.shadowColor=col; g.shadowBlur=R*0.9; g.fillStyle=shade(col,0.25);
-    for(const s of [-1,1]){ g.beginPath(); g.ellipse(R*0.4, s*R*0.28, R*0.2, R*0.12, 0,0,PI2); g.fill(); }
+    g.save(); if(!light){ g.shadowColor=col; g.shadowBlur=R*0.9; } g.fillStyle=shade(col,0.25);
+    const blink = (Math.sin(t/1700)>0.97) ? 0.15 : 1;
+    for(const s of [-1,1]){ g.beginPath(); g.ellipse(R*0.4, s*R*0.28, R*0.2, R*0.12*blink, 0,0,PI2); g.fill(); }
     g.restore();
+    g.fillStyle='#fff'; for(const s of [-1,1]){ g.beginPath(); g.arc(R*0.46, s*R*0.26, R*0.045*blink, 0,PI2); g.fill(); }
     // fogazott száj
     g.strokeStyle=shade(col,0.4); g.lineWidth=R*0.05; g.beginPath();
     for(let i=0;i<=6;i++){ const yy=(-0.3+i*0.1)*R; const xx=R*(0.62+ (i%2?0.08:0)); i?g.lineTo(xx,yy):g.moveTo(xx,yy);} g.stroke();
   });
+  g.restore();
 }
 
 // --- érintős botkormányok kirajzolása ---
@@ -3372,14 +4538,8 @@ function renderHeroLooks(){
     cv.className = 'headOpt' + (isSel ? ' selected' : '');
     if(!unlocked) cv.style.filter = 'grayscale(0.85) brightness(0.5)';
     const c = cv.getContext('2d');
-    const R=20, cx=31, cy=36;
-    withRot(c, cx, cy, -Math.PI/2, ()=> drawHeroAccent(c, chosenClass, i, R, Date.now()));
-    withRot(c, cx, cy, -Math.PI/2, ()=>{
-      drawHeroBodyPath(c, chosenClass, R);
-      c.fillStyle=sk.col; c.shadowColor=sk.glow||sk.col; c.shadowBlur=10; c.fill(); c.shadowBlur=0;
-      c.lineWidth=2; c.strokeStyle='rgba(255,255,255,0.85)'; c.stroke();
-    });
-    drawPlayerHead(c, cx, cy, R*0.72, -Math.PI/2, chosenHead, sk.col);
+    const R=15, cx=31, cy=38;
+    drawHeroFigure(c, { x:cx, y:cy, r:R, cls:chosenClass, skin:i, head:chosenHead, facing:-Math.PI/2, invuln:0 }, { preview:true });
     cv.title = unlocked ? skinTxt(sk) : T('skinLockedTitle', skinTxt(sk), sk.price);
     wrap.appendChild(cv);
     if(!unlocked){
@@ -3508,14 +4668,8 @@ function renderClassCards(){
       (unlocked?'':`<div class="lockTag">${T('lockTag', c.req)}</div>`);
     // portré: a hős saját, felismerhető sziluettje a kártya tetején
     const pc = card.querySelector('.cPortrait').getContext('2d');
-    const pcx=79, pcy=44, pR=26, pSkin = (id===chosenClass ? (heroSkinData(id,chosenSkin).skin) : heroSkinData(id,0).skin);
-    withRot(pc, pcx, pcy, -Math.PI/2, ()=> drawHeroAccent(pc, id, id===chosenClass?chosenSkin:0, pR, Date.now()));
-    withRot(pc, pcx, pcy, -Math.PI/2, ()=>{
-      drawHeroBodyPath(pc, id, pR);
-      pc.fillStyle = pSkin.col; pc.shadowColor = pSkin.glow||pSkin.col; pc.shadowBlur = 14; pc.fill(); pc.shadowBlur=0;
-      pc.lineWidth=2; pc.strokeStyle='rgba(255,255,255,0.85)'; pc.stroke();
-    });
-    drawPlayerHead(pc, pcx, pcy, pR*0.72, -Math.PI/2, chosenHead, pSkin.col);
+    const pcx=79, pcy=48, pR=21;
+    drawHeroFigure(pc, { x:pcx, y:pcy, r:pR, cls:id, skin:(id===chosenClass?chosenSkin:0), head:chosenHead, facing:-Math.PI/2, invuln:0 }, { preview:true });
     if(unlocked) card.addEventListener('click', ()=>{
       card.classList.remove('flashing'); void card.offsetWidth; card.classList.add('flashing');
       setClass(id);
@@ -3568,14 +4722,8 @@ function renderHeroDetail(){
     </div>`;
   const pc = document.getElementById('hdPortrait').getContext('2d');
   const { skin } = heroSkinData(id, chosenSkin);
-  const cx=48, cy=52, R=34;
-  withRot(pc, cx, cy, -Math.PI/2, ()=> drawHeroAccent(pc, id, chosenSkin, R, Date.now()));
-  withRot(pc, cx, cy, -Math.PI/2, ()=>{
-    drawHeroBodyPath(pc, id, R);
-    pc.fillStyle = skin.col; pc.shadowColor = skin.glow||skin.col; pc.shadowBlur = 18; pc.fill(); pc.shadowBlur=0;
-    pc.lineWidth=2; pc.strokeStyle='rgba(255,255,255,0.85)'; pc.stroke();
-  });
-  drawPlayerHead(pc, cx, cy, R*0.72, -Math.PI/2, chosenHead, skin.col);
+  const cx=48, cy=56, R=26;
+  drawHeroFigure(pc, { x:cx, y:cy, r:R, cls:id, skin:chosenSkin, head:chosenHead, facing:-Math.PI/2, invuln:0 }, { preview:true });
   panel.querySelectorAll('.tierDot').forEach(dot=>{
     dot.addEventListener('click', ()=>{
       const t = parseInt(dot.dataset.tier, 10);
@@ -4184,6 +5332,7 @@ function resetGame(){
   p.x = canvas.width/2; p.y = canvas.height/2; p._px=p.x; p._py=p.y;
   if(game.companion){ game.companion.x = p.x-46; game.companion.y = p.y+46; }
   resetSticks();
+  resetVfx();
   buildAbilityBar();
   if(game.chapter) loadChapterLayout(game.chapter);
   else{ generateObstacles(); generateGroundTexture(canvas.width, canvas.height); }
@@ -4246,6 +5395,8 @@ function explodeBarrel(bar){
   knockback(bar.x, bar.y, R, 10);
   addParticles(bar.x, bar.y, '#ff8c3c', 40); addParticles(bar.x, bar.y, '#ffd24a', 20);
   SFX.explosion(true);
+  addRing(bar.x,bar.y,'#ffb347',R*1.35,22,6); addRing(bar.x,bar.y,'#ffffff',R*0.7,12,3); addFlash('#ff8c3c',0.14,12); addChroma(0.4);
+  addPuff(bar.x,bar.y,'#3a3030',10,R*0.16,2.6); addShake(8,14);
   if(p && p.invuln<=0 && p.shieldActive<=0 && dist(p.x,p.y,bar.x,bar.y) < R+p.r){
     const armorFactor = clamp(1-(p.armor||0)+(p.buffs.berserk>0?0.2:0)-(p.buffs.boneward>0?0.35:0)-(p.buffs.godShield>0?0.3:0)-(p.buffs.masterShield>0?0.7:0), 0.15, 2);
     p.hp -= DMG*0.35*armorFactor; p.invuln=12; addParticles(p.x,p.y,'#ff5c7c',6);
@@ -4257,7 +5408,7 @@ function explodeBarrel(bar){
 /* Láda kinyitása — rejtett bónusz (gyógyulás / ult-töltés / XP) */
 function dropLoot(cr){
   const p = game.player;
-  addParticles(cr.x, cr.y, '#ffd166', 26); SFX.crate();
+  addParticles(cr.x, cr.y, '#ffd166', 26); SFX.crate(); addRing(cr.x,cr.y,'#ffd166',60,20,3);
   if(cr.loot==='heal'){ p.hp = Math.min(p.maxHp, p.hp + p.maxHp*0.35); addParticles(cr.x,cr.y,'#8affc1',16); }
   else if(cr.loot==='ult'){ addUltCharge(p.ult ? p.ult.chargeMax*0.5 : 0); }
   else { game.orbs.push({ x:cr.x, y:cr.y, xp:40, r:7, t:0 }); }
@@ -4364,7 +5515,7 @@ function spawnEnemyType(type, forcedX, forcedY, hpMult=1, rMult=1){
         y = m + Math.random()*(h - 2*m);
         tries++;
       } while(tries < 40 && p2 && dist(x, y, p2.x, p2.y) < 220);
-      addParticles(x, y, def.color, 20);
+      addParticles(x, y, def.color, 20); addRing(x,y,def.color,70,24,3);
     } else {
       const edge = Math.floor(Math.random()*4);
       if(edge===0){ x=-30; y=Math.random()*h; }
@@ -4427,6 +5578,7 @@ function spawnBoss(isMini){
     spiralAng:0,
   };
   game.boss.maxHp = game.boss.hp;
+  game.boss._introT = 70; vfxPunch(game.boss.x, game.boss.y, game.boss.col, 2.4); addShake(8,16);   // belépő: felnő a földből, lökéshullámmal
   if(bd && bd.surrenderAt){ game.boss.surrenderAt = bd.surrenderAt; game.boss.onSurrender = bd.onSurrender; game.boss.surrendered=false; }
 }
 
@@ -4495,6 +5647,7 @@ function levelUp(){
     sub = T('baseStatSub');
   }
   SFX.levelup();
+  addRing(p.x,p.y,'#ffd166',150,32,5); addRing(p.x,p.y,'#ffffff',70,18,2); addPuff(p.x,p.y,'#ffe9a8',8,7,2.5); addFlash('#ffd166',0.10,14); addChroma(0.3);
   document.getElementById('luText').textContent = T('levelFmt', p.level);
   document.getElementById('luSub').textContent = sub;
   const banner = document.getElementById('levelUpBanner');
@@ -4593,6 +5746,7 @@ function update(){
       ab.cd = Math.round(ABILITIES[ab.id].cdMax * (p.cdScale||1));
       ab.cdMax = ab.cd;
       recordAbilityUse(ab.id);
+      vfxPunch(p.x, p.y, heroSkinData(p.cls,p.skin).skin.glow || p.color, 1);
       SFX.ability();
     }
   });
@@ -4603,7 +5757,7 @@ function update(){
     if(!rdy) p._ultRdy = false;
   }
   if(p.ult && p.ult.key && keys[p.ult.key] && p.ult.charge>=p.ult.chargeMax){
-    ULTIMATES[p.ult.id].run(p); p.ult.charge = 0; addUltShake();
+    ULTIMATES[p.ult.id].run(p); p.ult.charge = 0; addUltShake(); vfxPunch(p.x, p.y, '#ffd166', 2.2);
     SFX.ult(); padRumble(0.3, 0.7, 220);
   }
 
@@ -4623,7 +5777,7 @@ function update(){
     if(nearest && best<320){
       comp.facing = Math.atan2(nearest.y-comp.y, nearest.x-comp.x);
       if(comp.fireCooldown<=0){
-        comp.fireCooldown = comp.fireRate;
+        comp.fireCooldown = comp.fireRate; comp._recoil = 1; comp._muzzle = 4;
         game.bullets.push({ x:comp.x,y:comp.y, vx:Math.cos(comp.facing)*comp.bulletSpeed, vy:Math.sin(comp.facing)*comp.bulletSpeed,
           r:4, life:70, friendly:true, dmg:comp.bulletDmg });
       }
@@ -4723,6 +5877,7 @@ function update(){
       if(game.boss && dist(game.boss.x,game.boss.y,m.x,m.y)<m.r+game.boss.r){ game.boss.hp-=m.dmg*0.8; game.boss.hitFlash=10; }
       game.barrels.forEach(bar=>{ if(!bar.dead && dist(bar.x,bar.y,m.x,m.y)<m.r+bar.r) bar.hp=0; });
       addUltCharge(m.dmg*0.3); addParticles(m.x,m.y,m.color||'#ff8c3c',36); SFX.explosion(false);
+      addRing(m.x,m.y,m.color||'#ff8c3c',(m.r||110)*1.15,20,5); addPuff(m.x,m.y,'#3a3a44',6,18,2.2); addShake(4,8);
     }
   });
   game.meteors = game.meteors.filter(m=>m.t < m.delay+30);
@@ -4731,6 +5886,7 @@ function update(){
   if(p.fireCooldown>0) p.fireCooldown--;
   if(firing && p.fireCooldown<=0){
     p.fireCooldown = p.fireRate;
+    p._recoil = 1; p._muzzle = 4;   // vizuális: hátrarúgás + torkolattűz
     const n = p.buffs.multishot>0 ? Math.max(3, p.bulletCount) : p.bulletCount;
     const spreadA = (n>1) ? 0.16 : 0;
     let base = p.bulletDmg * (1 + (p.lowHpDmg||0)*(1 - p.hp/p.maxHp));
@@ -4773,7 +5929,7 @@ function update(){
       if(d < en.r+p.r+80){ const perp=pang+Math.PI/2*en.strafe; en.x+=Math.cos(perp)*spd*0.55; en.y+=Math.sin(perp)*spd*0.55; }
       separation(en, 0.75);
       if(en.type==='scout' || ai>0.6) dodgeBullets(en, en.type==='scout'?ai*0.8:ai*0.5);
-      if(d < en.r+p.r && p.invuln<=0 && p.shieldActive<=0 && !inv){ p.hp -= en.dmg*0.16*armorFactor; p.invuln=8; addParticles(p.x,p.y,'#ff5c7c',3); }
+      if(d < en.r+p.r && p.invuln<=0 && p.shieldActive<=0 && !inv){ p.hp -= en.dmg*0.16*armorFactor; p.invuln=8; addParticles(p.x,p.y,'#ff5c7c',3); addFlash('#ff2d55',0.06,8); }
     } else if(en.kind==='charger'){
       en.atkTimer++;
       if(en.chargeState>0){
@@ -4786,7 +5942,7 @@ function update(){
         separation(en, 0.5);
         if(en.atkTimer > (150 - ai*70)){ en.atkTimer=0; en.telegraph = Math.round(32 - ai*14); }
       }
-      if(d < en.r+p.r && p.invuln<=0 && p.shieldActive<=0 && !inv){ p.hp -= en.dmg*0.16*armorFactor; p.invuln=8; addParticles(p.x,p.y,'#ff5c7c',3); }
+      if(d < en.r+p.r && p.invuln<=0 && p.shieldActive<=0 && !inv){ p.hp -= en.dmg*0.16*armorFactor; p.invuln=8; addParticles(p.x,p.y,'#ff5c7c',3); addFlash('#ff2d55',0.06,8); }
     } else if(en.kind==='bomber'){
       // ravaszabb: enyhén előretartva közelít
       en.x += Math.cos(pang)*spd; en.y += Math.sin(pang)*spd;
@@ -4796,7 +5952,7 @@ function update(){
           const tookC = en.dmg*0.5*armorFactor;
           p.hp -= tookC;
           addFloater(p.x, p.y-p.r-8, '-'+Math.max(1,Math.round(tookC)), '#ff7d94');
-          addShake(5, 10);
+          addShake(5, 10); addFlash('#ff5c3c',0.18,12); addChroma(0.4);
         }
         addParticles(en.x,en.y,'#ff4d4d',24); en.hp = 0;
       }
@@ -4840,13 +5996,15 @@ function update(){
     game.enemies.forEach(en=>{
       if(b.life>0 && !(b._hit && b._hit.has(en)) && dist(b.x,b.y,en.x,en.y) < en.r+b.r){
         en.hp -= bd; en.hitFlash=6; addParticles(b.x,b.y,en.color,4); addUltCharge(bd*0.35); SFX.hit();
+        en._knock = 6; en._kdir = Math.atan2(b.vy,b.vx);   // vizuális hőkölés a lövedék irányába
+        if(b.crit){ addShake(3,5); addRing(b.x,b.y,'#ffd166',en.r*1.6+10,12,2); }
         addFloater(en.x, en.y-en.r-6, Math.round(bd), b.crit?'#ff5c7c':'#ffe9a8', !!b.crit);
         if(!b.friendly && (p.buffs.lifesteal>0 || p.buffs.berserkUlt>0)) p.hp=Math.min(p.maxHp, p.hp + bd*0.12);
         if(b.pierce){ if(!b._hit) b._hit=new Set(); b._hit.add(en); } else { b.life=0; }
       }
     });
     if(game.boss && b.life>0 && !(b._hit && b._hit.has(game.boss)) && dist(b.x,b.y,game.boss.x,game.boss.y) < game.boss.r+b.r){
-      game.boss.hp -= bd*0.85; game.boss.hitFlash=6; addParticles(b.x,b.y,'#ff5c7c',5); addUltCharge(bd*0.35); SFX.hit();
+      game.boss.hp -= bd*0.85; game.boss.hitFlash=6; addParticles(b.x,b.y,'#ff5c7c',5); game.boss._knock=4; game.boss._kdir=Math.atan2(b.vy,b.vx); addUltCharge(bd*0.35); SFX.hit();
       addFloater(game.boss.x, game.boss.y-game.boss.r-8, Math.round(bd*0.85), '#ffd166');
       if(b.pierce){ if(!b._hit) b._hit=new Set(); b._hit.add(game.boss); } else { b.life=0; }
     }
@@ -4883,7 +6041,7 @@ function update(){
 
   // --- Halott ellenfelek + XP + raj-hasadás ---
   game.enemies.filter(en=>en.hp<=0).forEach(en=>{
-    addParticles(en.x,en.y,en.color,14); SFX.enemyDie();
+    addParticles(en.x,en.y,en.color,14); SFX.enemyDie(); addDeathAnim(en);
     game.orbs.push({ x:en.x, y:en.y, xp: en.kind==='bomber'?0:Math.round(4+en.maxHp*0.2), r:6, t:0 });
     game.killsThisRun = (game.killsThisRun||0) + 1;
     if(en.splits && !en.isChild){
@@ -4958,7 +6116,7 @@ function update(){
       }
     }
     if(b.hp<=0){
-      addParticles(b.x,b.y, b.col||'#ff5c7c',60); SFX.explosion(true);
+      addParticles(b.x,b.y, b.col||'#ff5c7c',60); SFX.explosion(true); addBossDeath(b);
       const wasMini = b.isMini;
       game.boss = null;
       if(wasMini){ game.wave++; game.waveTimer=waveInterval(); spawnWave(); }
@@ -4974,14 +6132,15 @@ function update(){
       const tookB = (eb.dmg||8)*armorFactor;
       p.hp -= tookB; eb.life=0; p.invuln=10; addParticles(p.x,p.y,'#ff5c7c',6);
       addFloater(p.x, p.y-p.r-8, '-'+Math.max(1,Math.round(tookB)), '#ff7d94');
-      addShake(4, 9);
+      addShake(4, 9); addFlash('#ff2d55',0.14,12); addChroma(0.3);
     }
   });
   game.enemyBullets = game.enemyBullets.filter(eb=>eb.life>0 && eb.x>-30&&eb.x<w+30&&eb.y>-30&&eb.y<h+30);
 
   // szétlőtt rombolható fedezékek eltakarítása
   if(game.obstacles.some(o=>o._dead)){
-    game.obstacles.filter(o=>o._dead).forEach(o=>addParticles(o.x,o.y,o.dcol||'#8a97b3',18));
+    game.obstacles.filter(o=>o._dead).forEach(o=>{ addParticles(o.x,o.y,o.dcol||'#8a97b3',18);
+      addDebris(o.x,o.y,o.dcol||'#6b563a',10,o.r*0.3,{speed:3.2,life:56,gravity:0.3}); addPuff(o.x,o.y,'#8a7a66',8,o.r*0.5,2); addShake(3,6); });
     game.obstacles = game.obstacles.filter(o=>!o._dead);
   }
 
@@ -6038,6 +7197,12 @@ function togglePause(){
     document.getElementById('pauseScreen').classList.add('hidden');
   }
 }
+function setWaveNum(txt){
+  const el = document.getElementById('waveNum'); txt = String(txt);
+  if(el.textContent === txt) return;
+  el.textContent = txt;
+  el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+}
 function updateHud(){
   const p = game.player;
   document.getElementById('hpBarFill').style.width = Math.max(0,(p.hp/p.maxHp*100))+'%';
@@ -6047,10 +7212,10 @@ function updateHud(){
   const bossTag = game.boss ? (game.boss.isMini?T('miniBossLabel'):T('bossLabel')) : null;
   document.getElementById('waveTitle').textContent = T('waveLabel');
   if(game.chapter){
-    document.getElementById('waveNum').textContent = bossTag || (game.chapterWave+'/'+game.chapter.waveCount);
+    setWaveNum(bossTag || (game.chapterWave+'/'+game.chapter.waveCount));
     document.getElementById('modeTag').textContent = T('chapterTag', game.chapterIndex+1, game.chapter.title.toUpperCase());
   } else {
-    document.getElementById('waveNum').textContent = bossTag || game.wave;
+    setWaveNum(bossTag || game.wave);
     document.getElementById('modeTag').textContent = (game.endless?T('endlessPrefix'):'') + diffTxt(game.diff.key,'label').toUpperCase();
   }
   const alive = game.enemies.length + game.pendingSpawns.length;
@@ -6067,6 +7232,7 @@ function updateHud(){
 function draw(){
   const w=canvas.width, h=canvas.height;
   ctx.clearRect(0,0,w,h);
+  const nowT = Date.now();
   // a rázást a teljes világ-rajzra tesszük rá; a HUD DOM-elem, azt nem érinti
   const shaking = shakeT>0 && shakeMag>0;
   if(shaking){
@@ -6088,263 +7254,202 @@ function draw(){
   }
   if(!game){ if(shaking) ctx.restore(); return; }
   const p = game.player;
+  const lightFx = fxLight();
 
-  // környezeti veszélyzónák (padló-réteg, lüktető)
+  // környezeti veszélyzónák (padló-réteg, lüktető, lágy széllel)
   game.hazards.forEach(hz=>{
     const pulse = 0.5 + 0.5*Math.sin(hz.ph||0);
     let c1,c2;
-    if(hz.kind==='ice'){ c1='rgba(150,210,255,'; c2='rgba(210,240,255,'; }
-    else if(hz.kind==='shock'){ c1='rgba(120,220,255,'; c2='rgba(190,240,255,'; }
-    else { c1='rgba(255,110,40,'; c2='rgba(255,200,80,'; }   // lava
-    ctx.beginPath(); ctx.arc(hz.x,hz.y,hz.r,0,PI2);
-    ctx.fillStyle = c1+(0.18+0.12*pulse)+')'; ctx.fill();
-    ctx.lineWidth=2; ctx.strokeStyle = c2+(0.5+0.3*pulse)+')'; ctx.stroke();
-    ctx.beginPath(); ctx.arc(hz.x,hz.y,hz.r*0.6,0,PI2); ctx.fillStyle=c2+(0.10+0.10*pulse)+')'; ctx.fill();
+    if(hz.kind==='ice'){ c1='150,210,255'; c2='210,240,255'; }
+    else if(hz.kind==='shock'){ c1='120,220,255'; c2='190,240,255'; }
+    else { c1='255,110,40'; c2='255,200,80'; }   // lava
+    const hg = ctx.createRadialGradient(hz.x,hz.y,hz.r*0.2,hz.x,hz.y,hz.r);
+    hg.addColorStop(0,`rgba(${c2},${0.22+0.14*pulse})`); hg.addColorStop(0.7,`rgba(${c1},${0.2+0.12*pulse})`); hg.addColorStop(1,`rgba(${c1},0.02)`);
+    ctx.beginPath(); ctx.arc(hz.x,hz.y,hz.r,0,PI2); ctx.fillStyle=hg; ctx.fill();
+    ctx.lineWidth=2; ctx.strokeStyle = `rgba(${c2},${0.5+0.3*pulse})`; ctx.stroke();
+    ctx.save(); ctx.setLineDash([6,8]); ctx.lineWidth=1; ctx.strokeStyle=`rgba(${c2},0.35)`; ctx.beginPath(); ctx.arc(hz.x,hz.y,hz.r*0.62,nowT/900,nowT/900+PI2); ctx.stroke(); ctx.restore();
   });
 
-  // akadályok (romok + rombolható fedezékek)
-  const oFill=(th&&th.obstacleFill)||'#2a3348', oFill2=(th&&th.obstacleFill2)||'#333f58', oStroke=(th&&th.obstacleStroke)||'#454f6b';
+  // statikus akadályok: egyszer kisütött réteg; a rombolhatók élőben (törés-fokozattal)
+  ctx.drawImage(getObstacleLayer(w,h), 0, 0);
+  const theme = obstTheme();
   game.obstacles.forEach(o=>{
-    if(o.destructible){
-      const dmgF = clamp(o.hp/(o.maxHp||o.hp||1),0,1);
-      ctx.save(); ctx.translate(o.x,o.y);
-      rr(ctx, -o.r,-o.r, o.r*2, o.r*2, o.r*0.25);
-      ctx.fillStyle = shade(o.dcol||'#6b563a', -0.15*(1-dmgF)); ctx.fill();
-      ctx.lineWidth=2; ctx.strokeStyle = shade(o.dcol||'#6b563a', -0.4); ctx.stroke();
-      ctx.strokeStyle = shade(o.dcol||'#6b563a', -0.55); ctx.lineWidth=1.5;
-      ctx.beginPath(); ctx.moveTo(-o.r*0.9,-o.r*0.2); ctx.lineTo(o.r*0.9,-o.r*0.2);
-      ctx.moveTo(-o.r*0.9,o.r*0.35); ctx.lineTo(o.r*0.9,o.r*0.35); ctx.stroke();
-      if(dmgF<0.6){ ctx.strokeStyle='rgba(0,0,0,0.5)'; ctx.lineWidth=1.5;
-        ctx.beginPath(); ctx.moveTo(-o.r*0.3,-o.r*0.6); ctx.lineTo(o.r*0.1,0); ctx.lineTo(-o.r*0.2,o.r*0.6); ctx.stroke(); }
-      ctx.restore();
-    } else if(o.kind==='wall'){        // tégla-/beton fal
-      ctx.save(); ctx.translate(o.x,o.y);
-      rr(ctx, -o.r, -o.r*0.68, o.r*2, o.r*1.36, o.r*0.12);
-      ctx.fillStyle='#4a4f5c'; ctx.fill();
-      ctx.lineWidth=2; ctx.strokeStyle='#22252c'; ctx.stroke();
-      ctx.strokeStyle='rgba(0,0,0,0.28)'; ctx.lineWidth=1;
-      for(let ry=-o.r*0.5; ry<o.r*0.65; ry+=o.r*0.34){ ctx.beginPath(); ctx.moveTo(-o.r*0.94,ry); ctx.lineTo(o.r*0.94,ry); ctx.stroke(); }
-      ctx.restore();
-    } else if(o.kind==='barrel'){      // fa/fém hordó
-      ctx.save(); ctx.translate(o.x,o.y);
-      ctx.beginPath(); ctx.arc(0,0,o.r,0,PI2); ctx.fillStyle='#8a6a3a'; ctx.fill();
-      ctx.lineWidth=2; ctx.strokeStyle='#4a3620'; ctx.stroke();
-      ctx.strokeStyle='#4a3620'; ctx.lineWidth=o.r*0.15;
-      ctx.beginPath(); ctx.arc(0,0,o.r*0.7,0,PI2); ctx.stroke();
-      ctx.beginPath(); ctx.arc(0,0,o.r*0.32,0,PI2); ctx.stroke();
-      ctx.restore();
-    } else if(o.kind==='bush'){        // rejtőzésre alkalmas bokor
-      ctx.save(); ctx.translate(o.x,o.y); ctx.globalAlpha=0.92;
-      [[0,0,1],[-0.4,0.25,0.68],[0.4,0.2,0.68],[0,-0.35,0.6]].forEach(([dx,dy,rf])=>{
-        ctx.beginPath(); ctx.arc(dx*o.r,dy*o.r,rf*o.r*0.72,0,PI2); ctx.fillStyle='#2f5c34'; ctx.fill();
-      });
-      ctx.beginPath(); ctx.arc(-o.r*0.15,-o.r*0.15,o.r*0.4,0,PI2); ctx.fillStyle='#3d7a44'; ctx.fill();
-      ctx.restore();
-    } else if(o.kind==='pine'){        // fenyőfa — sztori-pályák erdős témájához
-      ctx.save(); ctx.translate(o.x,o.y);
-      ctx.fillStyle='#4a3420'; ctx.fillRect(-o.r*0.1,o.r*0.1,o.r*0.2,o.r*0.8);
-      ctx.fillStyle='#1f4a2c';
-      [1,0.68,0.4].forEach((s,i)=>{
-        ctx.beginPath(); ctx.moveTo(0,-o.r*1.15+i*o.r*0.5); ctx.lineTo(o.r*0.75*s,o.r*0.15+i*o.r*0.42); ctx.lineTo(-o.r*0.75*s,o.r*0.15+i*o.r*0.42); ctx.closePath(); ctx.fill();
-      });
-      ctx.restore();
-    } else if(o.kind==='haybale'){     // szénabála — sztori farm-pályához
-      ctx.save(); ctx.translate(o.x,o.y);
-      ctx.beginPath(); ctx.ellipse(0,0,o.r,o.r*0.82,0,0,PI2); ctx.fillStyle='#c9a24a'; ctx.fill();
-      ctx.strokeStyle='#8a6a2a'; ctx.lineWidth=o.r*0.1;
-      ctx.beginPath(); ctx.ellipse(0,-o.r*0.3,o.r*0.9,o.r*0.2,0,0,PI2); ctx.stroke();
-      ctx.beginPath(); ctx.ellipse(0,o.r*0.3,o.r*0.9,o.r*0.2,0,0,PI2); ctx.stroke();
-      ctx.restore();
-    } else {
-      ctx.beginPath(); ctx.arc(o.x,o.y,o.r,0,PI2);
-      ctx.fillStyle = oFill; ctx.fill();
-      ctx.beginPath(); ctx.arc(o.x-o.r*0.25,o.y-o.r*0.25,o.r*0.55,0,PI2);
-      ctx.fillStyle = oFill2; ctx.fill();
-      ctx.strokeStyle = oStroke; ctx.lineWidth=2; ctx.stroke();
-    }
+    if(!o.destructible) return;
+    const dmgF = clamp(o.hp/(o.maxHp||o.hp||1),0,1);
+    drawObstacleShadow(ctx,o,theme); drawObstacleBody(ctx,o,theme,dmgF);
   });
 
-  // robbanó hordók
-  game.barrels.forEach(bar=>{
-    ctx.save(); ctx.translate(bar.x,bar.y);
-    ctx.beginPath(); ctx.arc(0,0,bar.r,0,PI2);
-    ctx.fillStyle='#b8412e'; ctx.fill();
-    ctx.lineWidth=2; ctx.strokeStyle='#2a1410'; ctx.stroke();
-    ctx.fillStyle='#f0c040'; ctx.fillRect(-bar.r,-bar.r*0.28,bar.r*2,bar.r*0.16);
-    ctx.fillStyle='#1a0e0a'; ctx.font=`bold ${Math.round(bar.r)}px Trebuchet MS`; ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText('☢', 0, bar.r*0.14);
-    ctx.restore();
-  });
+  // robbanó hordók + rejtett ládák
+  game.barrels.forEach(bar=>drawExplosiveBarrel(ctx,bar,nowT));
+  game.crates.forEach(cr=>drawCrate(ctx,cr,nowT));
 
-  // rejtett ládák (titkok)
-  game.crates.forEach(cr=>{
-    ctx.save(); ctx.translate(cr.x,cr.y);
-    rr(ctx,-cr.r,-cr.r,cr.r*2,cr.r*2,cr.r*0.2);
-    ctx.fillStyle = cr.loot==='heal'?'#3a6b4a':(cr.loot==='ult'?'#6b5a2a':'#5a4632'); ctx.fill();
-    ctx.lineWidth=2; ctx.strokeStyle='#20160e'; ctx.stroke();
-    ctx.strokeStyle='rgba(255,255,255,0.28)'; ctx.lineWidth=1.5;
-    ctx.beginPath(); ctx.moveTo(-cr.r,-cr.r); ctx.lineTo(cr.r,cr.r); ctx.moveTo(cr.r,-cr.r); ctx.lineTo(-cr.r,cr.r); ctx.stroke();
-    ctx.fillStyle='#ffd166'; ctx.font=`bold ${Math.round(cr.r*1.1)}px Trebuchet MS`; ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText('?',0,cr.r*0.08);
-    ctx.restore();
-  });
+  // por, füst, törmelék és halál-animációk a talaj fölött, az élő szereplők alatt
+  drawPuffs(ctx);
+  drawDeaths(ctx, p);
+  drawDebris(ctx);
 
-  // xp orbok
-  game.orbs.forEach(o=>{ ctx.beginPath(); ctx.arc(o.x,o.y,o.r,0,PI2);
-    ctx.fillStyle='#ffd166'; ctx.shadowColor='#ffd166'; ctx.shadowBlur=10; ctx.fill(); ctx.shadowBlur=0; });
+  // xp orbok: lüktető fény-mag, körülötte forgó szikra
+  if(game.orbs.length){
+    const gs = glowSprite('#ffd166', 16);
+    game.orbs.forEach(o=>{
+      const pl = 0.8+0.2*Math.sin(nowT/160+o.x);
+      ctx.globalAlpha=0.7*pl; ctx.drawImage(gs.c,o.x-gs.S,o.y-gs.S,gs.S*2,gs.S*2); ctx.globalAlpha=1;
+      ctx.beginPath(); ctx.arc(o.x,o.y,o.r*pl,0,PI2); ctx.fillStyle='#ffd166'; ctx.fill();
+      ctx.beginPath(); ctx.arc(o.x-o.r*0.3,o.y-o.r*0.3,o.r*0.35,0,PI2); ctx.fillStyle='#fff8dc'; ctx.fill();
+      const a = nowT/300+o.x; ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.beginPath(); ctx.arc(o.x+Math.cos(a)*o.r*1.8,o.y+Math.sin(a)*o.r*1.8,1.4,0,PI2); ctx.fill();
+    });
+  }
 
   // méregfelhők / mezők (c.color szerint, hogy a lézerfal is elüsse a méregtől)
   game.clouds.forEach(c=>{
     const ccol = c.color||'#78dc78'; const [cr_,cg_,cb_]=hexToRgb(ccol);
-    ctx.beginPath(); ctx.arc(c.x,c.y,c.r,0,PI2);
-    ctx.fillStyle=`rgba(${cr_},${cg_},${cb_},${clamp(c.life/220,0,1)*0.28})`; ctx.fill();
-    ctx.strokeStyle=`rgba(${cr_},${cg_},${cb_},0.5)`; ctx.lineWidth=2; ctx.stroke();
+    const a = clamp(c.life/220,0,1);
+    const cg = ctx.createRadialGradient(c.x,c.y,c.r*0.1,c.x,c.y,c.r);
+    cg.addColorStop(0,`rgba(${cr_},${cg_},${cb_},${a*0.38})`); cg.addColorStop(0.75,`rgba(${cr_},${cg_},${cb_},${a*0.22})`); cg.addColorStop(1,`rgba(${cr_},${cg_},${cb_},0)`);
+    ctx.beginPath(); ctx.arc(c.x,c.y,c.r,0,PI2); ctx.fillStyle=cg; ctx.fill();
+    ctx.strokeStyle=`rgba(${cr_},${cg_},${cb_},${0.55*a})`; ctx.lineWidth=2; ctx.stroke();
+    if(!lightFx){ for(let i=0;i<4;i++){ const an=nowT/700+i*1.57+c.x; const rr2=c.r*(0.45+0.25*Math.sin(nowT/400+i));
+      ctx.beginPath(); ctx.arc(c.x+Math.cos(an)*rr2,c.y+Math.sin(an)*rr2,c.r*0.18,0,PI2); ctx.fillStyle=`rgba(${cr_},${cg_},${cb_},${0.18*a})`; ctx.fill(); } }
   });
 
   // csapdák/aknák — halványan látszó jelölés a talajon (nem teljesen láthatatlan, hogy fair legyen)
   game.traps.forEach(tr=>{
     if(!tr.armed) return;
-    ctx.save(); ctx.globalAlpha = 0.55 + 0.25*Math.sin(Date.now()/220);
+    ctx.save(); ctx.globalAlpha = 0.55 + 0.25*Math.sin(nowT/220);
     ctx.beginPath(); ctx.arc(tr.x,tr.y,tr.r*0.55,0,PI2);
     ctx.strokeStyle='#c9a24a'; ctx.lineWidth=2; ctx.setLineDash([4,3]); ctx.stroke(); ctx.setLineDash([]);
     ctx.fillStyle='rgba(201,162,74,0.18)'; ctx.fill();
+    ctx.fillStyle='#e0b85a'; for(let i=0;i<6;i++){ const an=i/6*PI2; ctx.beginPath(); ctx.moveTo(tr.x+Math.cos(an)*tr.r*0.2,tr.y+Math.sin(an)*tr.r*0.2); ctx.lineTo(tr.x+Math.cos(an)*tr.r*0.5,tr.y+Math.sin(an)*tr.r*0.5); ctx.lineTo(tr.x+Math.cos(an+0.4)*tr.r*0.2,tr.y+Math.sin(an+0.4)*tr.r*0.2); ctx.closePath(); ctx.fill(); }
     ctx.restore();
   });
 
-  // meteor célzó + robbanás (m.r / m.color szerint)
+  // meteor célzó (szűkülő gyűrű + töltődő belső korong) + robbanás
   game.meteors.forEach(m=>{
     const col = m.color||'#ff8c3c'; const R=m.r||110;
     if(!m.exploded){
-      ctx.beginPath(); ctx.arc(m.x,m.y,R,0,PI2);
-      ctx.strokeStyle=col; ctx.globalAlpha=0.5; ctx.setLineDash([6,6]); ctx.lineWidth=2; ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1;
+      const k = clamp(m.t/(m.delay||1),0,1);
+      ctx.save(); ctx.globalAlpha=0.55; ctx.strokeStyle=col; ctx.setLineDash([6,6]); ctx.lineWidth=2; ctx.lineDashOffset=-nowT/40;
+      ctx.beginPath(); ctx.arc(m.x,m.y,R,0,PI2); ctx.stroke(); ctx.setLineDash([]);
+      ctx.globalAlpha=0.18+0.25*k; ctx.fillStyle=col; ctx.beginPath(); ctx.arc(m.x,m.y,R*k,0,PI2); ctx.fill();
+      ctx.globalAlpha=0.8; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(m.x-R*0.3,m.y); ctx.lineTo(m.x+R*0.3,m.y); ctx.moveTo(m.x,m.y-R*0.3); ctx.lineTo(m.x,m.y+R*0.3); ctx.stroke();
+      ctx.restore();
     } else {
       const fade = 1-(m.t-m.delay)/30;
-      ctx.beginPath(); ctx.arc(m.x,m.y,R,0,PI2);
-      ctx.globalAlpha=Math.max(0,fade*0.4); ctx.fillStyle=col; ctx.fill(); ctx.globalAlpha=1;
+      const eg = ctx.createRadialGradient(m.x,m.y,0,m.x,m.y,R);
+      eg.addColorStop(0,rgbaAny('#ffffff',Math.max(0,fade*0.5))); eg.addColorStop(0.4,rgbaAny(col,Math.max(0,fade*0.45))); eg.addColorStop(1,rgbaAny(col,0));
+      ctx.beginPath(); ctx.arc(m.x,m.y,R,0,PI2); ctx.fillStyle=eg; ctx.fill();
     }
   });
 
-  // sugarak (railgun)
+  // sugarak (railgun): fehér mag + színes burok
   game.beams.forEach(bm=>{
     ctx.save(); ctx.translate(bm.x,bm.y); ctx.rotate(bm.a);
     const a = clamp(bm.life/10,0,1);
-    ctx.globalAlpha=a; ctx.fillStyle='#bfe9ff'; ctx.shadowColor='#6ee7ff'; ctx.shadowBlur=18;
-    ctx.fillRect(0,-4,1600,8); ctx.fillStyle='#fff'; ctx.fillRect(0,-1.5,1600,3);
-    ctx.restore(); ctx.globalAlpha=1; ctx.shadowBlur=0;
+    ctx.globalCompositeOperation='lighter';
+    ctx.globalAlpha=a*0.5; ctx.fillStyle='#6ee7ff'; ctx.fillRect(0,-9,1600,18);
+    ctx.globalAlpha=a; ctx.fillStyle='#bfe9ff'; ctx.fillRect(0,-4,1600,8); ctx.fillStyle='#fff'; ctx.fillRect(0,-1.5,1600,3);
+    ctx.restore(); ctx.globalAlpha=1;
   });
 
-  // fireballs
+  // tűzgolyók: izzó gyűrű, belül forró mag
   game.fireballs.forEach(f=>{
-    ctx.beginPath(); ctx.arc(f.x,f.y,f.r,0,PI2);
-    ctx.fillStyle = `rgba(255,140,60,${clamp(f.life/70,0,1)*0.35})`; ctx.fill();
-    ctx.strokeStyle='#ff8c3c'; ctx.lineWidth=2; ctx.stroke();
+    const a = clamp(f.life/70,0,1);
+    const fg = ctx.createRadialGradient(f.x,f.y,Math.max(0,f.r-14),f.x,f.y,f.r);
+    fg.addColorStop(0,`rgba(255,140,60,0)`); fg.addColorStop(0.6,`rgba(255,160,70,${a*0.35})`); fg.addColorStop(1,`rgba(255,220,120,${a*0.7})`);
+    ctx.beginPath(); ctx.arc(f.x,f.y,f.r,0,PI2); ctx.fillStyle=fg; ctx.fill();
+    ctx.strokeStyle=`rgba(255,240,180,${a})`; ctx.lineWidth=2.5; ctx.stroke();
   });
 
-  // turrets (idézett ágyúk)
+  // idézett ágyúk / szolgák
   game.turrets.forEach(t=>{
-    ctx.beginPath(); ctx.arc(t.x,t.y,12,0,PI2);
-    ctx.fillStyle = p.color; ctx.shadowColor=p.color; ctx.shadowBlur=10; ctx.fill(); ctx.shadowBlur=0;
-    ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
+    if(t.mobile){
+      ctx.beginPath(); ctx.ellipse(t.x+3,t.y+8,9,4,0,0,PI2); ctx.fillStyle='rgba(0,0,0,0.35)'; ctx.fill();
+      const col = t.skeleton ? '#d8d0e8' : (t.beast ? '#c98a4a' : p.color);
+      ctx.beginPath(); ctx.arc(t.x,t.y,10,0,PI2); ctx.fillStyle=col; if(!lightFx){ ctx.shadowColor=t.skeleton?'#9d5cff':col; ctx.shadowBlur=10; } ctx.fill(); ctx.shadowBlur=0;
+      ctx.fillStyle='#1a1020'; ctx.beginPath(); ctx.arc(t.x-3,t.y-2,2,0,PI2); ctx.arc(t.x+3,t.y-2,2,0,PI2); ctx.fill();
+    } else {
+      ctx.beginPath(); ctx.ellipse(t.x+4,t.y+9,13,5,0,0,PI2); ctx.fillStyle='rgba(0,0,0,0.4)'; ctx.fill();
+      ctx.fillStyle='#2a3040'; rr(ctx,t.x-11,t.y-6,22,16,4); ctx.fill();
+      ctx.beginPath(); ctx.arc(t.x,t.y,10,0,PI2); ctx.fillStyle = p.color; if(!lightFx){ ctx.shadowColor=p.color; ctx.shadowBlur=10; } ctx.fill(); ctx.shadowBlur=0;
+      ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
+      let nearest=null, best=99999; game.enemies.forEach(en=>{ const d=dist(t.x,t.y,en.x,en.y); if(d<best){best=d; nearest=en;} });
+      const an = nearest ? Math.atan2(nearest.y-t.y,nearest.x-t.x) : -Math.PI/2;
+      ctx.strokeStyle='#dfe6ec'; ctx.lineWidth=t.heavy?5:4; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(t.x,t.y); ctx.lineTo(t.x+Math.cos(an)*16,t.y+Math.sin(an)*16); ctx.stroke();
+    }
   });
 
-  // drónok
+  // drónok: gyémánt-test forgó rotorral, körözés a hős körül
   game.drones.forEach(dr=>{
-    ctx.beginPath(); ctx.arc(dr.x,dr.y,9,0,PI2);
-    ctx.fillStyle='#cfe8ff'; ctx.shadowColor='#6ee7ff'; ctx.shadowBlur=10; ctx.fill(); ctx.shadowBlur=0;
-    ctx.strokeStyle='#6ee7ff'; ctx.lineWidth=2; ctx.stroke();
-    ctx.fillStyle='#ff5c7c'; ctx.beginPath(); ctx.arc(dr.x,dr.y,2.5,0,PI2); ctx.fill();
+    ctx.save(); ctx.translate(dr.x,dr.y);
+    ctx.beginPath(); ctx.ellipse(3,10,8,3,0,0,PI2); ctx.fillStyle='rgba(0,0,0,0.3)'; ctx.fill();
+    ctx.rotate(nowT/90); ctx.strokeStyle='rgba(200,230,255,0.45)'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(-13,0); ctx.lineTo(13,0); ctx.moveTo(0,-13); ctx.lineTo(0,13); ctx.stroke();
+    ctx.rotate(-nowT/90 + (dr.ang||0));
+    ctx.fillStyle= dr.heal ? '#b8ffd8' : '#cfe8ff'; if(!lightFx){ ctx.shadowColor=dr.heal?'#8affc1':'#6ee7ff'; ctx.shadowBlur=10; }
+    ctx.beginPath(); ctx.moveTo(10,0); ctx.lineTo(0,6); ctx.lineTo(-8,0); ctx.lineTo(0,-6); ctx.closePath(); ctx.fill(); ctx.shadowBlur=0;
+    ctx.strokeStyle= dr.heal ? '#8affc1' : '#6ee7ff'; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.fillStyle = dr.heal ? '#3ddc97' : '#ff5c7c'; ctx.beginPath(); ctx.arc(2,0,2.2,0,PI2); ctx.fill();
+    ctx.restore();
   });
 
-  // ellenfelek
-  const nowT = Date.now();
-  /* Kímélő rajzolás: vagy mert a játékos bekapcsolta, vagy mert egyszerre nagyon
-     sokan vannak a pályán. Az elmosás (glow) ellenfelenként fizetendő, és 90 fölött
-     a képkockasebesség felére esik tőle — nagy hullámban a folyamatosság többet ér,
-     mint a fény. Képkockánként dől el, szóval a kisebb hullámok látványa nem változik. */
-  const lightFx = !!SETTINGS.lowFx || game.enemies.length > 55;
+  // ellenfelek (sprite-alapú, típusfüggő mozgás-karakterrel)
   game.enemies.forEach(en=>{
-    // a képernyőn kívül lévőket meg se rajzoljuk — a hullámok jó része kívülről sétál be
     const margin = en.r*3 + 20;
     if(en.x < -margin || en.x > w+margin || en.y < -margin || en.y > h+margin) return;
-    const R = en.r;
-    const face = Math.atan2(p.y-en.y, p.x-en.x);
-    // rohamozó figyelmeztetés / töltés-nyom
-    if(en.telegraph>0){ ctx.beginPath(); ctx.arc(en.x,en.y,R+8,0,PI2);
-      ctx.strokeStyle='rgba(255,80,80,0.8)'; ctx.lineWidth=3; ctx.setLineDash([4,4]); ctx.stroke(); ctx.setLineDash([]); }
-    // talaj-árnyék — mélységet ad, elválasztja az alaptalajtól
-    ctx.beginPath(); ctx.ellipse(en.x, en.y+R*0.55, R*0.85, R*0.32, 0, 0, PI2);
-    ctx.fillStyle='rgba(0,0,0,0.4)'; ctx.fill();
-
-    /* Lüktető, típus-színű aura a törzs mögött. Kímélő látvány módban elmosás
-       nélkül, egy nagyobb halvány körrel — hasonló hatás, töredék annyi munka. */
-    const pulse = 0.55 + 0.25*Math.sin(nowT/260 + en.x*0.05);
-    if(lightFx){
-      ctx.globalAlpha = pulse*0.28;
-      ctx.beginPath(); ctx.arc(en.x, en.y, R*1.8, 0, PI2);
-      ctx.fillStyle = en.color; ctx.fill();
-      ctx.globalAlpha = 1;
-    } else {
-      ctx.save();
-      ctx.globalAlpha = pulse*0.5;
-      ctx.beginPath(); ctx.arc(en.x, en.y, R*1.55, 0, PI2);
-      ctx.fillStyle = en.color; ctx.shadowColor = en.color; ctx.shadowBlur = R*0.9;
-      ctx.fill();
-      ctx.restore();
-    }
-
-    /* Törzs + arc EGY transzformáció alatt. Korábban a törzs és az arc külön-külön
-       állította be a translate/rotate-et, és egy harmadik save/restore hordozta a
-       glow-t: ellenfelenként négy save/restore pár futott. Ez volt a rajzolás
-       legdrágább része nagy hullámoknál. */
-    const fill = en.frozen>0 ? '#bfe9ff' : (en.hitFlash>0 ? '#fff' : en.color);
-    ctx.save();
-    ctx.translate(en.x, en.y); ctx.rotate(face);
-    if(!lightFx){ ctx.shadowColor = en.color; ctx.shadowBlur = en.hitFlash>0 ? 4 : 12; }
-    drawEnemyShapeAt0(ctx, en, R, fill);
-    ctx.shadowBlur = 0;
-    drawEnemyFaceAt0(ctx, en, R);
-    ctx.restore();
-
-    if(en.hitFlash>0){ ctx.beginPath(); ctx.arc(en.x,en.y,en.r,0,PI2); ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.fill(); }
-    if(en.frozen>0){ ctx.beginPath(); ctx.arc(en.x,en.y,en.r,0,PI2); ctx.fillStyle='rgba(140,210,255,0.45)'; ctx.fill(); }
-    // hp sáv
-    ctx.fillStyle='#1c2333'; ctx.fillRect(en.x-16, en.y-en.r-10, 32, 4);
-    ctx.fillStyle='#ff5c7c'; ctx.fillRect(en.x-16, en.y-en.r-10, 32*clamp(en.hp/en.maxHp,0,1), 4);
+    drawEnemyLive(ctx, en, p, lightFx, nowT);
   });
 
-  // boss
+  // boss + életcsík (név, keret, fényes töltés)
   if(game.boss){
     const b = game.boss;
     drawBoss(ctx, b, Math.atan2(p.y-b.y, p.x-b.x));
-    ctx.fillStyle='#1c2333'; ctx.fillRect(w/2-160,20,320,10);
-    ctx.fillStyle='#ff5c7c'; ctx.fillRect(w/2-160,20,320*clamp(b.hp/b.maxHp,0,1),10);
+    const bx=w/2-160, by=22, bw=320, bh=10, hf=clamp(b.hp/b.maxHp,0,1), bcol=b.col||'#ff5c7c';
+    ctx.fillStyle='rgba(6,8,12,0.8)'; rr(ctx,bx-3,by-3,bw+6,bh+6,6); ctx.fill();
+    ctx.strokeStyle=rgbaAny(bcol,0.6); ctx.lineWidth=1; ctx.stroke();
+    const bg = ctx.createLinearGradient(0,by,0,by+bh); bg.addColorStop(0,shade(bcol,0.35)); bg.addColorStop(0.5,bcol); bg.addColorStop(1,shade(bcol,-0.4));
+    ctx.fillStyle = b.hitFlash>0 ? '#fff' : bg; rr(ctx,bx,by,Math.max(0,bw*hf),bh,4); ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.28)'; rr(ctx,bx,by,Math.max(0,bw*hf),bh*0.4,3); ctx.fill();
+    if(b.name){ ctx.font='bold 11px Trebuchet MS'; ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+      ctx.lineWidth=3; ctx.strokeStyle='rgba(4,6,10,0.85)'; ctx.strokeText(b.name.toUpperCase(), w/2, by+bh+16);
+      ctx.fillStyle=bcol; ctx.fillText(b.name.toUpperCase(), w/2, by+bh+16); }
   }
 
-  // ellenség golyók
-  game.enemyBullets.forEach(eb=>{ const ec=eb.col||'#ff5c7c'; ctx.beginPath(); ctx.arc(eb.x,eb.y,eb.r,0,PI2);
-    ctx.fillStyle=ec; ctx.shadowColor=ec; ctx.shadowBlur=8; ctx.fill(); ctx.shadowBlur=0; });
-
-  // player golyók
-  game.bullets.forEach(b=>{ ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,PI2);
-    ctx.fillStyle= b.friendly? '#fff' : p.color; ctx.shadowColor=p.color; ctx.shadowBlur=8; ctx.fill(); ctx.shadowBlur=0; });
-
-  // részecskék / villámlánc vizuál
+  // lövedékek: additív fény, nyomvonallal
+  ctx.save(); ctx.globalCompositeOperation='lighter';
+  game.enemyBullets.forEach(eb=>{
+    const ec=eb.col||'#ff5c7c';
+    ctx.strokeStyle=rgbaAny(ec,0.45); ctx.lineWidth=eb.r*1.2; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(eb.x-eb.vx*2.2,eb.y-eb.vy*2.2); ctx.lineTo(eb.x,eb.y); ctx.stroke();
+    ctx.beginPath(); ctx.arc(eb.x,eb.y,eb.r*1.7,0,PI2); ctx.fillStyle=rgbaAny(ec,0.28); ctx.fill();
+    ctx.beginPath(); ctx.arc(eb.x,eb.y,eb.r,0,PI2); ctx.fillStyle=ec; ctx.fill();
+    ctx.beginPath(); ctx.arc(eb.x,eb.y,eb.r*0.45,0,PI2); ctx.fillStyle='#fff'; ctx.fill();
+  });
+  const pcol = p.color;
+  game.bullets.forEach(b=>{
+    const col = b.friendly ? '#dff6ff' : pcol;
+    ctx.strokeStyle=rgbaAny(col,0.5); ctx.lineWidth=b.r*1.3; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(b.x-b.vx*1.8,b.y-b.vy*1.8); ctx.lineTo(b.x,b.y); ctx.stroke();
+    ctx.beginPath(); ctx.arc(b.x,b.y,b.r*1.6,0,PI2); ctx.fillStyle=rgbaAny(col,0.3); ctx.fill();
+    ctx.beginPath(); ctx.arc(b.x,b.y,b.r*0.7,0,PI2); ctx.fillStyle='#fff'; ctx.fill();
+    if(b.crit){ ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; const s=b.r*2.2, a=nowT/60;
+      ctx.beginPath(); ctx.moveTo(b.x+Math.cos(a)*s,b.y+Math.sin(a)*s); ctx.lineTo(b.x-Math.cos(a)*s,b.y-Math.sin(a)*s);
+      ctx.moveTo(b.x+Math.cos(a+1.57)*s,b.y+Math.sin(a+1.57)*s); ctx.lineTo(b.x-Math.cos(a+1.57)*s,b.y-Math.sin(a+1.57)*s); ctx.stroke(); }
+  });
+  // részecskék / villámlánc vizuál (ugyanabban az additív menetben)
   game.particles.forEach(pt=>{
     if(pt.bolt){
-      ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.globalAlpha=0.8;
-      ctx.beginPath(); ctx.moveTo(pt.x,pt.y); ctx.lineTo(pt.bolt.tx,pt.bolt.ty); ctx.stroke(); ctx.globalAlpha=1;
+      ctx.globalAlpha=0.9; drawBolt(ctx, pt.x,pt.y, pt.bolt.tx,pt.bolt.ty, 'rgba(160,220,255,0.7)', 5);
+      drawBolt(ctx, pt.x,pt.y, pt.bolt.tx,pt.bolt.ty, '#fff', 2); ctx.globalAlpha=1;
       return;
     }
-    ctx.globalAlpha = clamp(pt.life/30,0,1);
-    ctx.beginPath(); ctx.arc(pt.x,pt.y,2.4,0,PI2); ctx.fillStyle=pt.color; ctx.fill();
-    ctx.globalAlpha = 1;
+    const lf = clamp(pt.life/30,0,1);
+    ctx.globalAlpha = lf;
+    ctx.beginPath(); ctx.arc(pt.x,pt.y,(pt.size||2.6)*(0.5+0.5*lf),0,PI2); ctx.fillStyle=pt.color; ctx.fill();
   });
+  ctx.globalAlpha=1;
+  ctx.restore();
 
-  // pajzs
-  if(p.shieldActive>0){
-    ctx.beginPath(); ctx.arc(p.x,p.y,p.r+10,0,PI2);
-    ctx.strokeStyle = `rgba(110,231,255,${clamp(p.shieldActive/90,0,1)})`; ctx.lineWidth=3; ctx.stroke();
-  }
+  // lökéshullám-gyűrűk
+  drawRings(ctx);
 
   // ---- JÁTÉKOS ----
   if(p.buffs.invisible>0) ctx.globalAlpha = 0.4;
@@ -6354,36 +7459,33 @@ function draw(){
   // ---- AI BARÁT ----
   if(game.companion && game.companion.alive){
     const comp = game.companion;
-    const compSkin = heroSkinData(comp.cls, comp.skin).skin;
+    comp._vx = comp.x - (comp._px===undefined?comp.x:comp._px); comp._vy = comp.y - (comp._py===undefined?comp.y:comp._py);
+    comp._px = comp.x; comp._py = comp.y;
     ctx.save();
     if(comp.hitFlash>0) ctx.globalAlpha = 0.6;
-    withRot(ctx, comp.x, comp.y, comp.facing, ()=>{
-      ctx.fillStyle='#20242e'; rr(ctx, comp.r*0.3, -comp.r*0.14, comp.r*1.0, comp.r*0.28, comp.r*0.07); ctx.fill();
-    });
-    withRot(ctx, comp.x, comp.y, comp.facing, ()=> drawHeroAccent(ctx, comp.cls, comp.skin, comp.r, Date.now()));
-    withRot(ctx, comp.x, comp.y, comp.facing, ()=>{
-      drawHeroBodyPath(ctx, comp.cls, comp.r);
-      ctx.fillStyle = compSkin.col; ctx.shadowColor = compSkin.glow||compSkin.col; ctx.shadowBlur=10; ctx.fill(); ctx.shadowBlur=0;
-      ctx.lineWidth=2; ctx.strokeStyle='rgba(255,255,255,0.85)'; ctx.stroke();
-    });
-    drawPlayerHead(ctx, comp.x, comp.y, comp.r*0.72, comp.facing, 'commando', compSkin.col);
+    if(!comp.head) comp.head='commando';
+    drawHeroFigure(ctx, comp, { name:false });
     ctx.restore();
     // apró HP-csík a barát feje fölött
-    const bw=34, bh=4, bx=comp.x-bw/2, by=comp.y-comp.r-14;
-    ctx.fillStyle='rgba(10,14,20,0.7)'; ctx.fillRect(bx,by,bw,bh);
-    ctx.fillStyle='#7dffb0'; ctx.fillRect(bx,by,bw*clamp(comp.hp/comp.maxHp,0,1),bh);
-    ctx.font='9px Trebuchet MS'; ctx.fillStyle='rgba(255,255,255,0.65)'; ctx.textAlign='center';
+    const bw=34, bh=4, bx=comp.x-bw/2, by=comp.y-comp.r-16;
+    ctx.fillStyle='rgba(6,8,12,0.75)'; rr(ctx,bx-1,by-1,bw+2,bh+2,3); ctx.fill();
+    ctx.fillStyle='#7dffb0'; rr(ctx,bx,by,bw*clamp(comp.hp/comp.maxHp,0,1),bh,2); ctx.fill();
+    ctx.font='9px Trebuchet MS'; ctx.fillStyle='rgba(255,255,255,0.7)'; ctx.textAlign='center'; ctx.textBaseline='alphabetic';
     if(CLASSES[comp.cls]) ctx.fillText(clsTxt(comp.cls,'label'), comp.x, by-4);
   }
 
+  // légkör: köd + porszemcsék a szereplők fölött, hogy tér legyen a kép
+  drawAmbient(ctx, w, h, nowT, lightFx);
+
   // ---- lebegő sebzésszámok (még a világ-koordinátákban) ----
   if(game.floaters && game.floaters.length){
-    ctx.textAlign='center';
+    ctx.textAlign='center'; ctx.textBaseline='alphabetic';
     game.floaters.forEach(f=>{
       const a = clamp(f.life/22, 0, 1);
+      const pop = f.big ? 1 + Math.max(0, (f.life-44)/10)*0.6 : 1;
       ctx.globalAlpha = a;
-      ctx.font = `bold ${f.big?18:13}px Trebuchet MS`;
-      ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(4,6,10,0.85)';
+      ctx.font = `bold ${Math.round((f.big?19:13)*pop)}px Trebuchet MS`;
+      ctx.lineWidth = 3.5; ctx.strokeStyle = 'rgba(4,6,10,0.9)';
       ctx.strokeText(f.text, f.x, f.y);
       ctx.fillStyle = f.color; ctx.fillText(f.text, f.x, f.y);
     });
@@ -6393,10 +7495,13 @@ function draw(){
   // innentől képernyő-koordináták: a kezelőfelületet nem rázzuk
   if(shaking) ctx.restore();
 
+  // villanások + kromatikus perem-lüktetés
+  drawScreenFx(ctx, w, h);
+
   // ---- alacsony élet: lüktető vörös keret, hogy tényleg észrevedd ----
   const hpFrac = clamp(p.hp / p.maxHp, 0, 1);
   if(game.state==='playing' && hpFrac < 0.25 && p.hp > 0){
-    const pulse = 0.5 + 0.5*Math.sin(Date.now()/170);
+    const pulse = 0.5 + 0.5*Math.sin(nowT/170);
     const intensity = (1 - hpFrac/0.25);
     const vg = ctx.createRadialGradient(w/2, h/2, Math.min(w,h)*0.20, w/2, h/2, Math.max(w,h)*0.68);
     vg.addColorStop(0, 'rgba(255,40,70,0)');
@@ -6490,7 +7595,7 @@ function loop(t){
   frameAcc += dt;
   pollGamepad();
   let steps = 0;
-  while(frameAcc >= STEP_MS && steps < 4){ update(); frameAcc -= STEP_MS; steps++; }
+  while(frameAcc >= STEP_MS && steps < 4){ update(); if(game && game.state==='playing') tickVfx(); frameAcc -= STEP_MS; steps++; }
   if(steps === 4) frameAcc = 0;        // lassú eszközön ne halmozódjon restancia (nincs halál-spirál)
   draw();
   requestAnimationFrame(loop);
