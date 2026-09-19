@@ -11116,29 +11116,24 @@ function bakeFigure(a, opt, faceRight, phase, moving){
                  _walk: phase, _spd: moving?0.02:0, team:a.team, hp:1, maxHp:1 };
   isoFigureRaw(tg, stub, ox, oy, S, opt, faceRight);
 
-  // 1. KONTÚR: nyolc irányba eltolt, sötétre színezett másolat
-  const ow = Math.max(1.6, S*0.55);
+  // 1. KONTÚR: nyolc irányba eltolt, sötétre színezett másolat.
+  // Vékonyabb, mint korábban: a figurának már saját belső árnyékolása
+  // van, a vastag körvonal csak zömökké tette.
+  const ow = Math.max(1.2, S*0.40);
   g.save();
   for(let i=0;i<8;i++){
     const an = i*(PI2/8);
     g.drawImage(tmp, Math.cos(an)*ow, Math.sin(an)*ow);
   }
   g.globalCompositeOperation = 'source-in';
-  g.fillStyle = 'rgba(10,9,14,0.95)'; g.fillRect(0,0,W,H);
+  g.fillStyle = 'rgba(12,11,18,0.88)'; g.fillRect(0,0,W,H);
   g.restore();
 
   // 2. maga a figura a kontúr fölé
   g.drawImage(tmp, 0, 0);
 
-  // 3. CEL-FÉNY: kemény peremfény a bal-felső élen
-  const lit = document.createElement('canvas'); lit.width=W; lit.height=H;
-  const lg = lit.getContext('2d');
-  lg.drawImage(tmp, -S*0.5, -S*0.5);
-  lg.globalCompositeOperation = 'destination-out';
-  lg.drawImage(tmp, S*0.7, S*0.7);
-  lg.globalCompositeOperation = 'source-in';
-  lg.fillStyle = 'rgba(255,248,225,0.30)'; lg.fillRect(0,0,W,H);
-  g.drawImage(lit, 0, 0);
+  // (A peremfény már a figurán belül készül el, egyetlen menetben az
+  //  egész sziluettre — itt nem tesszük rá másodszor.)
 
   return { c, ox, oy, S };
 }
@@ -11176,13 +11171,45 @@ const FIG_RIG = {
   shoulder:38.5, neck:40.5, headC:45, headR:4.4,
 };
 
-/* Tagolt végtag: felkar+alkar (ill. comb+lábszár), lekerekített ízülettel. */
-function limb(g, x0,y0, x1,y1, x2,y2, w1, w2, col){
-  g.lineCap='round'; g.lineJoin='round';
-  g.strokeStyle = col; g.lineWidth = w1;
-  g.beginPath(); g.moveTo(x0,y0); g.lineTo(x1,y1); g.stroke();
-  g.lineWidth = w2;
-  g.beginPath(); g.moveTo(x1,y1); g.lineTo(x2,y2); g.stroke();
+/* Egyetlen újrahasznált segédvászon. A figura ELŐBB ide épül fel, és csak
+   utána kerül a célvászonra. Ez azért kell, mert a fényt és az árnyékot a
+   KÉSZ sziluettre tesszük rá (source-atop), nem darabonként. */
+let _figScratch = null;
+function figScratch(w, h){
+  if(!_figScratch){ const c = document.createElement('canvas');
+    _figScratch = { c, g: c.getContext('2d') }; }
+  const s = _figScratch;
+  if(s.c.width < w || s.c.height < h){
+    s.c.width = Math.max(s.c.width, w); s.c.height = Math.max(s.c.height, h); }
+  s.g.setTransform(1,0,0,1,0,0);
+  s.g.globalCompositeOperation = 'source-over';
+  s.g.globalAlpha = 1;
+  s.g.clearRect(0, 0, s.c.width, s.c.height);
+  return s;
+}
+
+/* Elvékonyodó végtag: comb vastag a csípőnél, vékony a térdnél; a lábszár
+   még vékonyabb a bokánál. Két trapéz + három korong az ízületeknél —
+   mivel MIND ugyanaz a lapos szín, hézag és varrat nélkül összeolvadnak.
+   (A korábbi vastag vonal végig egyforma volt: ettől lett kolbász.) */
+function limbPath(g, p0, p1, p2, w0, w1, w2){
+  g.beginPath();
+  const seg = (a, b, wa, wb)=>{
+    const dx=b[0]-a[0], dy=b[1]-a[1], L=Math.hypot(dx,dy)||1, nx=-dy/L, ny=dx/L;
+    g.moveTo(a[0]+nx*wa, a[1]+ny*wa); g.lineTo(b[0]+nx*wb, b[1]+ny*wb);
+    g.lineTo(b[0]-nx*wb, b[1]-ny*wb); g.lineTo(a[0]-nx*wa, a[1]-ny*wa);
+    g.closePath();
+  };
+  seg(p0, p1, w0, w1); seg(p1, p2, w1, w2);
+  // Az ízületi körök AZONOS körüljárással készülnek, mint a trapézok
+  // (ezért a záró `true`). Ellenkező irányban a nonzero kitöltési szabály
+  // KILYUKASZTANÁ a végtagot a térdnél és a csípőnél.
+  for(const [p,w] of [[p0,w0],[p1,w1],[p2,w2]]){
+    g.moveTo(p[0]+w, p[1]); g.arc(p[0], p[1], w, 0, PI2, true); }
+}
+function limbPoly(g, p0, p1, p2, w0, w1, w2, col){
+  limbPath(g, p0, p1, p2, w0, w1, w2);
+  g.fillStyle = col; g.fill();
 }
 
 /* A nyers osztályszín neon. A referencia tompább: a szín felét a saját
@@ -11190,16 +11217,34 @@ function limb(g, x0,y0, x1,y1, x2,y2, w1, w2, col){
 function muteCol(hex, amt){
   const [r,gr,b] = hexToRgb(hex);
   const l = 0.30*r + 0.59*gr + 0.11*b;
-  const k = amt;
-  return `rgb(${(r+(l-r)*k)|0},${(gr+(l-gr)*k)|0},${(b+(l-b)*k)|0})`;
+  return `rgb(${(r+(l-r)*amt)|0},${(gr+(l-gr)*amt)|0},${(b+(l-b)*amt)|0})`;
 }
 /* rgb(...) -> hex, hogy a shade() tovább tudjon dolgozni vele */
 function rgbHex(c){
-  const m = /rgb\((\d+),(\d+),(\d+)\)/.exec(c);
+  const m = /rgb\((\d+),\s*(\d+),\s*(\d+)\)/.exec(c);
   if(!m) return c;
   return '#' + [1,2,3].map(i=>(+m[i]).toString(16).padStart(2,'0')).join('');
 }
 
+/* =========================================================
+   A FIGURA RAJZA — egybefüggő sziluett, utólagos fénnyel
+   ---------------------------------------------------------
+   A korábbi változat darabosnak látszott, mert MINDEN testrész külön
+   alakzat volt, saját sötét kontúrral és saját átmenettel. Így a törzs
+   és a váll közt, a comb és a csípő közt varrat futott, és minden
+   darabot mintha külön lámpa világított volna meg.
+
+   Itt három menetben épül fel:
+     1. DARABOK — lapos, tömör anyagszínek, kontúr NÉLKÜL. Az azonos
+        anyagú részek (törzs + első kar + első láb) így egyetlen
+        összefüggő folttá olvadnak, varrat nincs köztük.
+     2. FÉNY — a kész sziluettre egyetlen irányfény, talaj felé sötétedés
+        és peremfény (source-atop). Egy lámpa az egész alakra: ettől lesz
+        egy tárgy, nem darabok halmaza.
+     3. RÉSZLET — övek, lemezvarratok, redők, arcvonások, szintén a
+        sziluetten belülre vágva.
+   Kontúrt csak a KÜLSŐ él kap, a kisütéskor (bakeFigure).
+   ========================================================= */
 function isoFigureRaw(g, a, sx, sy, S_in, opt, faceRightIn){
   opt = opt || {};
   const lo = opt.loadout || ISO_LOADOUT[a.cls] || { w:'none', build:1, col:a.color };
@@ -11212,34 +11257,34 @@ function isoFigureRaw(g, a, sx, sy, S_in, opt, faceRightIn){
                   : (isoProject(Math.cos(a.facing), Math.sin(a.facing), 0).x >= 0);
   const F = faceRight ? 1 : -1;
   const R = FIG_RIG;
-  const U = S * 0.80;                       // egység -> képpont
-  const W = (bs.hip || 1);                  // testalkat-szélesítés
-  const uy = (v)=> sy - v*U;
-  const ux = (v)=> sx + v*U*F*W;
-  const uw = (v)=> v*U*W;                   // vízszintes hossz (előjel nélkül)
+  const U = S * 0.80;
+  const W = (bs.hip || 1);
 
-  /* --- paletta --------------------------------------------------------
-     A ruha tompított, a fém és a bőr saját színű, a fény meleg. Az
-     akcentus (öv-csat, rúna, szem) marad telített: csak ott van neon,
-     ahol a referencián is van. */
-  const cloth = rgbHex(muteCol(rawCol, 0.46));
-  const base  = shade(cloth, -0.06);
-  const litC  = shade(cloth,  0.30);
-  const darkC = shade(cloth, -0.40);
-  const deepC = shade(cloth, -0.62);
-  const accent = shade(rawCol, 0.18);
-  const leather = '#4a3a2b', leatherD = '#2f251b', leatherL = '#6b5540';
-  const steel = '#7f8a99', steelD = '#3f4855', steelL = '#aeb9c8';
-  const skin = '#cda57e', skinD = '#93714f';
+  // --- a segédvászon és a benne lévő talp-pont ---
+  const CW = Math.max(8, Math.ceil(44*S)), CH = Math.max(8, Math.ceil(52*S));
+  const ox = Math.round(CW*0.5), oy = Math.round(CH - 6*S);
+  const sc = figScratch(CW, CH);
+  const fg = sc.g;
 
-  // --- lépésfázis ---
+  const uy = (v)=> oy - v*U;
+  const ux = (v)=> ox + v*U*F*W;
+  const uw = (v)=> Math.abs(v*U*W);
+
+  /* --- anyagok: LAPOS színek, a fény utólag jön rájuk --------------- */
+  const cloth   = rgbHex(muteCol(rawCol, 0.34));
+  const clothB  = shade(cloth, -0.34);        // hátsó (takart) végtagok
+  const clothD  = shade(cloth, -0.18);
+  const accent  = shade(rawCol, 0.18);
+  const leather = '#4a3a2b', leatherD = '#32271c', leatherL = '#6b5540';
+  const steel   = '#7f8a99', steelD = '#4a5361';
+  const skin    = '#cda57e', skinD = '#a07c57';
+
   const sw  = moving ? Math.sin(t) : 0;
   const swB = moving ? Math.sin(t + Math.PI) : 0;
 
-  /* --- testalkat-táblázat: minden ruhához saját váll/derék/csípő ----- */
   const FIT = {
     plate:  { sh:8.6, wa:5.2, hi:5.8, arm:3.0 },
-    hulk:   { sh:9.2,  wa:5.6, hi:6.0, arm:3.9 },
+    hulk:   { sh:9.2, wa:5.6, hi:6.0, arm:3.9 },
     coat:   { sh:7.0, wa:4.3, hi:5.0, arm:2.5 },
     bare:   { sh:8.2, wa:4.4, hi:5.2, arm:2.9 },
     robe:   { sh:6.6, wa:4.6, hi:5.2, arm:2.4 },
@@ -11251,414 +11296,504 @@ function isoFigureRaw(g, a, sx, sy, S_in, opt, faceRightIn){
   };
   const fit = FIT[bs.body] || FIT.bare;
   const shW = fit.sh, waW = fit.wa, hiW = fit.hi;
-  /* Testtartás: a behemót behúzza a nyakát és hosszabb a karja, a bomba-
-     hordó feje pedig a hasára ül. Enélkül a fej a törzs fölött lebeg. */
   const hunch   = (bs.body==='hulk') ? 3.6 : (bs.body==='blob' ? 3.0 : 0);
   const armLong = (bs.body==='hulk') ? 4.2 : 0;
-
   const hidesLegs = (bs.body==='robe' || bs.body==='hooded' || bs.body==='float' || bs.body==='tripod');
+  const isPlate = (bs.body==='plate' || bs.body==='hulk');
 
-  /* ================= LÁB =================
-     A két láb KÜLÖN csípőpontból indul, ezért van közöttük rés, és
-     ezért nem néz ki féllábúnak álltában sem. */
+  /* ======================================================
+     1. MENET — DARABOK, lapos színnel, kontúr nélkül
+     ====================================================== */
+
+  /* --- forma és érintkezés -------------------------------------------
+     A lapos foltok önmagukban síkok. Két dolog kell, hogy testté álljanak
+     össze, és közben NE legyen köztük varrat:
+       formShade() — az alakzaton BELÜL (vágva) egy oldalirányú átmenet,
+                     ettől hengeres lesz a végtag és domború a törzs;
+       contact()   — az alakzat elmosott, sötét mása ALÁ rajzolva, ettől
+                     a kar és az első láb ráül a testre, és látszik a két
+                     láb közti rés — kontúr nélkül, lágyan.
+     -------------------------------------------------------------------- */
+  const formShade = (pathFn, xl, xr, litA, darkA)=>{
+    fg.save(); pathFn(); fg.clip();
+    const gr = fg.createLinearGradient(xl, 0, xr, 0);
+    gr.addColorStop(0.00, `rgba(255,246,222,${litA})`);
+    gr.addColorStop(0.38, 'rgba(255,246,222,0)');
+    gr.addColorStop(0.56, 'rgba(10,12,22,0)');
+    gr.addColorStop(1.00, `rgba(10,12,22,${darkA})`);
+    fg.fillStyle = gr; fg.fillRect(0, 0, CW, CH); fg.restore();
+  };
+  const contact = (pathFn, blurPx, al)=>{
+    fg.save(); fg.filter = 'blur(' + blurPx.toFixed(2) + 'px)';
+    pathFn(); fg.fillStyle = `rgba(6,8,16,${al})`; fg.fill();
+    fg.restore();
+  };
+
+  // -- láb --
   const legTop = hidesLegs ? R.hip-3 : R.hip;
+  const legGeo = (phase, side, back)=>{
+    const hipX = side*hiW*0.74;
+    // álltában is enyhe terpesz-ellenpóz: a hátsó láb kissé hátrébb,
+    // különben a két láb egyetlen oszloppá olvad
+    const idle = (moving || !back) ? 0 : -0.9;
+    return { hip:[ux(hipX), uy(legTop)],
+             knee:[ux(hipX + phase*2.4 + idle*0.6), uy(R.knee + Math.abs(phase)*0.7)],
+             foot:[ux(hipX + phase*4.4 + idle), uy(R.foot + Math.max(0, phase)*2.0)] };
+  };
   const drawLeg = (phase, side, back)=>{
-    const hipX = side*hiW*0.52;
-    const kx = ux(hipX + phase*2.4), ky = uy(R.knee + Math.abs(phase)*0.7);
-    const fx = ux(hipX + phase*4.4), fy = uy(R.foot + Math.max(0, phase)*2.0);
-    const c1 = back ? deepC : darkC;
-    limb(g, ux(hipX), uy(legTop), kx, ky, fx, fy, uw(2.9), uw(2.3), c1);
-    // csizmaszár
-    g.strokeStyle = back ? leatherD : leather; g.lineWidth = uw(2.7); g.lineCap='round';
-    g.beginPath(); g.moveTo(kx, uy(R.ankle+3.2)); g.lineTo(fx, uy(R.ankle-0.6)); g.stroke();
-    // talp
-    g.fillStyle = back ? leatherD : leather;
-    g.beginPath(); g.ellipse(fx + uw(0.9)*F, fy - U*0.4, uw(2.7), U*1.5, 0, 0, PI2); g.fill();
+    const L = legGeo(phase, side, back);
+    const wA = uw(2.15), wB = uw(1.55), wC = uw(1.30);
+    const legPath = ()=> limbPath(fg, L.hip, L.knee, L.foot, wA, wB, wC);
+    // az első láb ÁRNYÉKOT vet a hátsóra és a csípőre -> látszik a rés
+    if(!back) contact(legPath, Math.max(1.0, U*1.35), 0.62);
+    limbPoly(fg, L.hip, L.knee, L.foot, wA, wB, wC, back?clothB:cloth);
+    formShade(legPath, L.hip[0]-wA*1.25, L.hip[0]+wA*1.45, back?0.06:0.22, back?0.34:0.50);
+    // csizma: a lábszár aljára simuló tömb
+    fg.fillStyle = back ? leatherD : leather;
+    fg.beginPath();
+    fg.moveTo(L.foot[0]-uw(1.7), L.foot[1]-U*3.4);
+    fg.lineTo(L.foot[0]+uw(1.7), L.foot[1]-U*3.4);
+    fg.lineTo(L.foot[0]+uw(2.0), L.foot[1]-U*0.7);
+    fg.lineTo(L.foot[0]+uw(3.1)*F, L.foot[1]-U*0.1);
+    fg.quadraticCurveTo(L.foot[0]+uw(3.2)*F, L.foot[1]+U*0.9, L.foot[0]+uw(2.0)*F, L.foot[1]+U*0.9);
+    fg.lineTo(L.foot[0]-uw(2.0), L.foot[1]+U*0.9);
+    fg.quadraticCurveTo(L.foot[0]-uw(2.3), L.foot[1], L.foot[0]-uw(2.0), L.foot[1]-U*0.7);
+    fg.closePath(); fg.fill();
   };
   if(!hidesLegs) drawLeg(swB, -1, true);
 
-  /* ================= HÁTSÓ KAR ================= */
+  // -- hátsó kar --
   const armShY = uy(R.shoulder-1.2);
-  const backHand = { x: ux(-shW*0.58 - swB*1.2), y: uy(R.waist+0.2-armLong) };
+  const backHand = [ux(-shW*0.58 - swB*1.2), uy(R.waist+0.2-armLong)];
   if(fit.arm > 0){
-    limb(g, ux(-shW*0.70), armShY,
-            ux(-shW*0.88 - swB*0.4), uy(R.chest-4.4-armLong*0.5),
-            backHand.x, backHand.y,
-            uw(fit.arm*0.94), uw(fit.arm*0.72), deepC);
-    g.fillStyle = shade(leatherD,-0.1);
-    g.beginPath(); g.arc(backHand.x, backHand.y, uw(fit.arm*0.5), 0, PI2); g.fill();
+    const bA=[ux(-shW*0.70), armShY],
+          bB=[ux(-shW*0.88 - swB*0.4), uy(R.chest-4.4-armLong*0.5)],
+          bw0=uw(fit.arm*0.50), bw1=uw(fit.arm*0.38), bw2=uw(fit.arm*0.34);
+    const bPath = ()=> limbPath(fg, bA, bB, backHand, bw0, bw1, bw2);
+    limbPoly(fg, bA, bB, backHand, bw0, bw1, bw2, clothB);
+    formShade(bPath, bA[0]-bw0*1.4, bA[0]+bw0*1.6, 0.04, 0.26);
+    fg.fillStyle = leatherD;
+    fg.beginPath(); fg.arc(backHand[0], backHand[1], uw(fit.arm*0.48), 0, PI2); fg.fill();
   }
 
-  /* ================= TÖRZS =================
-     Trapéz: széles váll -> keskeny derék. Ez adja a sziluettet. */
+  // -- törzs --
   const torsoTop = uy(R.shoulder+1.0), torsoBot = uy(R.hip+0.5);
-  const bodyGrad = (w)=>{ const gr = g.createLinearGradient(ux(-w), 0, ux(w), 0);
-    gr.addColorStop(0, litC); gr.addColorStop(0.42, base); gr.addColorStop(1, darkC); return gr; };
   const torsoPath = (sW, wW, top, bot)=>{
-    g.beginPath();
-    g.moveTo(ux(-sW), top + U*1.0);
-    g.quadraticCurveTo(ux(-sW*0.55), top - U*0.8, ux(0), top - U*1.0);
-    g.quadraticCurveTo(ux(sW*0.55), top - U*0.8, ux(sW), top + U*1.0);
-    g.quadraticCurveTo(ux(wW+0.9), (top+bot)*0.55, ux(wW), bot);
-    g.quadraticCurveTo(ux(0), bot + U*0.9, ux(-wW), bot);
-    g.quadraticCurveTo(ux(-wW-0.9), (top+bot)*0.55, ux(-sW), top + U*1.0);
-    g.closePath();
-  };
-  const inkLine = (w)=>{ g.strokeStyle='rgba(12,10,16,0.55)'; g.lineWidth=Math.max(0.6, U*0.55); g.stroke(); };
-
-  /* vállvért: a vállra SIMULÓ lemez, a törzs ívét követi */
-  const pauldron = (sgn, rw, rh, spike)=>{
-    // A vállvért a vállon ÜL: felül kupola, alul a kar felé lemetszve.
-    // Korábban teljes ellipszis volt, és ezért lebegő korongnak látszott.
-    const px = ux(sgn*(shW-1.5)), py = uy(R.shoulder-0.6);
-    const rx = uw(rw), ry = rh*U;
-    g.save();
-    g.beginPath();
-    g.moveTo(px-rx, py+ry*0.42);
-    g.bezierCurveTo(px-rx, py-ry, px+rx, py-ry, px+rx, py+ry*0.42);
-    g.quadraticCurveTo(px+rx*0.55, py+ry*0.95, px, py+ry*0.9);
-    g.quadraticCurveTo(px-rx*0.55, py+ry*0.95, px-rx, py+ry*0.42);
-    g.closePath();
-    g.save(); g.clip();
-    const pg = g.createLinearGradient(px-rx*0.5, py-ry, px+rx*0.6, py+ry);
-    pg.addColorStop(0, steelL); pg.addColorStop(0.45, steel); pg.addColorStop(1, steelD);
-    g.fillStyle = pg; g.fillRect(px-rx*1.2, py-ry*1.2, rx*2.4, ry*2.6);
-    g.strokeStyle='rgba(12,10,16,0.40)'; g.lineWidth=Math.max(0.5,U*0.38);
-    for(let k=1;k<=2;k++){ const yy = py - ry*0.5 + ry*0.62*k;
-      g.beginPath(); g.moveTo(px-rx, yy); g.quadraticCurveTo(px, yy+U*0.8, px+rx, yy); g.stroke(); }
-    g.restore();
-    g.strokeStyle='rgba(12,10,16,0.66)'; g.lineWidth=Math.max(0.6,U*0.5); g.stroke();
-    g.restore();
-    // peremfény a kupola tetején
-    g.strokeStyle='rgba(255,250,235,0.42)'; g.lineWidth=Math.max(0.5,U*0.38); g.lineCap='round';
-    g.beginPath(); g.moveTo(px-rx*0.72, py-ry*0.42);
-    g.quadraticCurveTo(px-rx*0.1, py-ry*0.98, px+rx*0.5, py-ry*0.62); g.stroke();
-    if(spike){ g.fillStyle = steelD;
-      g.beginPath(); g.moveTo(px - uw(rw*0.28), py - ry*0.72);
-      g.lineTo(px + sgn*uw(rw*0.42), py - ry*2.0);
-      g.lineTo(px + uw(rw*0.42), py - ry*0.55); g.closePath(); g.fill();
-      g.strokeStyle='rgba(12,10,16,0.6)'; g.lineWidth=Math.max(0.5,U*0.35); g.stroke(); }
+    fg.beginPath();
+    fg.moveTo(ux(-sW), top + U*1.2);
+    fg.quadraticCurveTo(ux(-sW*0.52), top - U*0.9, ux(0), top - U*1.0);
+    fg.quadraticCurveTo(ux(sW*0.52), top - U*0.9, ux(sW), top + U*1.2);
+    fg.quadraticCurveTo(ux(wW+1.0), (top+bot)*0.52, ux(wW), bot);
+    fg.quadraticCurveTo(ux(0), bot + U*1.0, ux(-wW), bot);
+    fg.quadraticCurveTo(ux(-wW-1.0), (top+bot)*0.52, ux(-sW), top + U*1.2);
+    fg.closePath();
   };
 
-  if(bs.body==='plate' || bs.body==='hulk'){
+  // a ruhadarabok LAPOS anyagszínekkel; a részletvonalak a 3. menetben
+  const detail = [];                       // { fn } — a fény UTÁN futnak
+
+  const torsoForm = (sW)=> formShade(()=>torsoPath(sW, waW, torsoTop, torsoBot),
+                                     ux(-sW*1.2), ux(sW*1.3), 0.28, 0.48);
+
+  if(isPlate){
     const big = (bs.body==='hulk');
-    g.fillStyle = bodyGrad(shW); torsoPath(shW, waW, torsoTop, torsoBot); g.fill(); inkLine();
-    // mellvért-lemezek
-    g.strokeStyle = deepC; g.lineWidth = Math.max(0.5,U*0.5);
-    for(let k=0;k<3;k++){
-      const y = torsoBot - (torsoBot-torsoTop)*(0.10 + k*0.14);
-      g.beginPath(); g.moveTo(ux(-waW*0.92), y); g.quadraticCurveTo(ux(0), y+U*0.9, ux(waW*0.92), y); g.stroke();
-    }
-    // mellkas-él
-    g.strokeStyle = shade(steelL,-0.1); g.globalAlpha=0.35; g.lineWidth=Math.max(0.5,U*0.45);
-    g.beginPath(); g.moveTo(ux(0), torsoTop+U*1.4); g.lineTo(ux(0), uy(R.waist+2)); g.stroke();
-    g.globalAlpha=1;
-    // nyakvédő
-    g.fillStyle = steelD;
-    g.beginPath(); g.ellipse(ux(0), torsoTop+U*0.4, uw(shW*0.42), U*1.3, 0, 0, PI2); g.fill();
-    // öv + csat
-    g.fillStyle = leather; g.fillRect(ux(-waW)-Math.min(0,uw(waW*2)), uy(R.waist-1.4), Math.abs(uw(waW*2)), U*2.0);
-    g.fillStyle = '#c9a44a'; g.fillRect(ux(-0.9)-Math.min(0,uw(1.8)), uy(R.waist-1.2), Math.abs(uw(1.8)), U*1.6);
+    fg.fillStyle = cloth; torsoPath(shW, waW, torsoTop, torsoBot); fg.fill();
+    torsoForm(shW);
+    // nyakvédő + mellvért-lemez ugyanabból a tömbből nő ki
+    fg.fillStyle = steelD;
+    fg.beginPath(); fg.ellipse(ux(0), torsoTop+U*0.6, uw(shW*0.40), U*1.5, 0, 0, PI2); fg.fill();
     // combvért
-    if(!hidesLegs){ g.fillStyle = darkC;
+    if(!hidesLegs){ fg.fillStyle = clothD;
       for(const sgn of [-1,1]){
-        g.beginPath(); g.moveTo(ux(sgn*0.9), torsoBot-U*0.5);
-        g.lineTo(ux(sgn*(waW+1.4)), torsoBot-U*0.5);
-        g.lineTo(ux(sgn*(waW+0.4)), uy(R.hip-5.5));
-        g.lineTo(ux(sgn*1.1), uy(R.hip-4.8)); g.closePath(); g.fill(); inkLine(); } }
-    pauldron(-1, big?3.0:3.2, big?3.6:2.4, !big);
-    pauldron( 1, big?3.0:3.2, big?3.6:2.4, !big);
+        fg.beginPath(); fg.moveTo(ux(sgn*0.8), torsoBot-U*1.2);
+        fg.lineTo(ux(sgn*(waW+1.5)), torsoBot-U*1.4);
+        fg.quadraticCurveTo(ux(sgn*(waW+1.0)), uy(R.hip-5.0), ux(sgn*(waW-0.2)), uy(R.hip-6.0));
+        fg.lineTo(ux(sgn*1.0), uy(R.hip-5.2)); fg.closePath(); fg.fill(); } }
+    // öv
+    fg.fillStyle = leather;
+    fg.fillRect(ux(-waW)-(F<0?uw(waW*2):0), uy(R.waist-1.4), uw(waW*2), U*2.0);
+    // vállvért: a vállra SIMULÓ kupola, a törzzsel egy tömbben
+    const pRw = big?3.0:3.2, pRh = big?3.6:2.4;
+    for(const sgn of [-1,1]){
+      const px = ux(sgn*(shW-1.5)), py = uy(R.shoulder-0.6);
+      const rx = uw(pRw), ry = pRh*U;
+      fg.fillStyle = steel;
+      fg.beginPath();
+      fg.moveTo(px-rx, py+ry*0.45);
+      fg.bezierCurveTo(px-rx, py-ry, px+rx, py-ry, px+rx, py+ry*0.45);
+      fg.quadraticCurveTo(px+rx*0.5, py+ry*1.0, px, py+ry*0.95);
+      fg.quadraticCurveTo(px-rx*0.5, py+ry*1.0, px-rx, py+ry*0.45);
+      fg.closePath(); fg.fill();
+      if(!big){ fg.fillStyle = steelD;
+        fg.beginPath(); fg.moveTo(px-uw(pRw*0.26), py-ry*0.75);
+        fg.lineTo(px+sgn*uw(pRw*0.40), py-ry*2.0);
+        fg.lineTo(px+uw(pRw*0.40), py-ry*0.58); fg.closePath(); fg.fill(); }
+    }
+    detail.push(()=>{
+      // lemezvarratok
+      fg.strokeStyle='rgba(14,12,20,0.30)'; fg.lineWidth=Math.max(0.5,U*0.42);
+      for(let k=0;k<3;k++){ const y = torsoBot - (torsoBot-torsoTop)*(0.12 + k*0.15);
+        fg.beginPath(); fg.moveTo(ux(-waW*0.94), y);
+        fg.quadraticCurveTo(ux(0), y+U*1.0, ux(waW*0.94), y); fg.stroke(); }
+      // mellkas-él
+      fg.strokeStyle='rgba(255,250,235,0.16)'; fg.lineWidth=Math.max(0.5,U*0.45);
+      fg.beginPath(); fg.moveTo(ux(0), torsoTop+U*1.6); fg.lineTo(ux(0), uy(R.waist+2.5)); fg.stroke();
+      // övcsat
+      fg.fillStyle = '#c9a44a';
+      fg.fillRect(ux(-0.9)-(F<0?uw(1.8):0), uy(R.waist-1.2), uw(1.8), U*1.6);
+      // vállvért bordái
+      fg.strokeStyle='rgba(14,12,20,0.26)'; fg.lineWidth=Math.max(0.5,U*0.38);
+      for(const sgn of [-1,1]){ const px = ux(sgn*(shW-1.5)), py = uy(R.shoulder-0.6);
+        for(let k=1;k<=2;k++){ const yy = py - pRh*U*0.5 + pRh*U*0.62*k;
+          fg.beginPath(); fg.moveTo(px-uw(pRw), yy);
+          fg.quadraticCurveTo(px, yy+U*0.8, px+uw(pRw), yy); fg.stroke(); } }
+    });
 
   } else if(bs.body==='coat'){
-    // kabátszárnyak a törzs MÖGÉ
     const sway = moving ? sw*1.4 : 0;
-    g.fillStyle = darkC;
-    g.beginPath();
-    g.moveTo(ux(-waW-0.4), uy(R.waist+1));
-    g.quadraticCurveTo(ux(-waW-2.6+sway), uy(14), ux(-waW-1.4+sway), uy(6));
-    g.lineTo(ux(waW+1.4+sway), uy(6));
-    g.quadraticCurveTo(ux(waW+2.6+sway), uy(14), ux(waW+0.4), uy(R.waist+1));
-    g.closePath(); g.fill(); inkLine();
-    g.strokeStyle = deepC; g.lineWidth=Math.max(0.6,U*0.6);
-    g.beginPath(); g.moveTo(ux(0.5), uy(R.waist)); g.lineTo(ux(0.5+sway), uy(6.5)); g.stroke();
-    g.fillStyle = bodyGrad(shW); torsoPath(shW, waW, torsoTop, torsoBot); g.fill(); inkLine();
-    // hajtóka / ing
-    g.fillStyle = litC;
-    g.beginPath(); g.moveTo(ux(-2.0), torsoTop+U*0.4);
-    g.lineTo(ux(2.0), torsoTop+U*0.4); g.lineTo(ux(0.2), uy(R.chest-2.5)); g.closePath(); g.fill();
-    // bőrheveder a mellen
-    g.strokeStyle = leather; g.lineWidth = uw(1.3);
-    g.beginPath(); g.moveTo(ux(-shW*0.6), torsoTop+U*1.4); g.lineTo(ux(waW*0.7), uy(R.waist+0.5)); g.stroke();
-    // öv
-    g.fillStyle = leatherD; g.fillRect(ux(-waW)-Math.min(0,uw(waW*2)), uy(R.waist-0.9), Math.abs(uw(waW*2)), U*1.8);
-    // kis vállpánt
-    g.fillStyle = darkC;
-    for(const sgn of [-1,1]){ g.beginPath();
-      g.ellipse(ux(sgn*(shW-0.5)), uy(R.shoulder-0.4), uw(1.9), U*1.3, 0, 0, PI2); g.fill(); inkLine(); }
+    fg.fillStyle = clothD;                       // kabátszárny a törzs mögé
+    fg.beginPath();
+    fg.moveTo(ux(-waW-0.4), uy(R.waist+1));
+    fg.quadraticCurveTo(ux(-waW-2.6+sway), uy(14), ux(-waW-1.4+sway), uy(6));
+    fg.lineTo(ux(waW+1.4+sway), uy(6));
+    fg.quadraticCurveTo(ux(waW+2.6+sway), uy(14), ux(waW+0.4), uy(R.waist+1));
+    fg.closePath(); fg.fill();
+    fg.fillStyle = cloth; torsoPath(shW, waW, torsoTop, torsoBot); fg.fill();
+    torsoForm(shW);
+    fg.fillStyle = leatherD;                     // öv
+    fg.fillRect(ux(-waW)-(F<0?uw(waW*2):0), uy(R.waist-0.9), uw(waW*2), U*1.8);
+    for(const sgn of [-1,1]){                    // vállpánt
+      fg.fillStyle = clothD; fg.beginPath();
+      fg.ellipse(ux(sgn*(shW-0.6)), uy(R.shoulder-0.5), uw(1.9), U*1.3, 0, 0, PI2); fg.fill(); }
+    detail.push(()=>{
+      fg.fillStyle = shade(cloth, 0.26);         // ing / hajtóka
+      fg.beginPath(); fg.moveTo(ux(-2.0), torsoTop+U*0.6);
+      fg.lineTo(ux(2.0), torsoTop+U*0.6); fg.lineTo(ux(0.2), uy(R.chest-2.5)); fg.closePath(); fg.fill();
+      fg.strokeStyle = leatherD; fg.lineWidth = uw(1.1); fg.lineCap='round';
+      fg.beginPath(); fg.moveTo(ux(-shW*0.58), torsoTop+U*1.6); fg.lineTo(ux(waW*0.7), uy(R.waist+0.8)); fg.stroke();
+      fg.strokeStyle='rgba(14,12,20,0.34)'; fg.lineWidth=Math.max(0.5,U*0.5);
+      fg.beginPath(); fg.moveTo(ux(0.5), uy(R.waist)); fg.lineTo(ux(0.5+sway), uy(6.5)); fg.stroke();
+    });
 
   } else if(bs.body==='bare'){
-    g.fillStyle = bodyGrad(shW); torsoPath(shW, waW, torsoTop, torsoBot); g.fill(); inkLine();
-    // izomzat
-    g.strokeStyle = deepC; g.lineWidth=Math.max(0.5,U*0.5); g.globalAlpha=0.65;
-    g.beginPath(); g.moveTo(ux(-shW*0.52), uy(R.chest+0.5));
-    g.quadraticCurveTo(ux(0), uy(R.chest-2.0), ux(shW*0.52), uy(R.chest+0.5)); g.stroke();
-    g.beginPath(); g.moveTo(ux(0), uy(R.chest-1.6)); g.lineTo(ux(0), uy(R.waist+0.5)); g.stroke();
-    for(const yy of [R.waist+1.6, R.waist-0.6]){
-      g.beginPath(); g.moveTo(ux(-waW*0.7), uy(yy)); g.lineTo(ux(waW*0.7), uy(yy)); g.stroke(); }
-    g.globalAlpha=1;
-    // fényes váll-csúcs
-    g.fillStyle = 'rgba(255,246,222,0.16)';
-    g.beginPath(); g.ellipse(ux(-shW*0.55), uy(R.shoulder-1), uw(2.0), U*2.2, 0, 0, PI2); g.fill();
-    // bőrheveder
-    g.strokeStyle = leather; g.lineWidth = uw(1.5);
-    g.beginPath(); g.moveTo(ux(-shW*0.62), torsoTop+U*1.2); g.lineTo(ux(waW*0.8), uy(R.waist)); g.stroke();
-    // szőrme-kötény
-    g.fillStyle = leatherL;
-    g.beginPath(); g.moveTo(ux(-hiW-0.6), torsoBot);
-    g.lineTo(ux(hiW+0.6), torsoBot);
-    g.lineTo(ux(hiW-0.2), uy(R.hip-6.5)); g.lineTo(ux(-hiW+0.2), uy(R.hip-6.5));
-    g.closePath(); g.fill(); inkLine();
-    g.strokeStyle = shade(leatherL,-0.3); g.lineWidth=Math.max(0.5,U*0.45);
-    for(const fx of [-2.4,0,2.4]){ g.beginPath();
-      g.moveTo(ux(fx), torsoBot+U*0.4); g.lineTo(ux(fx*0.9), uy(R.hip-6.2)); g.stroke(); }
+    fg.fillStyle = cloth; torsoPath(shW, waW, torsoTop, torsoBot); fg.fill();
+    torsoForm(shW);
+    fg.fillStyle = leatherL;                     // szőrme-kötény
+    fg.beginPath(); fg.moveTo(ux(-hiW-0.6), torsoBot-U*0.6);
+    fg.lineTo(ux(hiW+0.6), torsoBot-U*0.6);
+    fg.quadraticCurveTo(ux(hiW*0.6), uy(R.hip-6.8), ux(0), uy(R.hip-6.4));
+    fg.quadraticCurveTo(ux(-hiW*0.6), uy(R.hip-6.8), ux(-hiW-0.6), torsoBot-U*0.6);
+    fg.closePath(); fg.fill();
+    detail.push(()=>{
+      fg.strokeStyle='rgba(14,12,20,0.26)'; fg.lineWidth=Math.max(0.5,U*0.48);
+      fg.beginPath(); fg.moveTo(ux(-shW*0.50), uy(R.chest+0.5));
+      fg.quadraticCurveTo(ux(0), uy(R.chest-2.2), ux(shW*0.50), uy(R.chest+0.5)); fg.stroke();
+      fg.beginPath(); fg.moveTo(ux(0), uy(R.chest-1.8)); fg.lineTo(ux(0), uy(R.waist+0.5)); fg.stroke();
+      for(const yy of [R.waist+1.8, R.waist-0.2]){
+        fg.beginPath(); fg.moveTo(ux(-waW*0.66), uy(yy)); fg.lineTo(ux(waW*0.66), uy(yy)); fg.stroke(); }
+      fg.strokeStyle = leather; fg.lineWidth = uw(1.3); fg.lineCap='round';
+      fg.beginPath(); fg.moveTo(ux(-shW*0.60), torsoTop+U*1.6); fg.lineTo(ux(waW*0.8), uy(R.waist+0.4)); fg.stroke();
+      fg.strokeStyle='rgba(14,12,20,0.24)'; fg.lineWidth=Math.max(0.5,U*0.42);
+      for(const fx of [-2.4,0,2.4]){ fg.beginPath();
+        fg.moveTo(ux(fx), torsoBot-U*0.2); fg.lineTo(ux(fx*0.85), uy(R.hip-6.2)); fg.stroke(); }
+    });
 
   } else if(bs.body==='robe' || bs.body==='float'){
     const isFloat = (bs.body==='float');
     const hover = isFloat ? Math.sin((a._walk||0)*0.7)*1.2 : 0;
     const hemY = isFloat ? uy(6+hover) : uy(1.2);
     const sway = moving ? sw*1.5 : 0;
-    const rg = g.createLinearGradient(ux(-9), 0, ux(9), 0);
-    rg.addColorStop(0, litC); rg.addColorStop(0.45, base); rg.addColorStop(1, deepC);
-    g.fillStyle = rg;
-    g.beginPath();
-    g.moveTo(ux(-shW*0.86), uy(R.shoulder));
-    g.quadraticCurveTo(ux(-6.0), uy(R.waist), ux(-8.6+sway), uy(12));
-    g.quadraticCurveTo(ux(-8.8+sway), uy(4), ux(-7.6+sway), hemY);
-    if(isFloat){ for(let k=1;k<=5;k++){ const xx = ux(-7.6+sway + k*3.0);
-                   g.lineTo(xx, hemY + (k%2? 3.2:0)*U); } }
-    else { for(let k=1;k<=5;k++){ const xx = ux(-7.6+sway + k*3.0);
-             g.lineTo(xx, hemY + (k%2? 0.8:0)*U); } }
-    g.quadraticCurveTo(ux(8.8+sway), uy(4), ux(6.0), uy(R.waist));
-    g.quadraticCurveTo(ux(shW*0.9), uy(R.chest), ux(shW*0.86), uy(R.shoulder));
-    g.closePath(); g.fill(); inkLine();
-    // redők
-    g.strokeStyle = deepC; g.lineWidth = Math.max(0.5,U*0.55); g.globalAlpha=0.6;
-    for(const fx of [-4.4, -1.6, 1.6, 4.4]){
-      g.beginPath(); g.moveTo(ux(fx*0.5), uy(R.chest-1));
-      g.quadraticCurveTo(ux(fx*1.1+sway*0.5), uy(12), ux(fx*1.5+sway), hemY+U*0.6); g.stroke(); }
-    g.globalAlpha=1;
-    // vállrész sötétebb pelerin
-    g.fillStyle = darkC;
-    g.beginPath(); g.moveTo(ux(-shW*0.95), uy(R.shoulder-0.5));
-    g.quadraticCurveTo(ux(0), uy(R.shoulder+2.2), ux(shW*0.95), uy(R.shoulder-0.5));
-    g.quadraticCurveTo(ux(shW*0.6), uy(R.chest-3), ux(0), uy(R.chest-3.6));
-    g.quadraticCurveTo(ux(-shW*0.6), uy(R.chest-3), ux(-shW*0.95), uy(R.shoulder-0.5));
-    g.closePath(); g.fill(); inkLine();
-    // öv
-    g.fillStyle = accent;
-    g.fillRect(ux(-4.4)-Math.min(0,uw(8.8)), uy(R.waist+0.4), Math.abs(uw(8.8)), U*1.5);
-    g.fillStyle = 'rgba(12,10,16,0.35)';
-    g.fillRect(ux(-4.4)-Math.min(0,uw(8.8)), uy(R.waist-1.1), Math.abs(uw(8.8)), U*0.5);
+    fg.fillStyle = cloth;
+    fg.beginPath();
+    fg.moveTo(ux(-shW*0.90), uy(R.shoulder+0.5));
+    fg.quadraticCurveTo(ux(-6.0), uy(R.waist), ux(-8.6+sway), uy(12));
+    fg.quadraticCurveTo(ux(-8.8+sway), uy(4), ux(-7.6+sway), hemY);
+    for(let k=1;k<=5;k++){ const xx = ux(-7.6+sway + k*3.0);
+      fg.lineTo(xx, hemY + (k%2? (isFloat?3.2:0.9):0)*U); }
+    fg.quadraticCurveTo(ux(8.8+sway), uy(4), ux(6.0), uy(R.waist));
+    fg.quadraticCurveTo(ux(shW*0.94), uy(R.chest), ux(shW*0.90), uy(R.shoulder+0.5));
+    fg.closePath(); fg.fill();
+    fg.save(); fg.beginPath();
+    fg.rect(ux(-10), uy(R.shoulder+2), uw(20), U*42); fg.clip();
+    const cgr = fg.createLinearGradient(ux(-9), 0, ux(9), 0);
+    cgr.addColorStop(0.00,'rgba(255,246,222,0.22)');
+    cgr.addColorStop(0.38,'rgba(255,246,222,0)');
+    cgr.addColorStop(0.58,'rgba(10,12,22,0)');
+    cgr.addColorStop(1.00,'rgba(10,12,22,0.52)');
+    fg.globalCompositeOperation='source-atop';
+    fg.fillStyle = cgr; fg.fillRect(0,0,CW,CH); fg.restore();
+    fg.fillStyle = clothD;                       // pelerin a vállon
+    fg.beginPath(); fg.moveTo(ux(-shW*0.98), uy(R.shoulder-0.2));
+    fg.quadraticCurveTo(ux(0), uy(R.shoulder+2.6), ux(shW*0.98), uy(R.shoulder-0.2));
+    fg.quadraticCurveTo(ux(shW*0.62), uy(R.chest-3.2), ux(0), uy(R.chest-3.8));
+    fg.quadraticCurveTo(ux(-shW*0.62), uy(R.chest-3.2), ux(-shW*0.98), uy(R.shoulder-0.2));
+    fg.closePath(); fg.fill();
+    detail.push(()=>{
+      fg.strokeStyle='rgba(14,12,20,0.28)'; fg.lineWidth = Math.max(0.5,U*0.50);
+      for(const fx of [-4.4, -1.6, 1.6, 4.4]){
+        fg.beginPath(); fg.moveTo(ux(fx*0.5), uy(R.chest-1));
+        fg.quadraticCurveTo(ux(fx*1.1+sway*0.5), uy(12), ux(fx*1.5+sway), hemY+U*0.6); fg.stroke(); }
+      fg.fillStyle = accent;                     // öv
+      fg.fillRect(ux(-4.4)-(F<0?uw(8.8):0), uy(R.waist+0.4), uw(8.8), U*1.5);
+    });
 
   } else if(bs.body==='hooded'){
     const sway = moving ? sw*1.5 : 0;
-    const rg = g.createLinearGradient(ux(-7), 0, ux(7), 0);
-    rg.addColorStop(0, base); rg.addColorStop(1, deepC);
-    g.fillStyle = rg;
-    g.beginPath();
-    g.moveTo(ux(-shW*0.9), uy(R.shoulder));
-    g.quadraticCurveTo(ux(-5.6), uy(R.waist), ux(-6.6+sway), uy(9));
+    fg.fillStyle = cloth;
+    fg.beginPath();
+    fg.moveTo(ux(-shW*0.94), uy(R.shoulder+0.5));
+    fg.quadraticCurveTo(ux(-5.6), uy(R.waist), ux(-6.6+sway), uy(9));
     for(let k=0;k<6;k++){ const xx = ux(-6.6+sway + k*2.7);
-      g.lineTo(xx, uy(8.4 - (k%2?2.8:0))); }
-    g.quadraticCurveTo(ux(5.6), uy(R.waist), ux(shW*0.9), uy(R.shoulder));
-    g.closePath(); g.fill(); inkLine();
-    g.strokeStyle = 'rgba(8,7,12,0.55)'; g.lineWidth=Math.max(0.5,U*0.5); g.globalAlpha=0.6;
-    for(const fx of [-2.8, 0.4, 3.0]){
-      g.beginPath(); g.moveTo(ux(fx*0.55), uy(R.chest-2));
-      g.quadraticCurveTo(ux(fx+sway*0.5), uy(15), ux(fx*1.25+sway), uy(9)); g.stroke(); }
-    g.globalAlpha=1;
-    // öv + tőrtok
-    g.fillStyle = leatherD;
-    g.fillRect(ux(-waW)-Math.min(0,uw(waW*2)), uy(R.waist-0.7), Math.abs(uw(waW*2)), U*1.5);
-    g.fillStyle = shade(leatherD,0.2);
-    g.beginPath(); g.ellipse(ux(-waW*0.8), uy(R.waist-3), uw(0.9), U*2.4, 0.25*F, 0, PI2); g.fill();
+      fg.lineTo(xx, uy(8.4 - (k%2?2.8:0))); }
+    fg.quadraticCurveTo(ux(5.6), uy(R.waist), ux(shW*0.94), uy(R.shoulder+0.5));
+    fg.closePath(); fg.fill();
+    fg.save(); fg.globalCompositeOperation='source-atop';
+    const hgr = fg.createLinearGradient(ux(-7), 0, ux(7), 0);
+    hgr.addColorStop(0.00,'rgba(255,246,222,0.18)');
+    hgr.addColorStop(0.36,'rgba(255,246,222,0)');
+    hgr.addColorStop(0.56,'rgba(8,9,18,0)');
+    hgr.addColorStop(1.00,'rgba(8,9,18,0.54)');
+    fg.fillStyle = hgr; fg.fillRect(0,0,CW,CH); fg.restore();
+    fg.fillStyle = leatherD;                     // öv
+    fg.fillRect(ux(-waW)-(F<0?uw(waW*2):0), uy(R.waist-0.7), uw(waW*2), U*1.5);
+    detail.push(()=>{
+      fg.strokeStyle='rgba(10,9,16,0.34)'; fg.lineWidth=Math.max(0.5,U*0.46);
+      for(const fx of [-2.8, 0.4, 3.0]){
+        fg.beginPath(); fg.moveTo(ux(fx*0.55), uy(R.chest-2));
+        fg.quadraticCurveTo(ux(fx+sway*0.5), uy(15), ux(fx*1.25+sway), uy(9)); fg.stroke(); }
+      fg.fillStyle = shade(leatherD, 0.22);      // tőrtok
+      fg.beginPath(); fg.ellipse(ux(-waW*0.8), uy(R.waist-3), uw(0.9), U*2.4, 0.25*F, 0, PI2); fg.fill();
+    });
 
   } else if(bs.body==='pack'){
-    // hátizsák a törzs mögé
-    const bx = ux(-shW*0.55), by = uy(R.chest+3.5);
-    g.fillStyle = '#4d535d';
-    g.save(); g.beginPath();
-    if(g.roundRect) g.roundRect(Math.min(bx, bx+uw(4.8)), by, Math.abs(uw(4.8)), U*11, U*1.2);
-    else g.rect(Math.min(bx, bx+uw(4.8)), by, Math.abs(uw(4.8)), U*11);
-    g.fill(); inkLine(); g.restore();
-    g.strokeStyle = steel; g.lineWidth=Math.max(0.6,U*0.7); g.lineCap='round';
-    g.beginPath(); g.moveTo(ux(-shW*0.35), uy(R.chest+4)); g.lineTo(ux(-shW*0.2), uy(R.shoulder+1.5)); g.stroke();
-    g.fillStyle = bodyGrad(shW); torsoPath(shW, waW, torsoTop, torsoBot); g.fill(); inkLine();
-    // overall-pántok
-    g.strokeStyle = darkC; g.lineWidth = uw(1.2);
-    for(const sgn of [-1,1]){ g.beginPath();
-      g.moveTo(ux(sgn*shW*0.55), torsoTop+U*1.0); g.lineTo(ux(sgn*waW*0.55), uy(R.waist)); g.stroke(); }
-    // szerszámöv
-    g.fillStyle = leather; g.fillRect(ux(-waW)-Math.min(0,uw(waW*2)), uy(R.waist-1.0), Math.abs(uw(waW*2)), U*1.9);
-    g.fillStyle = '#c9a44a';
-    for(const bxx of [-2.6, 0, 2.6]) g.fillRect(ux(bxx)-Math.min(0,uw(1.0)), uy(R.waist-0.8), Math.abs(uw(1.0)), U*1.5);
+    fg.fillStyle = '#4d535d';                    // hátizsák
+    const bxL = Math.min(ux(-shW*0.55), ux(-shW*0.55)+uw(4.8)*F);
+    fg.beginPath();
+    if(fg.roundRect) fg.roundRect(bxL, uy(R.chest+3.5), uw(4.8), U*11, U*1.2);
+    else fg.rect(bxL, uy(R.chest+3.5), uw(4.8), U*11);
+    fg.fill();
+    fg.fillStyle = cloth; torsoPath(shW, waW, torsoTop, torsoBot); fg.fill();
+    torsoForm(shW);
+    fg.fillStyle = leather;                      // szerszámöv
+    fg.fillRect(ux(-waW)-(F<0?uw(waW*2):0), uy(R.waist-1.0), uw(waW*2), U*1.9);
+    detail.push(()=>{
+      fg.strokeStyle='rgba(14,12,20,0.30)'; fg.lineWidth = uw(1.0);
+      for(const sgn of [-1,1]){ fg.beginPath();
+        fg.moveTo(ux(sgn*shW*0.55), torsoTop+U*1.4); fg.lineTo(ux(sgn*waW*0.55), uy(R.waist+0.5)); fg.stroke(); }
+      fg.fillStyle = '#c9a44a';
+      for(const bxx of [-2.6, 0, 2.6])
+        fg.fillRect(ux(bxx)-(F<0?uw(1.0):0), uy(R.waist-0.8), uw(1.0), U*1.5);
+      fg.strokeStyle='#96a2b2'; fg.lineWidth=Math.max(0.5,U*0.6); fg.lineCap='round';
+      fg.beginPath(); fg.moveTo(ux(-shW*0.38), uy(R.chest+4)); fg.lineTo(ux(-shW*0.22), uy(R.shoulder+1.2)); fg.stroke();
+    });
 
   } else if(bs.body==='blob'){
-    const bg2 = g.createRadialGradient(ux(-2.5), uy(R.chest), U*1.5, ux(0), uy(R.waist-2), uw(10));
-    bg2.addColorStop(0, litC); bg2.addColorStop(1, darkC);
-    g.fillStyle = bg2;
-    g.beginPath(); g.ellipse(ux(0), uy(R.waist-1.5), uw(8.0), U*10.5, 0, 0, PI2); g.fill(); inkLine();
-    // hevederek + gyutacsok
-    g.strokeStyle = leather; g.lineWidth=uw(1.4);
-    g.beginPath(); g.moveTo(ux(-6.6), uy(R.waist+2)); g.lineTo(ux(6.6), uy(R.waist-2.6)); g.stroke();
-    g.fillStyle = '#c9a44a';
-    for(let k=0;k<3;k++){ g.beginPath();
-      g.arc(ux(-4.2+k*3.6), uy(R.waist+1.2-k*1.5), uw(0.75), 0, PI2); g.fill(); }
+    fg.fillStyle = cloth;
+    fg.beginPath(); fg.ellipse(ux(0), uy(R.waist-1.5), uw(8.0), U*10.5, 0, 0, PI2); fg.fill();
+    formShade(()=>{ fg.beginPath();
+      fg.ellipse(ux(0), uy(R.waist-1.5), uw(8.0), U*10.5, 0, 0, PI2); },
+      ux(-8.6), ux(8.6), 0.26, 0.44);
+    detail.push(()=>{
+      fg.strokeStyle = leather; fg.lineWidth=uw(1.2); fg.lineCap='round';
+      fg.beginPath(); fg.moveTo(ux(-6.4), uy(R.waist+2)); fg.lineTo(ux(6.4), uy(R.waist-2.6)); fg.stroke();
+      fg.fillStyle = '#c9a44a';
+      for(let k=0;k<3;k++){ fg.beginPath();
+        fg.arc(ux(-4.2+k*3.6), uy(R.waist+1.2-k*1.5), uw(0.72), 0, PI2); fg.fill(); }
+    });
 
   } else if(bs.body==='tripod'){
-    g.strokeStyle = steelD; g.lineWidth = uw(1.8); g.lineCap='round';
+    fg.strokeStyle = steelD; fg.lineWidth = uw(1.6); fg.lineCap='round';
     for(const ang of [-0.8, 0, 0.8]){
-      g.beginPath(); g.moveTo(ux(0), uy(R.waist));
-      g.lineTo(ux(Math.sin(ang)*6.0), uy(R.foot)); g.stroke(); }
-    const mg = g.createLinearGradient(ux(-5), uy(R.chest), ux(5), uy(R.waist));
-    mg.addColorStop(0, steelL); mg.addColorStop(1, steelD);
-    g.fillStyle = mg;
-    g.beginPath();
-    if(g.roundRect) g.roundRect(Math.min(ux(-5),ux(5)), uy(R.chest+2), Math.abs(uw(10)), U*8, U*1.4);
-    else g.rect(Math.min(ux(-5),ux(5)), uy(R.chest+2), Math.abs(uw(10)), U*8);
-    g.fill(); inkLine();
-    g.fillStyle = accent;
-    g.beginPath(); g.arc(ux(0), uy(R.chest-1), uw(1.2), 0, PI2); g.fill();
+      fg.beginPath(); fg.moveTo(ux(0), uy(R.waist));
+      fg.lineTo(ux(Math.sin(ang)*6.0), uy(R.foot)); fg.stroke(); }
+    fg.fillStyle = steel;
+    fg.beginPath();
+    if(fg.roundRect) fg.roundRect(Math.min(ux(-5),ux(5)), uy(R.chest+2), uw(10), U*8, U*1.4);
+    else fg.rect(Math.min(ux(-5),ux(5)), uy(R.chest+2), uw(10), U*8);
+    fg.fill();
+    detail.push(()=>{ fg.fillStyle = accent;
+      fg.beginPath(); fg.arc(ux(0), uy(R.chest-1), uw(1.2), 0, PI2); fg.fill(); });
   }
 
-  /* ================= ELSŐ LÁB ================= */
+  // -- első láb (a törzs elé, ugyanabból az anyagszínből) --
   if(!hidesLegs) drawLeg(sw, 1, false);
 
-  /* ================= ELSŐ KAR + FEGYVER =================
-     A kar HAJLIK: váll -> könyök lefelé-kifelé -> kéz a test ELŐTT,
-     derék-mellkas magasságban. A fegyver a kézpontban ül. */
-  // A könyök LE és kissé hátra, az alkar onnan ELŐRE-FEL: ettől lesz
-  // hajlított a kar. Korábban a könyök kijjebb volt, mint a kéz, ezért
-  // nézett ki vízszintes deszkának.
+  // -- első kar --
   const elbX = shW*0.80 + sw*0.4, elbY = R.chest-4.6-armLong*0.5;
-  const hx = ux(shW*0.60 + 2.0 + sw*0.7);
-  const hy = uy(R.waist + 3.4 - armLong + (moving ? Math.abs(sw)*0.7 : 0));
+  const hxL = ux(shW*0.60 + 2.0 + sw*0.7);
+  const hyL = uy(R.waist + 3.4 - armLong + (moving ? Math.abs(sw)*0.7 : 0));
   if(fit.arm > 0){
-    limb(g, ux(shW*0.70), armShY,
-            ux(elbX), uy(elbY),
-            hx, hy,
-            uw(fit.arm), uw(fit.arm*0.76), base);
-    // felkar fénye
-    g.strokeStyle = 'rgba(255,246,222,0.18)'; g.lineWidth = uw(fit.arm*0.34); g.lineCap='round';
-    g.beginPath(); g.moveTo(ux(shW*0.68), armShY+U*0.3); g.lineTo(ux(elbX-0.15), uy(elbY+0.5)); g.stroke();
-    // kesztyű
-    g.fillStyle = shade(leatherD, 0.1);
-    g.beginPath(); g.arc(hx, hy, uw(fit.arm*0.56), 0, PI2); g.fill();
-    g.strokeStyle='rgba(12,10,16,0.55)'; g.lineWidth=Math.max(0.5,U*0.4); g.stroke();
+    const fA=[ux(shW*0.70), armShY], fB=[ux(elbX), uy(elbY)], fC=[hxL, hyL],
+          fw0=uw(fit.arm*0.54), fw1=uw(fit.arm*0.40), fw2=uw(fit.arm*0.36);
+    const fPath = ()=> limbPath(fg, fA, fB, fC, fw0, fw1, fw2);
+    contact(fPath, Math.max(1.0, U*1.35), 0.62);
+    limbPoly(fg, fA, fB, fC, fw0, fw1, fw2, shade(cloth, 0.07));
+    formShade(fPath, fA[0]-fw0*1.45, fA[0]+fw0*1.65, 0.26, 0.46);
+    fg.fillStyle = leather;
+    fg.beginPath(); fg.arc(hxL, hyL, uw(fit.arm*0.50), 0, PI2); fg.fill();
   }
-  if(lo.w && lo.w !== 'none') isoDrawWeapon(g, lo.w, hx, hy, S, faceRight, t);
 
-  /* ================= FEJ ================= */
+  // -- nyak + fej (lapos anyag; a vonások a 3. menetben) --
+  const hX = ux(0.5), hY = uy(R.headC - hunch), hR = U*R.headR;
   if(bs.head !== 'none'){
-    const hX = ux(0.5), hY = uy(R.headC - hunch);
-    g.strokeStyle = skinD; g.lineWidth = uw(hunch ? 3.4 : 2.0); g.lineCap='round';
-    g.beginPath(); g.moveTo(ux(0.2), uy(R.neck+0.4-hunch));
-    g.lineTo(ux(0.4), uy(R.shoulder+0.2-hunch*0.4)); g.stroke();
-    isoDrawHead2(g, bs.head, hX, hY, U*R.headR, col2(cloth), F, skin, skinD, steel, steelL, accent);
+    fg.strokeStyle = skinD; fg.lineWidth = uw(hunch ? 3.2 : 2.2); fg.lineCap='round';
+    fg.beginPath(); fg.moveTo(ux(0.2), uy(R.neck+0.8-hunch));
+    fg.lineTo(ux(0.4), uy(R.shoulder-0.6-hunch*0.4)); fg.stroke();
+    isoHeadShape(fg, bs.head, hX, hY, hR, cloth, F, skin, steel);
   }
-}
-function col2(c){ return rgbHex(c); }
 
-/* A fej stílusonként. `r` már képpontban van. */
-function isoDrawHead2(g, style, x, y, r, col, F, skin, skinD, steel, steelL, accent){
-  const ink = (w)=>{ g.strokeStyle='rgba(12,10,16,0.6)'; g.lineWidth=Math.max(0.6, r*0.14); g.stroke(); };
+  /* ======================================================
+     2. MENET — FÉNY a KÉSZ sziluettre. Egyetlen lámpa az
+     egész alakra: ettől lesz egy tárgy, nem darabok halmaza.
+     ====================================================== */
+  fg.save();
+  fg.globalCompositeOperation = 'source-atop';
+  // fő irányfény: bal-fent meleg, jobb-lent hideg és sötét
+  const lgr = fg.createLinearGradient(ux(-shW*1.4), uy(R.headC+2), ux(shW*1.6), uy(R.foot));
+  lgr.addColorStop(0.00, 'rgba(255,243,214,0.16)');
+  lgr.addColorStop(0.34, 'rgba(255,243,214,0.02)');
+  lgr.addColorStop(0.62, 'rgba(14,16,28,0.04)');
+  lgr.addColorStop(1.00, 'rgba(10,11,22,0.20)');
+  fg.fillStyle = lgr; fg.fillRect(0, 0, CW, CH);
+  // talaj felé sötétedés — a láb tövét a földhöz köti. Csak a boka alatt,
+  // különben a csizma feketévé válik.
+  const agr = fg.createLinearGradient(0, uy(R.ankle+1.5), 0, uy(R.foot-1.2));
+  agr.addColorStop(0, 'rgba(6,8,16,0)'); agr.addColorStop(1, 'rgba(6,8,16,0.28)');
+  fg.fillStyle = agr; fg.fillRect(0, 0, CW, CH);
+  // áll alatti és hónalj-árnyék: a fej és a kar így ráül a testre,
+  // nem mellé ragasztva látszik
+  const soft = (cx, cy, r, al)=>{
+    const rg = fg.createRadialGradient(cx, cy, 0, cx, cy, r);
+    rg.addColorStop(0, `rgba(8,9,18,${al})`); rg.addColorStop(1, 'rgba(8,9,18,0)');
+    fg.fillStyle = rg; fg.beginPath(); fg.arc(cx, cy, r, 0, PI2); fg.fill();
+  };
+  if(bs.head !== 'none') soft(hX, uy(R.shoulder+0.6-hunch*0.4), hR*1.5, 0.50);
+  soft(ux(-shW*0.55), uy(R.chest+1.5), uw(2.6), 0.40);
+  soft(ux( shW*0.55), uy(R.chest+1.5), uw(2.4), 0.30);
+  if(!hidesLegs) soft(ux(0), uy(R.hip-1.5), uw(2.8), 0.34);
+  fg.restore();
+
+  /* ======================================================
+     3. MENET — RÉSZLET a sziluetten belül
+     ====================================================== */
+  fg.save();
+  fg.globalCompositeOperation = 'source-atop';
+  fg.lineCap = 'round'; fg.lineJoin = 'round';
+  for(const fn of detail) fn();
+  if(bs.head !== 'none') isoHeadFace(fg, bs.head, hX, hY, hR, cloth, F, skinD, accent);
+  // peremfény a bal felső élen — egyetlen, az EGÉSZ alak körvonalán
+  fg.globalCompositeOperation = 'source-atop';
+  const rim = figScratchRim(sc.c, CW, CH, Math.max(0.8, U*0.42));
+  if(rim) fg.drawImage(rim, 0, 0);
+  fg.restore();
+
+  /* ======================================================
+     Kihelyezés a célvászonra, majd a FEGYVER (az a sziluetten
+     kívülre lóg, ezért nem vágjuk le).
+     ====================================================== */
+  g.drawImage(sc.c, 0, 0, CW, CH, sx - ox, sy - oy, CW, CH);
+  if(lo.w && lo.w !== 'none')
+    isoDrawWeapon(g, lo.w, sx + (hxL - ox), sy + (hyL - oy), S, faceRight, t);
+}
+
+/* A peremfény: a sziluett önmagával eltolva kivonva. Egyetlen menetben az
+   EGÉSZ alakra, nem darabonként — ezért nem lesz belőle belső varrat. */
+let _rimCv = null;
+function figScratchRim(srcCv, w, h, d){
+  if(!_rimCv){ const c=document.createElement('canvas');
+    _rimCv = { c, g:c.getContext('2d') }; }
+  const r = _rimCv;
+  if(r.c.width < w || r.c.height < h){
+    r.c.width = Math.max(r.c.width, w); r.c.height = Math.max(r.c.height, h); }
+  const rg = r.g;
+  rg.setTransform(1,0,0,1,0,0);
+  rg.globalCompositeOperation='source-over'; rg.clearRect(0,0,r.c.width,r.c.height);
+  rg.drawImage(srcCv, 0, 0, w, h, -d, -d, w, h);
+  rg.globalCompositeOperation='destination-out';
+  rg.drawImage(srcCv, 0, 0, w, h, d*0.5, d*0.5, w, h);
+  rg.globalCompositeOperation='source-in';
+  rg.fillStyle='rgba(255,247,226,0.20)'; rg.fillRect(0,0,w,h);
+  return r.c;
+}
+
+/* A fej TÖMEGE — lapos anyagszín, hogy a nyakkal összeolvadjon. */
+function isoHeadShape(g, style, x, y, r, col, F, skin, steel){
   if(style === 'helm'){
-    // sisak: zárt, orrvédős, arcrés
-    const hg = g.createLinearGradient(x-r, y-r*1.2, x+r*0.8, y+r);
-    hg.addColorStop(0, steelL); hg.addColorStop(0.55, steel); hg.addColorStop(1, shade(steel,-0.45));
-    g.fillStyle = hg;
+    g.fillStyle = steel;
     g.beginPath();
     g.moveTo(x-r, y+r*0.62);
     g.quadraticCurveTo(x-r*1.02, y-r*1.05, x, y-r*1.18);
     g.quadraticCurveTo(x+r*1.02, y-r*1.05, x+r, y+r*0.62);
-    g.quadraticCurveTo(x+r*0.55, y+r*1.15, x, y+r*1.15);
-    g.quadraticCurveTo(x-r*0.55, y+r*1.15, x-r, y+r*0.62);
-    g.closePath(); g.fill(); ink();
-    // arcrés
-    g.fillStyle = 'rgba(8,9,14,0.94)';
+    g.quadraticCurveTo(x+r*0.55, y+r*1.18, x, y+r*1.18);
+    g.quadraticCurveTo(x-r*0.55, y+r*1.18, x-r, y+r*0.62);
+    g.closePath(); g.fill();
+    g.fillStyle = shade(col, -0.15);                 // taréj
+    g.beginPath(); g.moveTo(x-r*0.16, y-r*1.10);
+    g.quadraticCurveTo(x, y-r*1.78, x+r*0.16, y-r*1.10); g.closePath(); g.fill();
+
+  } else if(style === 'hood'){
+    g.fillStyle = shade(col, -0.30);
+    g.beginPath();
+    g.moveTo(x + F*r*0.26, y - r*1.95);
+    g.quadraticCurveTo(x + r*1.30, y - r*0.30, x + r*0.94, y + r*1.10);
+    g.quadraticCurveTo(x, y + r*1.40, x - r*0.94, y + r*1.10);
+    g.quadraticCurveTo(x - r*1.30, y - r*0.30, x + F*r*0.26, y - r*1.95);
+    g.closePath(); g.fill();
+
+  } else if(style === 'goggles'){
+    g.fillStyle = skin;
+    g.beginPath(); g.ellipse(x, y, r*0.94, r, 0, 0, PI2); g.fill();
+    g.fillStyle = shade(col, -0.25);                 // sisakkupak
+    g.beginPath(); g.ellipse(x, y-r*0.16, r*1.02, r*0.92, 0, Math.PI*1.00, PI2); g.fill();
+
+  } else {
+    g.fillStyle = skin;
+    g.beginPath(); g.ellipse(x, y, r*0.92, r, 0, 0, PI2); g.fill();
+    g.fillStyle = shade(col, -0.62);                 // haj
+    g.beginPath(); g.ellipse(x, y - r*0.28, r*1.00, r*0.84, 0, Math.PI*1.00, PI2); g.fill();
+    g.beginPath(); g.ellipse(x - F*r*0.82, y - r*0.08, r*0.30, r*0.52, 0, 0, PI2); g.fill();
+  }
+}
+
+/* A fej VONÁSAI — a fény után, a sziluetten belülre vágva. */
+function isoHeadFace(g, style, x, y, r, col, F, skinD, accent){
+  if(style === 'helm'){
+    g.fillStyle = 'rgba(8,9,14,0.90)';               // arcrés
     g.beginPath();
     g.moveTo(x-r*0.68, y-r*0.10); g.lineTo(x+r*0.68, y-r*0.10);
     g.lineTo(x+r*0.58, y+r*0.30); g.lineTo(x-r*0.58, y+r*0.30);
     g.closePath(); g.fill();
-    // orrvédő
-    g.fillStyle = steel;
-    g.fillRect(x-r*0.10, y-r*0.10, r*0.20, r*0.42);
-    // taréj
-    g.fillStyle = shade(col, -0.15);
-    g.beginPath(); g.moveTo(x-r*0.16, y-r*1.12);
-    g.quadraticCurveTo(x, y-r*1.75, x+r*0.16, y-r*1.12); g.closePath(); g.fill();
-    // csillanás
-    g.fillStyle = 'rgba(255,250,235,0.35)';
-    g.beginPath(); g.ellipse(x-r*0.45, y-r*0.58, r*0.22, r*0.42, -0.35, 0, PI2); g.fill();
+    g.fillStyle = 'rgba(190,200,214,0.85)';          // orrvédő
+    g.fillRect(x-r*0.10, y-r*0.12, r*0.20, r*0.46);
+    g.fillStyle = 'rgba(255,250,235,0.26)';          // csillanás
+    g.beginPath(); g.ellipse(x-r*0.46, y-r*0.58, r*0.20, r*0.40, -0.35, 0, PI2); g.fill();
 
   } else if(style === 'hood'){
-    // csuklya: hegyes csúcs, mély árnyék, két izzó szem
-    g.fillStyle = shade(col, -0.40);
-    g.beginPath();
-    g.moveTo(x + F*r*0.26, y - r*1.95);
-    g.quadraticCurveTo(x + r*1.30, y - r*0.30, x + r*0.92, y + r*1.00);
-    g.quadraticCurveTo(x, y + r*1.30, x - r*0.92, y + r*1.00);
-    g.quadraticCurveTo(x - r*1.30, y - r*0.30, x + F*r*0.26, y - r*1.95);
-    g.closePath(); g.fill(); ink();
-    // a csuklya pereme világosabb
-    g.strokeStyle = shade(col, -0.05); g.lineWidth = r*0.16;
-    g.beginPath();
-    g.moveTo(x - r*0.88, y + r*0.62);
-    g.quadraticCurveTo(x + F*r*0.18, y - r*0.62, x + r*0.88, y + r*0.62); g.stroke();
-    // arcárnyék
-    g.fillStyle = 'rgba(5,4,9,0.94)';
-    g.beginPath(); g.ellipse(x + F*r*0.10, y + r*0.18, r*0.62, r*0.68, 0, 0, PI2); g.fill();
-    // szemek
-    g.fillStyle = accent || shade(col, 0.55);
+    g.fillStyle = 'rgba(5,4,9,0.88)';                // arcárnyék
+    g.beginPath(); g.ellipse(x + F*r*0.10, y + r*0.20, r*0.62, r*0.70, 0, 0, PI2); g.fill();
+    g.fillStyle = accent;
     for(const sgn of [-1, 1]){
-      g.beginPath(); g.ellipse(x + F*r*0.10 + sgn*r*0.26, y + r*0.10, r*0.15, r*0.10, 0, 0, PI2); g.fill(); }
+      g.beginPath(); g.ellipse(x + F*r*0.10 + sgn*r*0.26, y + r*0.12, r*0.15, r*0.10, 0, 0, PI2); g.fill(); }
+    g.strokeStyle = 'rgba(255,248,228,0.20)'; g.lineWidth = r*0.14;   // csuklyaperem
+    g.beginPath(); g.moveTo(x - r*0.88, y + r*0.64);
+    g.quadraticCurveTo(x + F*r*0.18, y - r*0.60, x + r*0.88, y + r*0.64); g.stroke();
 
   } else if(style === 'goggles'){
-    g.fillStyle = skin; g.beginPath(); g.arc(x, y, r*0.95, 0, PI2); g.fill(); ink();
-    g.fillStyle = skinD;
-    g.beginPath(); g.arc(x, y, r*0.95, Math.PI*0.12, Math.PI*0.88); g.fill();
-    // sisak-kupak
-    g.fillStyle = shade(col, -0.25);
-    g.beginPath(); g.arc(x, y-r*0.18, r*1.02, Math.PI*1.02, PI2); g.fill(); ink();
-    // szemüveg
-    g.fillStyle = '#343b47';
-    g.fillRect(x-r*1.02, y-r*0.36, r*2.04, r*0.58);
-    g.strokeStyle='rgba(12,10,16,0.6)'; g.lineWidth=Math.max(0.5,r*0.1);
-    g.strokeRect(x-r*1.02, y-r*0.36, r*2.04, r*0.58);
+    g.fillStyle = 'rgba(40,46,56,0.95)';
+    g.fillRect(x-r*1.02, y-r*0.36, r*2.04, r*0.56);
     g.fillStyle = '#7fe6ff';
     for(const sgn of [-1,1]){
-      g.beginPath(); g.arc(x + sgn*r*0.44, y-r*0.08, r*0.22, 0, PI2); g.fill(); }
-    // állszíj
-    g.strokeStyle = '#4a3a2b'; g.lineWidth=Math.max(0.5,r*0.14);
-    g.beginPath(); g.arc(x, y, r*0.98, Math.PI*0.18, Math.PI*0.82); g.stroke();
+      g.beginPath(); g.arc(x + sgn*r*0.44, y-r*0.09, r*0.21, 0, PI2); g.fill(); }
+    g.strokeStyle = 'rgba(60,46,32,0.8)'; g.lineWidth = r*0.13;       // állszíj
+    g.beginPath(); g.arc(x, y, r*0.94, Math.PI*0.18, Math.PI*0.82); g.stroke();
 
   } else {
-    // fedetlen fej: haj, arc, fül
-    g.fillStyle = skin; g.beginPath(); g.ellipse(x, y, r*0.92, r, 0, 0, PI2); g.fill(); ink();
-    g.fillStyle = skinD;
-    g.beginPath(); g.ellipse(x, y, r*0.92, r, 0, Math.PI*0.08, Math.PI*0.92); g.fill();
-    // haj
-    g.fillStyle = shade(col, -0.62);
-    g.beginPath(); g.ellipse(x, y - r*0.30, r*1.00, r*0.82, 0, Math.PI*1.00, PI2); g.fill();
-    g.beginPath(); g.ellipse(x - F*r*0.84, y - r*0.10, r*0.30, r*0.52, 0, 0, PI2); g.fill();
-    // fül
-    g.fillStyle = skinD;
-    g.beginPath(); g.ellipse(x - F*r*0.62, y + r*0.10, r*0.16, r*0.22, 0, 0, PI2); g.fill();
-    // szem + szemöldök
-    g.fillStyle = '#241c14';
-    g.beginPath(); g.ellipse(x + F*r*0.34, y + r*0.06, r*0.11, r*0.15, 0, 0, PI2); g.fill();
-    g.strokeStyle = shade(col, -0.62); g.lineWidth = Math.max(0.5, r*0.12);
-    g.beginPath(); g.moveTo(x + F*r*0.16, y - r*0.22); g.lineTo(x + F*r*0.52, y - r*0.18); g.stroke();
+    g.fillStyle = skinD;                              // fül
+    g.beginPath(); g.ellipse(x - F*r*0.60, y + r*0.12, r*0.16, r*0.22, 0, 0, PI2); g.fill();
+    g.fillStyle = 'rgba(36,28,20,0.9)';               // szem
+    g.beginPath(); g.ellipse(x + F*r*0.34, y + r*0.08, r*0.11, r*0.15, 0, 0, PI2); g.fill();
+    g.strokeStyle = 'rgba(30,22,14,0.55)'; g.lineWidth = r*0.11;      // szemöldök
+    g.beginPath(); g.moveTo(x + F*r*0.16, y - r*0.20); g.lineTo(x + F*r*0.52, y - r*0.16); g.stroke();
   }
 }
 
