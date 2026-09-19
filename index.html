@@ -78,6 +78,30 @@
     display:flex; align-items:center; justify-content:center; box-shadow:0 0 16px rgba(0,0,0,0.4); }
   #pauseBtn:active{ transform:translateX(-50%) scale(0.94); }
 
+  /* A tarsoly-gomb a szünet mellett ül, ugyanabban a stílusban. Mindig
+     elérhető: harc közben is, nem csak menüben. */
+  #invBtn{ position:absolute; top: max(calc(10px*var(--ui-scale)), env(safe-area-inset-top));
+    left:calc(50% + 52px*var(--ui-scale));
+    z-index:6; width:calc(40px*var(--ui-scale)); height:calc(40px*var(--ui-scale));
+    border-radius:calc(11px*var(--ui-scale)); border:1px solid rgba(232,201,106,0.38);
+    background: rgba(18,24,38,0.9); color:var(--gold); font-size:calc(18px*var(--ui-scale)); cursor:pointer;
+    display:flex; align-items:center; justify-content:center; box-shadow:0 0 16px rgba(0,0,0,0.4); }
+  #invBtn:active{ transform:scale(0.94); }
+  #invBtn .invKey{ position:absolute; bottom:-5px; right:-5px; min-width:14px; height:14px; padding:0 3px;
+    border-radius:7px; background:#1c2333; border:1px solid #2a3348; color:var(--dim);
+    font-size:9px; font-weight:bold; display:flex; align-items:center; justify-content:center; }
+  #invBtn .invKey:empty{ display:none; }
+
+  #invGrid{ width:100%; max-width:540px; margin:0 auto 12px; display:flex; flex-direction:column; gap:7px;
+    max-height:56vh; overflow-y:auto; padding-right:4px; }
+  .invCard{ display:flex; align-items:center; gap:11px; padding:9px 11px; border-radius:11px;
+    background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); text-align:left; }
+  .invCard .iIco{ font-size:23px; width:32px; text-align:center; flex:0 0 auto; }
+  .invCard .iName{ font-size:13px; font-weight:bold; }
+  .invCard .iDesc{ font-size:11px; color:var(--dim); line-height:1.4; margin-top:1px; }
+  #invHint{ font-size:11px; color:var(--dim); margin:0 auto 12px; max-width:480px; line-height:1.5; }
+  #invEmpty{ color:var(--dim); font-size:12px; padding:14px; text-align:center; }
+
   #abilityBar{ position:absolute; bottom: calc(10px*var(--ui-scale)); bottom: max(calc(10px*var(--ui-scale)), env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%);
     display:flex; gap:calc(6px*var(--ui-scale)); z-index:5; flex-wrap:wrap; justify-content:center; max-width:96vw; pointer-events:none; }
   .abIcon{ width:calc(40px*var(--ui-scale)); height:calc(40px*var(--ui-scale)); border-radius:calc(8px*var(--ui-scale)); background: rgba(18,24,38,0.9); border:2px solid #2a3348;
@@ -499,6 +523,7 @@
   <div id="storageWarn" class="hidden"></div>
 
   <button id="pauseBtn" class="hidden" aria-label="Szünet" data-i18n-aria="pauseAria">⏸</button>
+  <button id="invBtn" class="hidden" aria-label="Tarsoly" data-i18n-aria="invAria">🎒<span class="invKey"></span></button>
 
   <div id="hud" class="hidden">
     <div class="panel" id="hpWrap">
@@ -742,6 +767,17 @@
     <h1 class="title" id="bossIntroTitle" style="color:var(--accent2); -webkit-text-fill-color:var(--accent2);">A GONOSZ ÁRNYÉK</h1>
     <div class="storyBox" id="bossIntroText"></div>
     <button class="bigBtn red" id="bossStartBtn" data-i18n="bossFightBtn">HARC KEZDÉSE</button>
+  </div>
+
+  <div id="inventoryScreen" class="overlay hidden">
+    <h1 class="title" style="font-size:26px; margin-bottom:2px;" data-i18n="invTitle">TARSOLY</h1>
+    <div class="subtitle" id="invSub" style="margin-bottom:10px;"></div>
+    <div id="invGrid"></div>
+    <div id="invHint"></div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center;">
+      <button class="bigBtn ghost" id="invBindBtn" style="margin:0;"></button>
+      <button class="bigBtn" id="invCloseBtn" style="margin:0;" data-i18n="invClose">BEZÁRÁS</button>
+    </div>
   </div>
 
   <div id="trophyToasts"></div>
@@ -1280,6 +1316,22 @@ const TRANSLATIONS = {
     compAb_cRaise: 'Raise Skeleton', compAb_cDrain: 'Life Drain',
     compAb_cBeast: 'Call Beast', compAb_cTrap: 'Snare', compAb_cHerbs: 'Herbs',
     compAb_cTurret: 'Deploy Turret', compAb_cDrone: 'Repair Drone',
+    invTitle: 'SATCHEL', invClose: 'CLOSE', invAria: 'Satchel',
+    invSub: (n)=> `${n} magic item${n===1?'':'s'} carried`,
+    invEmpty: 'Empty. Wizards leave behind an item cut for your hero — beat one to fill this.',
+    invHint: 'Items work the moment you pick them up; there is nothing to equip. Opening the satchel pauses the fight.',
+    invBindBtn: (k)=> `⌨️ Key: ${k} — tap to change`,
+    invBindWaiting: 'Press any key...',
+    invOpenHint: (k)=> `Satchel (${k})`,
+    item_cloak_desc: 'Brief invisibility, and the strike you come out of it with lands harder.',
+    item_tracer_desc: 'Your shot curves onto the target sooner and harder.',
+    item_thorns_desc: 'Whoever hits you in melee takes 45% of it straight back.',
+    item_bloodpact_desc: 'Every hit you land heals you a little.',
+    item_chainseal_desc: 'Your blast jumps to a second enemy nearby.',
+    item_tether_desc: 'Healing on you reaches your companion too.',
+    item_bonehoard_desc: 'Kills raise a skeleton servant nearly twice as often.',
+    item_hmark_desc: 'Slowed targets take 25% extra damage from you.',
+    item_overclock_desc: 'Your turrets fire 40% faster.',
     item_cloak_name: 'Cloak of Shadows', item_tracer_name: 'Tracer Round',
     item_thorns_name: 'Thornplate', item_bloodpact_name: 'Blood Pact',
     item_chainseal_name: 'Chain Seal', item_tether_name: 'Lifebond Talisman',
@@ -1626,6 +1678,22 @@ const TRANSLATIONS = {
     compAb_cRaise: 'Csontváz idézése', compAb_cDrain: 'Életelszívás',
     compAb_cBeast: 'Vadállat hívása', compAb_cTrap: 'Csapda', compAb_cHerbs: 'Gyógyfüvek',
     compAb_cTurret: 'Torony telepítése', compAb_cDrone: 'Javítódrón',
+    invTitle: 'TARSOLY', invClose: 'BEZÁRÁS', invAria: 'Tarsoly',
+    invSub: (n)=> `${n} mágikus tárgy nálad`,
+    invEmpty: 'Üres. A varázslók a hősödre szabott tárgyat hagynak hátra — győzz le egyet, és itt megjelenik.',
+    invHint: 'A tárgyak azonnal hatnak, nincs mit felszerelni. A tarsoly megnyitása szünetelteti a harcot.',
+    invBindBtn: (k)=> `⌨️ Billentyű: ${k} — koppints az átállításhoz`,
+    invBindWaiting: 'Nyomj meg egy billentyűt...',
+    invOpenHint: (k)=> `Tarsoly (${k})`,
+    item_cloak_desc: 'Rövid láthatatlanság, és az abból érkező csapásod nagyobbat üt.',
+    item_tracer_desc: 'A lövedéked hamarabb és erősebben kanyarodik rá a célra.',
+    item_thorns_desc: 'Aki közelharcban megüt, visszakapja a sebzés 45%-át.',
+    item_bloodpact_desc: 'Minden találatod gyógyít egy keveset.',
+    item_chainseal_desc: 'A robbanásod átugrik egy közeli másik ellenfélre.',
+    item_tether_desc: 'Amit magadon gyógyítasz, a társad is megkapja.',
+    item_bonehoard_desc: 'A legyőzöttekből majdnem kétszer akkora eséllyel kel fel szolga.',
+    item_hmark_desc: 'A lassított célpont 25%-kal többet sérül tőled.',
+    item_overclock_desc: 'A tornyaid 40%-kal gyorsabban tüzelnek.',
     item_cloak_name: 'Láthatatlan köpeny', item_tracer_name: 'Követő lövedék',
     item_thorns_name: 'Tövises mellvért', item_bloodpact_name: 'Vérszomj-amulett',
     item_chainseal_name: 'Láncvillám-pecsét', item_tether_name: 'Életkötés-talizmán',
@@ -2214,6 +2282,7 @@ profile.totalRuns = profile.totalRuns || 0;                // lejátszott meccse
 /* Trófeák. A megszerzettek id-listája, mellette néhány élettartam-számláló,
    amit eddig nem vezettünk. Mind hiányozhat a régi mentésből — ilyenkor
    nulláról indulnak, a korábbi haladás nem vész el tőlük. */
+profile.invKey = profile.invKey || 'i';                     // a tarsoly billentyűje
 profile.ownedHeroes = profile.ownedHeroes || [];            // megvásárolt hősök
 profile.eliteUnlocks = profile.eliteUnlocks || {};          // kasztonként megvett elit képességek
 profile.trophies = profile.trophies || [];                 // megszerzett trófeák id-listája
@@ -5310,7 +5379,7 @@ function renderHeroDetail(){
 }
 
 // ---- Sztori mód: képernyő-router + fejezet-választó + intro ----
-const SCREENS = ['startScreen','heroSelectScreen','mapScreen','storyIntro','pauseScreen','bossIntro','winScreen','deathScreen','ladderScreen','settingsScreen','conquestScreen','tableauScreen','trophyScreen'];
+const SCREENS = ['startScreen','heroSelectScreen','mapScreen','storyIntro','pauseScreen','bossIntro','winScreen','deathScreen','ladderScreen','settingsScreen','conquestScreen','tableauScreen','trophyScreen','inventoryScreen'];
 function showScreen(id){
   SCREENS.forEach(s=>{ const el=document.getElementById(s); if(el) el.classList.toggle('hidden', s!==id); });
   // a térkép animációja csak akkor pörögjön, amíg tényleg látszik
@@ -8527,6 +8596,8 @@ function matchXp(bonus){
   return { earned: base, up: after>before ? after : 0, coins: levelCoins+matchCoins };
 }
 function hideCombatUI(){
+  document.getElementById('invBtn').classList.add('hidden');
+  if(inventoryOpen()) closeInventory();
   document.getElementById('hud').classList.add('hidden');
   document.getElementById('abilityBar').classList.add('hidden');
   document.getElementById('buffTray').classList.add('hidden');
@@ -10148,6 +10219,82 @@ function buyElite(cls, id){
 }
 
 
+
+/* =========================================================
+   TARSOLY (INVENTORY)
+   ---------------------------------------------------------
+   Bárhonnan előhívható: a képernyőn lévő gombbal, vagy a hozzá kötött
+   billentyűvel. A billentyű átállítható, és a profilban marad meg.
+
+   Harc közben megnyitva SZÜNETELTETI a játékot — egy túlélő játékban
+   tisztességtelen lenne, ha közben rád futnának, és fordítva: az sem jó,
+   ha a tarsollyal ki lehet cselezni egy szorult helyzetet.
+   ========================================================= */
+var INV_DEFAULT_KEY = 'i';
+function invKey(){ return (profile.invKey || INV_DEFAULT_KEY); }
+function setInvKey(k){ profile.invKey = k; saveProfile(); updateInvKeyBadge(); }
+function updateInvKeyBadge(){
+  const b = document.getElementById('invBtn'); if(!b) return;
+  const span = b.querySelector('.invKey');
+  if(span) span.textContent = invKey().toUpperCase();
+  b.title = T('invOpenHint', invKey().toUpperCase());
+}
+function inventoryOpen(){
+  const el = document.getElementById('inventoryScreen');
+  return !!el && !el.classList.contains('hidden');
+}
+var _invWasPlaying = false;
+function openInventory(){
+  if(inventoryOpen()) return;
+  // harc közben szüneteltetünk, és megjegyezzük, hogy vissza kell állni
+  _invWasPlaying = !!(game && game.state === 'playing');
+  if(_invWasPlaying){ game.state = 'paused'; resetSticks(); }
+  renderInventory();
+  document.getElementById('inventoryScreen').classList.remove('hidden');
+}
+function closeInventory(){
+  const el = document.getElementById('inventoryScreen'); if(!el) return;
+  el.classList.add('hidden');
+  invListening = false;
+  if(_invWasPlaying && game && game.state === 'paused'){ game.state = 'playing'; resetSticks(); }
+  _invWasPlaying = false;
+  updateInvBindBtn();
+}
+function toggleInventory(){ inventoryOpen() ? closeInventory() : openInventory(); }
+
+/* A tartalom: a hősödre szabott mágikus tárgyak, amiket összeszedtél.
+   Adatvezérelt — ami bekerül a MAGIC_ITEMS táblába, itt magától megjelenik. */
+function renderInventory(){
+  const grid = document.getElementById('invGrid'); if(!grid) return;
+  const p = game && game.player;
+  const owned = (p && p.items) ? [...p.items] : [];
+  const sub = document.getElementById('invSub');
+  if(sub) sub.textContent = T('invSub', owned.length);
+  if(!owned.length){
+    grid.innerHTML = `<div id="invEmpty">${T('invEmpty')}</div>`;
+  } else {
+    grid.innerHTML = owned.map(id=>{
+      const it = MAGIC_ITEMS[id]; if(!it) return '';
+      return `<div class="invCard" style="border-color:${it.col}55;">`+
+        `<div class="iIco">${it.icon}</div>`+
+        `<div><div class="iName" style="color:${it.col}">${T('item_'+id+'_name')}</div>`+
+        `<div class="iDesc">${T('item_'+id+'_desc')}</div></div></div>`;
+    }).join('');
+  }
+  const hint = document.getElementById('invHint');
+  if(hint) hint.textContent = T('invHint');
+  updateInvBindBtn();
+}
+
+/* Billentyű-átállítás: ugyanaz a minta, mint a képességeknél — megnyomod
+   a gombot, aztán a kívánt billentyűt. A foglalt billentyűket nem engedi. */
+var invListening = false;
+function updateInvBindBtn(){
+  const b = document.getElementById('invBindBtn'); if(!b) return;
+  b.textContent = invListening ? T('invBindWaiting') : T('invBindBtn', invKey().toUpperCase());
+}
+
+
 /* =========================================================
    MÁGIKUS TÁRGYAK — a varázsló hagyatéka, kasztra szabva
    ---------------------------------------------------------
@@ -10757,6 +10904,8 @@ function showCombatUI(){
   document.getElementById('buffTray').classList.remove('hidden');
   document.getElementById('ultBtn').classList.remove('hidden');
   document.getElementById('pauseBtn').classList.remove('hidden');
+  document.getElementById('invBtn').classList.remove('hidden');
+  updateInvKeyBadge();
   document.getElementById('menuEmbers').classList.add('hidden');
   updateSafeMargins();
   setTimeout(updateSafeMargins, 60);
@@ -10801,6 +10950,35 @@ window.addEventListener('keydown', (e)=>{
   if(idx < 0) return;
   setMageElement(p, MAGE_ELEMENT_ORDER[idx]);
 });
+/* TARSOLY: gomb + billentyű. A billentyű-figyelés előbb fut le, mint a
+   megnyitás, különben az átállításkor lenyomott billentyű rögtön be is
+   csukná a panelt. */
+document.getElementById('invBtn').addEventListener('click', toggleInventory);
+document.getElementById('invCloseBtn').addEventListener('click', closeInventory);
+document.getElementById('invBindBtn').addEventListener('click', ()=>{
+  invListening = true; updateInvBindBtn();
+});
+window.addEventListener('keydown', (e)=>{
+  const k = e.key.toLowerCase();
+  if(invListening){
+    e.preventDefault();
+    if(k !== 'escape' && !RESERVED_KEYS.has(k)) setInvKey(k);
+    invListening = false; updateInvBindBtn();
+    return;
+  }
+  /* A továbbterjedést is meg kell állítani, nem csak az alapértelmezést:
+     az Escape-nek van egy másik kezelője, ami szünetre teszi a játékot.
+     Nélküle a tarsoly bezárása után a menet szünetben ragadna. */
+  if(inventoryOpen() && k === 'escape'){
+    e.preventDefault(); e.stopPropagation(); closeInventory(); return;
+  }
+  if(k === invKey() && listeningSlot === null){
+    // menüben is működjön, de ne írjon bele egy szövegmezőbe
+    const t = e.target;
+    if(t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return;
+    e.preventDefault(); e.stopPropagation(); toggleInventory();
+  }
+}, true);
 document.getElementById('resumeRunBtn').addEventListener('click', resumeRun);
 /* SZTORI MÓD: ha van már haladásod, a "folytatás" oda dob vissza, ahol tartottál
    (a hódító térképre, ha a Királyságon már túl vagy). A "+" új sztorit indít,
