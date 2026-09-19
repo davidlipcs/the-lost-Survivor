@@ -5987,10 +5987,23 @@ document.getElementById('conquestBackBtn').addEventListener('click', ()=> showSc
 /* A hódító térképről most már az IZOMETRIKUS misszióba lépünk be, ha van
    hozzá kézzel tervezett pálya. Ha nincs, marad a régi aréna-csata —
    így minden királyság játszható marad, amíg a pályák elkészülnek. */
-/* Minden királyságnak van izometrikus pályája: a kézzel rajzoltakhoz
-   a sajátjuk, a többihez a generátoré. Ezért ez már nem ad vissza null-t
-   — a hódító csata mindig 45 fokban megy. */
-function isoMapForKingdom(id){ return id || null; }
+/* A hódító csata a FŐ MOTORON megy.
+   -------------------------------------------------------------------
+   A csempés misszió-jelenet saját, párhuzamos motor volt: külön harc,
+   külön képességek, külön hullámok. Emiatt ott a teljes képesség-
+   rendszer sosem működött — az a `game` objektumra épül, ami a
+   jelenetben nem létezik —, és minden új funkciót kétszer kellett volna
+   megírni.
+
+   A fő motor viszont már 45 fokban rajzol, és MINDENT tud: a 12 osztály
+   összes pecsétjét, az ultikat, a hullámokat, a tapasztalatot, a
+   szintlépést, a halált és a győzelmet. Ezért a csata oda kerül vissza.
+
+   A kézzel rajzolt és generált csempepályák a kódban maradnak
+   (ISO_MAP_DEFS, isoGenerateMapDef, isoStartScene): ahhoz, hogy azokon
+   is a fő motor fusson, kamera és csempe-ütközés kell a fő motorba. Az
+   a következő lépés, nem veszett el semmi. */
+function isoMapForKingdom(id){ return null; }
 document.getElementById('conquestAttackBtn').addEventListener('click', ()=>{
   if(!conquestSel || !conquestAttackable(conquestSel)) return;
   const iso = isoMapForKingdom(conquestSel);
@@ -6067,6 +6080,10 @@ const ENEMY_DEFS = {
   medic:    { r:15, hp:23, dmg:0,  speed:0.9,  kind:'medic', color:'#8affc1', range:320 },
   charger:  { r:15, hp:31, dmg:17, speed:1.1,  kind:'charger', color:'#ffb347' },
   turret:   { r:22, hp:63, dmg:14, speed:0,    kind:'ranged', color:'#6a6a8a', range:420 },
+  /* IDÉZŐ — Minecraft Dungeons-szerű spawner. Nem mozog és nem támad:
+     folyamatosan ONTJA az ellenfelet, amíg le nem rombolod. Ez adja a
+     "menj oda és zúzd szét, különben sosem fogy el" ritmust. */
+  spawner:  { r:24, hp:150, dmg:0, speed:0,    kind:'spawner', color:'#b06bff' },
   swarmling:{ r:9,  hp:11, dmg:6,  speed:1.7,  kind:'melee', color:'#ff6ec7', splits:true },
   /* VARÁZSLÓ — lebeg, távolságot tart, és nem lő, hanem VARÁZSOL: tűzgolyót
      dob, rúnakört éget a földre, és ha túl közel mész, elvillan. A halála
@@ -6582,9 +6599,48 @@ function isFinalWaveOut(){
     : (!game.endless && game.wave >= MAX_WAVES);
 }
 
+/* Mit ont ki egy idéző, a játék előrehaladtával. */
+const SPAWNER_POOL = [
+  ['swarmling','scout'],
+  ['swarmling','scout','grunt'],
+  ['scout','grunt','charger'],
+  ['grunt','charger','sniper'],
+  ['grunt','charger','sniper','tank'],
+];
+
+/* Idézők kirakása. Nem a hullámmal jönnek, hanem a pályára állnak, és
+   addig termelnek, amíg le nem rombolod őket. A hős közeléből kimaradnak,
+   hogy ne induláskor essen a nyakadba egy raj. */
+function placeSpawners(n){
+  const w = canvas.width, h = canvas.height, p = game.player;
+  for(let i=0;i<n;i++){
+    let x=0, y=0, ok=false;
+    for(let tries=0; tries<40 && !ok; tries++){
+      x = 90 + Math.random()*(w-180);
+      y = safeTop + 70 + Math.random()*(h-safeTop-safeBottom-140);
+      ok = dist(x,y,p.x,p.y) > 260
+        && !game.obstacles.some(o=>dist(x,y,o.x,o.y) < o.r+46)
+        && !game.enemies.some(e=>e.type==='spawner' && dist(x,y,e.x,e.y) < 220);
+    }
+    if(!ok) continue;
+    const en = spawnEnemyType('spawner', x, y);
+    if(en){ en.spawnT = 90 + Math.floor(Math.random()*90); }
+  }
+}
+
 function spawnWave(){
   if(typeof saveRun==='function') saveRun();   // minden hullám elején rögzítjük a futamot
   SFX.wave();
+  /* IDÉZŐK. A 2. hullámtól állnak a pályán, és amíg élnek, ontják az
+     ellenfelet — a hullámon FELÜL. Ettől nem lehet passzívan kivárni a
+     hullámot: oda kell menni és szétverni őket. Egyszerre legfeljebb
+     néhány áll, hogy ne fulladjon meg a pálya. */
+  const wn0 = game.chapter ? game.chapterWave : game.wave;
+  if(wn0 >= 2){
+    const want = Math.min(4, 1 + Math.floor(wn0/3));
+    const have = game.enemies.filter(e=>e.type==='spawner').length;
+    if(have < want) placeSpawners(want - have);
+  }
   const ch = game.chapter;
   const pool = ch ? ch.enemyPool : poolForWave(game.wave);
   // story módban a fejezeten belüli hullám vezérli a mennyiséget (kezelhető tempó),
@@ -6711,6 +6767,7 @@ function spawnEnemyType(type, forcedX, forcedY, hpMult=1, rMult=1){
      legfontosabb pillanatában. */
   const spawned = game.enemies[game.enemies.length-1];
   if(spawned && spawned.ward > 0) spawned._wardHp = spawned.hp;
+  return spawned;      // az idézőnek kell a hivatkozás, hogy időzítőt adhassunk neki
 }
 
 /* A kampány/végtelen bossai eddig mind ugyanaz a "Gonosz Árnyék" volt, pedig a
@@ -7368,6 +7425,32 @@ function update(){
             dmg: Math.round(20*dif.dmg), exploded:false, color:'#a86ede', hostile:true });
         }
         SFX.eshoot();
+      }
+    } else if(en.kind==='spawner'){
+      /* Az idéző nem mozdul és nem sebez. Időzítőre kiereszt egy kis rajt,
+         amíg áll. Minél közelebb vagy, annál sűrűbben — így megéri odamenni
+         és leverni, de nem büntetlenül. */
+      en.spawnT = (en.spawnT || 0) - 1;
+      const near = d < 320;
+      /* Felső korlát: zsúfolt pályán az idéző kivár. Enélkül a hullám és
+         az idézők együtt olyan tömeget hoznak, amit se a játékos, se a
+         képkockasebesség nem bír el. */
+      const crowded = game.enemies.length > 88;
+      if(!crowded && en.spawnT <= 0 && (en.spawnLeft === undefined || en.spawnLeft > 0)){
+        en.spawnLeft = (en.spawnLeft === undefined ? 14 : en.spawnLeft) - 1;
+        en.spawnT = Math.max(70, (near ? 115 : 190) - game.wave*3);
+        const pool = SPAWNER_POOL[Math.min(SPAWNER_POOL.length-1, Math.floor(game.wave/4))];
+        const n = 1 + (near ? 1 : 0) + (Math.random() < 0.35 ? 1 : 0);
+        for(let k=0;k<n;k++){
+          const a = Math.random()*PI2, rr = en.r + 14 + Math.random()*22;
+          spawnEnemyType(pool[Math.floor(Math.random()*pool.length)],
+                         en.x + Math.cos(a)*rr, en.y + Math.sin(a)*rr);
+        }
+        addRing(en.x, en.y, '#b06bff', en.r*2.6, 18, 3);
+        addParticles(en.x, en.y, '#d8b4ff', 8);
+        /* Kimerült készlet: az idéző magától összeomlik. Enélkül egy
+           ügyesen kikerült idéző vég nélkül nyújtaná a hullámot. */
+        if(en.spawnLeft <= 0){ en.hp = 0; addRing(en.x, en.y, '#ffd166', en.r*3.4, 26, 4); }
       }
     } else if(en.kind==='medic'){
       if(d < en.range*0.6){ const a=Math.atan2(en.y-p.y,en.x-p.x); en.x+=Math.cos(a)*spd; en.y+=Math.sin(a)*spd; }
@@ -9102,7 +9185,12 @@ function arenaIsoOpt(e, foe){
    a tár folyamatosan újrasütne — ez vitte el a képkockákat. Négy lépcső
    bőven elég ahhoz, hogy egy kis futár és egy behemót más méretű legyen. */
 function arenaIsoZ(e){
-  const raw = clamp((e.r || 14) / 19, 0.45, 1.6);
+  /* Lapos görbe: a sugár csak MÓDOSÍTJA a méretet, nem határozza meg.
+     Az egyenes arány a nagy ellenfeleket óriássá tette, és sűrű hullámban
+     testfallá álltak össze — kis futár és behemót közt legyen különbség,
+     de ne háromszoros. A durva kerekítés a sprite-gyorsítótár miatt kell:
+     minden lépték külön kisütés. */
+  const raw = clamp(0.42 + (e.r || 14) / 46, 0.5, 1.15);
   return Math.round(raw / 0.25) * 0.25 || 0.5;
 }
 
@@ -9374,6 +9462,27 @@ function draw(){
   }
 
   // ---- JÁTÉKOS ----
+  /* A hős talaj-gyűrűje. 45 fokban, ötven ellenfél között a saját alakod
+     elveszik; ez a gyűrű mondja meg egy pillantásra, hol állsz. A talajon
+     fekszik, tehát a ferde mátrixszal rajzoljuk, nem az álló rétegben. */
+  (function heroRing(){
+    const t = nowT/420, pr = p.r*2.3;
+    ctx.save();
+    // tömör fény-tócsa a talpad alatt, fölötte pörgő szaggatott gyűrű
+    const gr = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, pr);
+    gr.addColorStop(0, 'rgba(110,231,255,0.26)');
+    gr.addColorStop(0.7, 'rgba(110,231,255,0.10)');
+    gr.addColorStop(1, 'rgba(110,231,255,0)');
+    ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(p.x, p.y, pr, 0, PI2); ctx.fill();
+    ctx.strokeStyle = 'rgba(150,240,255,'+(0.85+0.15*Math.sin(t*2)).toFixed(2)+')';
+    ctx.lineWidth = 4.5; ctx.setLineDash([11,8]); ctx.lineDashOffset = -nowT/22;
+    ctx.beginPath(); ctx.arc(p.x, p.y, pr, 0, PI2); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(p.x, p.y, pr*0.55, 0, PI2); ctx.stroke();
+    ctx.restore();
+  })();
+
   stand(p.x, p.y, ()=>{
     if(p.buffs.invisible>0) ctx.globalAlpha = 0.4;
     const pz = arenaIsoZ(p);
@@ -11523,6 +11632,7 @@ const ISO_ENEMY_LOADOUT = {
   medic:     { w:'censer',   build:0.96 },
   charger:   { w:'shortblade', build:1.05 },
   turret:    { w:'barrels',  build:1.10 },
+  spawner:   { w:'none',     build:1.30 },
   swarmling: { w:'none',     build:0.70 },
   wizard:    { w:'fireball', build:1.02 },
 };
@@ -11859,6 +11969,7 @@ const ISO_BODY_FOE = {
   medic:     { body:'robe',   head:'hood',  hip:0.94 },
   charger:   { body:'bare',   head:'helm',  hip:1.02 },
   turret:    { body:'tripod', head:'none',  hip:1.05 },
+  spawner:   { body:'totem',  head:'none',  hip:1.25 },
   swarmling: { body:'bare',   head:'bare',  hip:0.70 },
   wizard:    { body:'float',  head:'hood',  hip:1.00 },
 };
@@ -12131,12 +12242,14 @@ function isoFigureRaw(g, a, sx, sy, S_in, opt, faceRightIn){
     pack:   { sh:7.4, wa:4.6, hi:5.2, arm:2.7 },
     blob:   { sh:7.0, wa:8.4, hi:7.0, arm:2.7 },
     tripod: { sh:5.0, wa:4.0, hi:4.0, arm:0 },
+    totem:  { sh:6.0, wa:5.4, hi:5.4, arm:0 },
   };
   const fit = FIT[bs.body] || FIT.bare;
   const shW = fit.sh, waW = fit.wa, hiW = fit.hi;
   const hunch   = (bs.body==='hulk') ? 3.6 : (bs.body==='blob' ? 3.0 : 0);
   const armLong = (bs.body==='hulk') ? 4.2 : 0;
-  const hidesLegs = (bs.body==='robe' || bs.body==='hooded' || bs.body==='float' || bs.body==='tripod');
+  const hidesLegs = (bs.body==='robe' || bs.body==='hooded' || bs.body==='float'
+                  || bs.body==='tripod' || bs.body==='totem');
   const isPlate = (bs.body==='plate' || bs.body==='hulk');
 
   /* ======================================================
@@ -12437,6 +12550,36 @@ function isoFigureRaw(g, a, sx, sy, S_in, opt, faceRightIn){
       fg.fillStyle = '#c9a44a';
       for(let k=0;k<3;k++){ fg.beginPath();
         fg.arc(ux(-4.2+k*3.6), uy(R.waist+1.2-k*1.5), uw(0.72), 0, PI2); fg.fill(); }
+    });
+
+  } else if(bs.body==='totem'){
+    /* IDÉZŐ: faragott kőoszlop, benne lüktető rúnamag. Messziről is
+       felismerhető legyen, hogy EZT kell szétverni. */
+    const top = uy(R.shoulder+4), bot = uy(R.foot);
+    fg.fillStyle = '#4a4552';
+    fg.beginPath();
+    fg.moveTo(ux(-5.0), bot); fg.lineTo(ux(-4.0), top);
+    fg.lineTo(ux(0), uy(R.shoulder+7)); fg.lineTo(ux(4.0), top);
+    fg.lineTo(ux(5.0), bot); fg.closePath(); fg.fill();
+    formShade(()=>{ fg.beginPath();
+      fg.moveTo(ux(-5.0), bot); fg.lineTo(ux(-4.0), top);
+      fg.lineTo(ux(0), uy(R.shoulder+7)); fg.lineTo(ux(4.0), top);
+      fg.lineTo(ux(5.0), bot); fg.closePath(); }, ux(-5.6), ux(5.6), 0.26, 0.48);
+    detail.push(()=>{
+      // faragott sávok
+      fg.strokeStyle='rgba(12,10,16,0.38)'; fg.lineWidth=Math.max(0.5,U*0.5);
+      for(let k=1;k<=4;k++){ const y = bot - (bot-top)*(k/5);
+        fg.beginPath(); fg.moveTo(ux(-4.4), y); fg.lineTo(ux(4.4), y); fg.stroke(); }
+      // izzó rúnamag
+      const pulse = 0.6 + 0.4*Math.sin((a._walk||0)*0.6 + (a.wx||0));
+      const cy = uy(R.chest+2);
+      const gr = fg.createRadialGradient(ux(0), cy, 0, ux(0), cy, uw(4.6));
+      gr.addColorStop(0, 'rgba(255,240,255,'+(0.85*pulse).toFixed(2)+')');
+      gr.addColorStop(0.45, 'rgba(176,107,255,'+(0.7*pulse).toFixed(2)+')');
+      gr.addColorStop(1, 'rgba(176,107,255,0)');
+      fg.fillStyle = gr; fg.beginPath(); fg.arc(ux(0), cy, uw(4.6), 0, PI2); fg.fill();
+      fg.fillStyle = '#f0e0ff';
+      fg.beginPath(); fg.arc(ux(0), cy, uw(1.5), 0, PI2); fg.fill();
     });
 
   } else if(bs.body==='tripod'){
