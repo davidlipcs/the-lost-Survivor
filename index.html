@@ -10820,63 +10820,213 @@ const ISO_ENEMY_LOADOUT = {
 };
 
 /* A fegyver rajza. A kéz-pontban (hx,hy) ül, a nézési irány szerint
-   tükrözve. Minden alak egyszerű, hogy kis méretben is olvasható legyen. */
+   tükrözve. A mértékegység S: a figura kb. 39 S magas, tehát egy 14
+   hosszú penge a testmagasság harmada — ennyi olvasható kis méretben is.
+
+   Minden fegyver kap sötét kontúrt, mert a pálya tarka, és kontúr nélkül
+   beleolvad. A fa meleg barna, a fém hideg kék-szürke: ettől látszik
+   messziről is, mi fa és mi acél. */
 function isoDrawWeapon(g, kind, hx, hy, S, faceRight, t){
   g.save(); g.translate(hx, hy); g.scale(faceRight?1:-1, 1);
-  const L = (x,y,x2,y2,w,c)=>{ g.strokeStyle=c; g.lineWidth=w*S; g.lineCap='round';
+  const wood='#6a4f33', woodD='#402e1d', woodL='#8a6a45';
+  const iron='#9aa6b6', ironD='#454f5d', ironL='#d7dee8';
+  const gold='#c9a44a';
+  const ink=(w)=>{ g.strokeStyle='rgba(10,9,14,0.72)'; g.lineWidth=(w||0.5)*S; g.lineJoin='round'; g.stroke(); };
+  /* rúd/nyél: lekerekített vastag vonal */
+  const rod=(x,y,x2,y2,w,c)=>{ g.lineCap='round';
+    g.strokeStyle='rgba(10,9,14,0.72)'; g.lineWidth=(w+0.55)*S;
+    g.beginPath(); g.moveTo(x*S,y*S); g.lineTo(x2*S,y2*S); g.stroke();
+    g.strokeStyle=c; g.lineWidth=w*S;
     g.beginPath(); g.moveTo(x*S,y*S); g.lineTo(x2*S,y2*S); g.stroke(); };
-  const R = (x,y,w,h,c)=>{ g.fillStyle=c; g.fillRect(x*S,y*S,w*S,h*S); };
-  const C = (x,y,r,c)=>{ g.fillStyle=c; g.beginPath(); g.arc(x*S,y*S,r*S,0,PI2); g.fill(); };
+  /* sokszög fémből, világos-sötét átmenettel */
+  const blade=(pts, c1, c2, lw)=>{
+    const xs=pts.map(p=>p[0]*S), ys=pts.map(p=>p[1]*S);
+    const gr=g.createLinearGradient(Math.min(...xs),Math.min(...ys),Math.max(...xs),Math.max(...ys));
+    gr.addColorStop(0,c1); gr.addColorStop(1,c2);
+    g.fillStyle=gr; g.beginPath(); g.moveTo(xs[0],ys[0]);
+    for(let i=1;i<pts.length;i++) g.lineTo(xs[i],ys[i]);
+    g.closePath(); g.fill(); ink(lw||0.55); };
+  const C=(x,y,r,c,lw)=>{ g.fillStyle=c; g.beginPath(); g.arc(x*S,y*S,r*S,0,PI2); g.fill(); if(lw!==0) ink(lw||0.5); };
+  const glow=(x,y,r,c)=>{ const gr=g.createRadialGradient(x*S,y*S,0,x*S,y*S,r*S);
+    gr.addColorStop(0,c); gr.addColorStop(1,'rgba(0,0,0,0)');
+    g.fillStyle=gr; g.beginPath(); g.arc(x*S,y*S,r*S,0,PI2); g.fill(); };
+  /* fényes él a pengén */
+  const edge=(x,y,x2,y2)=>{ g.strokeStyle='rgba(255,252,240,0.55)'; g.lineWidth=0.35*S; g.lineCap='round';
+    g.beginPath(); g.moveTo(x*S,y*S); g.lineTo(x2*S,y2*S); g.stroke(); };
+
   switch(kind){
-    case 'shield':                                    // toronypajzs + buzogány
-      g.fillStyle='#8a9bb0'; g.beginPath();
-      g.moveTo(-1*S,-7*S); g.lineTo(5*S,-6*S); g.lineTo(5*S,5*S); g.lineTo(-1*S,7*S); g.closePath(); g.fill();
-      g.strokeStyle='#5d6c80'; g.lineWidth=1.1*S; g.stroke();
-      L(0,-1,9,-4,1.5,'#6b5236'); C(9.6,-4.4,1.9,'#9aa6b8'); break;
-    case 'rifle':                                     // hosszú puska távcsővel
-      L(-2,0,13,-2.4,1.5,'#3a2f24'); R(4,-3.6,3.4,1.2,'#20272f');
-      C(13.4,-2.6,0.8,'#cfd8e3'); break;
-    case 'axe':                                       // kétélű bárd
-      L(0,2,8,-5,1.6,'#5a4630');
-      g.fillStyle='#c3ccd8'; g.beginPath();
-      g.moveTo(8*S,-5*S); g.quadraticCurveTo(13*S,-8*S,12*S,-2*S);
-      g.quadraticCurveTo(13*S,4*S,8*S,1*S); g.closePath(); g.fill(); break;
-    case 'staff':                                     // varázsbot izzó gömbbel
-      L(0,4,5,-9,1.4,'#6b5236');
-      const gl=g.createRadialGradient(5*S,-10*S,0,5*S,-10*S,3.4*S);
-      gl.addColorStop(0,'#fff'); gl.addColorStop(1,'rgba(160,110,255,0)');
-      g.fillStyle=gl; g.beginPath(); g.arc(5*S,-10*S,3.4*S,0,PI2); g.fill();
-      C(5,-10,1.6,'#c9a6ff'); break;
-    case 'daggers':                                   // két tőr
-      L(0,0,5,-3,1.2,'#cfd8e3'); L(-3,2,-7,4,1.2,'#cfd8e3'); break;
-    case 'bow':                                       // íj nyílvesszővel
-      g.strokeStyle='#6b5236'; g.lineWidth=1.3*S;
-      g.beginPath(); g.arc(3*S,0,6.5*S,-1.1,1.1); g.stroke();
-      L(3.2,-6,3.2,6,0.5,'#d8d0c0'); L(1,0,9,0,0.8,'#b9a88a'); break;
-    case 'wrench':                                    // csavarkulcs + tekercs
-      L(0,0,7,-4,1.6,'#8f9aa8'); C(7.6,-4.4,1.8,'#6ee7ff'); break;
-    case 'sword':                                     // pallos
-      L(0,2,7,-8,1.8,'#e8f0fa'); L(-1,1,2,-0.5,1.6,'#6b5236'); break;
-    case 'orb':                                       // fény-gömbök
-      for(let i=0;i<3;i++){ const a=t*0.05+i*2.1;
-        C(4+Math.cos(a)*3, -5+Math.sin(a)*3, 1.7, '#fff5c2'); } break;
-    // --- ellenfelek ---
-    case 'club':       L(0,1,6,-4,1.7,'#5a4630'); C(6.6,-4.6,2.1,'#6a5a48'); break;
-    case 'shortblade': L(0,0,6,-4,1.3,'#d9c9a0'); break;
-    case 'fists':      C(2.5,1,2.6,'#8a6a52'); C(-3,2,2.6,'#8a6a52'); break;
-    case 'crossbow':
-      L(-1,0,7,0,1.3,'#4a3a2a');
-      g.strokeStyle='#6b5236'; g.lineWidth=1.2*S;
-      g.beginPath(); g.arc(6*S,0,4.5*S,-1.3,1.3); g.stroke(); break;
-    case 'satchel':
-      C(4,1,3.2,'#4a3a2a'); L(4,-2,6,-6,0.7,'#caa25a');
-      C(6.2,-6.4,1.1,'#ffb347'); break;
-    case 'censer':     L(0,-1,4,-5,1.0,'#8f9aa8'); C(4.4,-5.4,2.0,'#8affc1'); break;
-    case 'barrels':    R(0,-2,9,1.6,'#3b4250'); R(0,0.6,9,1.6,'#3b4250'); break;
+    case 'shield': {                                  // toronypajzs + buzogány
+      // buzogány a kézben, a pajzs mögötte
+      rod(0,0,8.5,-3.5,1.5,wood);
+      C(9.4,-3.9,2.3,iron); C(8.8,-4.5,0.9,ironL,0);
+      for(let k=0;k<4;k++){ const an=k*(PI2/4)+0.4;
+        blade([[9.4+Math.cos(an)*1.8,-3.9+Math.sin(an)*1.8],
+               [9.4+Math.cos(an)*3.5,-3.9+Math.sin(an)*3.5],
+               [9.4+Math.cos(an+0.5)*1.8,-3.9+Math.sin(an+0.5)*1.8]], ironL, ironD, 0.4); }
+      // pajzs (a másik kézben, a test előtt)
+      blade([[-3.4,-9],[3.6,-7.6],[4.2,3.4],[0.4,9.2],[-3.4,7.6]], '#8d9bad', '#49535f', 0.7);
+      blade([[-2.2,-7.2],[2.6,-6.2],[3.0,2.6],[0.3,7.2],[-2.2,6.2]], '#5f6c7d', '#39424e', 0.4);
+      C(0.4,0,1.9,ironL); C(0.4,0,0.9,gold,0);
+      for(const p of [[-2.4,-6.4],[2.6,-5.4],[3.0,2.0],[-2.4,5.6]]) C(p[0],p[1],0.5,ironL,0);
+      break; }
+
+    case 'rifle': {                                   // hosszú mesterlövész-puska
+      rod(-3.6,1.8,1.4,0.2,2.0,woodD);                // tusa
+      blade([[-4.4,0.2],[-1.2,-0.8],[-1.0,2.6],[-4.0,2.8]], woodL, woodD, 0.45);
+      rod(-1.0,0.0,14.5,-2.6,1.05,'#2c333d');         // cső
+      rod(1.0,0.4,4.2,-0.2,1.7,wood);                 // markolat-fa
+      blade([[3.4,-2.6],[8.0,-3.5],[8.0,-1.9],[3.4,-1.0]], '#1c2229', '#39424e', 0.45); // távcső
+      C(8.2,-3.0,0.75,'#7fe6ff',0.35);
+      C(3.3,-1.8,0.7,'#7fe6ff',0.35);
+      rod(1.6,0.8,2.4,3.0,0.85,'#2c333d');            // ravaszkengyel
+      C(14.7,-2.7,0.85,ironL,0.35);                   // torkolat
+      edge(-1.0,-0.45,13.8,-2.9);
+      break; }
+
+    case 'axe': {                                     // kétélű csatabárd
+      rod(-1.4,5.0,7.6,-6.2,1.7,wood);
+      g.strokeStyle=woodD; g.lineWidth=0.45*S;        // bőrtekercs a nyélen
+      for(let k=0;k<4;k++){ const f=0.18+k*0.11;
+        g.beginPath(); g.moveTo((-1.4+9.0*f)*S,(5.0-11.2*f)*S);
+        g.lineTo((-1.4+9.0*f+0.9)*S,(5.0-11.2*f+0.5)*S); g.stroke(); }
+      blade([[6.4,-4.2],[12.8,-9.2],[13.6,-4.0],[11.2,-0.2],[6.9,-1.4]], ironL, ironD, 0.6);
+      blade([[6.4,-5.2],[2.0,-9.4],[1.2,-5.0],[3.0,-2.2],[6.6,-2.6]], iron, ironD, 0.6);
+      edge(12.6,-8.6,12.9,-1.0); edge(2.2,-8.8,2.2,-2.8);
+      C(6.7,-3.0,1.5,'#5d6b7c'); C(6.7,-3.0,0.6,gold,0);
+      break; }
+
+    case 'staff': {                                   // varázsbot kristállyal
+      rod(-0.8,6.0,4.6,-9.0,1.35,wood);
+      g.strokeStyle=woodD; g.lineWidth=0.4*S;         // görcsök
+      for(const f of [0.3,0.55,0.78]){ g.beginPath();
+        g.arc((-0.8+5.4*f)*S,(6.0-15.0*f)*S,0.7*S,0,Math.PI); g.stroke(); }
+      glow(5.0,-11.0,5.4,'rgba(190,150,255,0.55)');
+      blade([[5.0,-14.0],[7.0,-11.2],[5.0,-8.6],[3.0,-11.2]], '#e7d8ff', '#8a5cff', 0.45);
+      C(5.0,-11.1,0.8,'#fff',0);
+      // karom-foglalat
+      g.strokeStyle=ironD; g.lineWidth=0.55*S; g.lineCap='round';
+      for(const sgn of [-1,1]){ g.beginPath();
+        g.moveTo((5.0+sgn*0.3)*S,-8.9*S); g.quadraticCurveTo((5.0+sgn*2.4)*S,-9.6*S,(5.0+sgn*1.7)*S,-11.6*S); g.stroke(); }
+      break; }
+
+    case 'daggers': {                                 // két tőr, fordított fogással
+      // első tőr
+      rod(0.2,0.6,2.4,-1.4,1.25,woodD);
+      blade([[2.2,-2.6],[8.8,-5.6],[9.6,-4.6],[3.0,-0.4]], ironL, '#6d7887', 0.45);
+      blade([[1.5,-0.5],[3.4,-2.9],[4.0,-2.2],[2.1,0.2]], gold, '#8a6b23', 0.35);
+      edge(2.6,-2.3,8.6,-5.2);
+      // hátsó tőr (a másik kézben, lejjebb-hátrébb)
+      rod(-4.6,3.4,-2.8,2.2,1.05,woodD);
+      blade([[-3.0,1.6],[-8.6,-1.0],[-9.2,0.0],[-3.4,2.6]], iron, '#5b6675', 0.4);
+      break; }
+
+    case 'bow': {                                     // visszacsapó íj felhúzva
+      g.strokeStyle='rgba(10,9,14,0.72)'; g.lineWidth=1.9*S; g.lineCap='round';
+      g.beginPath(); g.moveTo(2.6*S,-8.4*S);
+      g.quadraticCurveTo(8.2*S,-4.4*S,7.6*S,0); g.quadraticCurveTo(8.2*S,4.4*S,2.6*S,8.4*S); g.stroke();
+      g.strokeStyle=wood; g.lineWidth=1.25*S;
+      g.beginPath(); g.moveTo(2.6*S,-8.4*S);
+      g.quadraticCurveTo(8.2*S,-4.4*S,7.6*S,0); g.quadraticCurveTo(8.2*S,4.4*S,2.6*S,8.4*S); g.stroke();
+      g.strokeStyle='#e5dcc6'; g.lineWidth=0.42*S;    // húr
+      g.beginPath(); g.moveTo(2.6*S,-8.4*S); g.lineTo(0.6*S,0); g.lineTo(2.6*S,8.4*S); g.stroke();
+      rod(0.7,0,10.6,0,0.55,'#b6a184');            // vessző
+      blade([[10.2,-1.1],[12.4,0],[10.2,1.1]], ironL, ironD, 0.35);
+      g.fillStyle='#c9c2ae';                       // tollazat
+      g.beginPath(); g.moveTo(1.4*S,0); g.lineTo(3.2*S,-1.5*S); g.lineTo(3.2*S,1.5*S); g.closePath(); g.fill();
+      break; }
+
+    case 'wrench': {                                  // állítható csavarkulcs
+      rod(-0.6,1.6,6.2,-3.2,1.8,'#7d8794');
+      blade([[5.6,-4.6],[9.4,-6.8],[10.4,-5.0],[8.2,-3.7],[10.0,-2.6],[9.0,-0.9],[5.2,-3.0]], ironL, '#5b6675', 0.5);
+      C(6.4,-3.6,0.8,'#39424e',0.3);
+      rod(-1.6,2.4,-0.2,1.2,1.4,'#c0562e');           // nyél-gumi
+      break; }
+
+    case 'sword': {                                   // pallos
+      rod(-1.6,3.6,0.6,0.6,1.5,woodD);
+      C(-2.0,4.2,1.15,gold);                          // gombkupak
+      blade([[-1.6,0.6],[3.2,-2.6],[3.9,-1.5],[-0.9,1.7]], gold, '#8a6b23', 0.45); // keresztvas
+      blade([[1.0,-0.6],[11.6,-9.4],[13.2,-8.6],[2.2,0.7]], ironL, '#6d7887', 0.55);
+      edge(1.6,-0.9,12.2,-9.2);
+      break; }
+
+    case 'orb': {                                     // keringő fény-gömbök
+      glow(4,-5,6.2,'rgba(255,238,170,0.45)');
+      for(let i=0;i<3;i++){ const an=t*0.05+i*2.1;
+        C(4+Math.cos(an)*3.4, -5+Math.sin(an)*3.4*0.6, 1.7, '#fff5c2',0.3); }
+      C(4,-5,1.1,'#fffdf2',0);
+      break; }
+
+    // ---------------- ellenfelek ----------------
+    case 'club': {                                    // szöges bunkó
+      rod(-0.8,2.2,5.6,-3.6,1.7,wood);
+      blade([[4.6,-2.2],[6.4,-7.4],[9.6,-6.4],[8.6,-1.0],[6.0,-0.2]], '#6a5a48', '#33291d', 0.55);
+      g.fillStyle=iron;
+      for(const p of [[6.2,-6.0],[8.4,-5.2],[7.0,-3.0],[8.9,-2.4]]){
+        g.beginPath(); g.arc(p[0]*S,p[1]*S,0.62*S,0,PI2); g.fill(); }
+      break; }
+
+    case 'shortblade': {
+      rod(0,0.8,1.8,-0.4,1.15,woodD);
+      blade([[1.6,-1.4],[7.4,-4.4],[8.0,-3.4],[2.2,-0.2]], '#d9c9a0', '#7d6f52', 0.45);
+      edge(2.0,-1.2,7.2,-4.0);
+      break; }
+
+    case 'fists': {                                   // páncélkesztyűs ököl
+      C(3.0,0.4,2.9,'#8a6a52'); C(-3.4,2.0,2.5,'#6f5341');
+      g.fillStyle=ironD;
+      for(let k=0;k<3;k++){ g.beginPath();
+        g.arc((4.4-k*0.2)*S,(-1.2+k*1.3)*S,0.72*S,0,PI2); g.fill(); }
+      g.strokeStyle='rgba(10,9,14,0.6)'; g.lineWidth=0.5*S;
+      g.beginPath(); g.arc(3.0*S,0.4*S,2.9*S,0,PI2); g.stroke();
+      break; }
+
+    case 'crossbow': {
+      rod(-2.6,1.2,7.4,-0.6,1.5,woodD);               // ágy
+      g.strokeStyle='rgba(10,9,14,0.72)'; g.lineWidth=1.7*S; g.lineCap='round';
+      g.beginPath(); g.moveTo(6.0*S,-5.2*S); g.quadraticCurveTo(8.6*S,0,6.0*S,5.2*S); g.stroke();
+      g.strokeStyle=wood; g.lineWidth=1.1*S;
+      g.beginPath(); g.moveTo(6.0*S,-5.2*S); g.quadraticCurveTo(8.6*S,0,6.0*S,5.2*S); g.stroke();
+      g.strokeStyle='#e5dcc6'; g.lineWidth=0.4*S;     // ideg
+      g.beginPath(); g.moveTo(6.0*S,-5.2*S); g.lineTo(2.2*S,-0.2*S); g.lineTo(6.0*S,5.2*S); g.stroke();
+      rod(2.4,-0.3,9.6,-0.9,0.5,'#cbbea0');           // vessző
+      blade([[9.4,-1.8],[11.4,-0.9],[9.4,0.0]], ironL, ironD, 0.35);
+      break; }
+
+    case 'satchel': {                                 // bombászzsák égő kanóccal
+      C(3.6,1.4,3.3,'#3f3225'); C(2.6,0.4,1.1,'#5b4834',0);
+      g.strokeStyle=woodD; g.lineWidth=0.7*S;
+      g.beginPath(); g.moveTo(1.2*S,0.2*S); g.lineTo(6.0*S,2.4*S); g.stroke();
+      g.strokeStyle='#caa25a'; g.lineWidth=0.55*S; g.lineCap='round';
+      g.beginPath(); g.moveTo(4.4*S,-1.6*S); g.quadraticCurveTo(6.4*S,-4.0*S,5.6*S,-6.2*S); g.stroke();
+      glow(5.5,-6.6,2.6,'rgba(255,170,60,0.75)'); C(5.5,-6.6,0.85,'#fff0c0',0);
+      break; }
+
+    case 'censer': {                                  // füstölő láncon
+      g.strokeStyle='#8f9aa8'; g.lineWidth=0.5*S;
+      g.beginPath(); g.moveTo(0.4*S,-0.6*S); g.lineTo(4.0*S,-4.4*S); g.stroke();
+      blade([[2.6,-4.4],[5.6,-4.4],[5.0,-1.4],[3.2,-1.4]], ironL, '#5b6675', 0.45);
+      glow(4.1,-2.6,3.4,'rgba(140,255,193,0.6)');
+      C(4.1,-2.6,0.9,'#d6ffe9',0);
+      break; }
+
+    case 'barrels': {                                 // ikercső állványon
+      blade([[-0.6,-3.2],[9.6,-3.2],[9.6,-1.5],[-0.6,-1.5]], '#5b6675', '#2c333d', 0.45);
+      blade([[-0.6,0.2],[9.6,0.2],[9.6,1.9],[-0.6,1.9]], '#5b6675', '#2c333d', 0.45);
+      C(9.8,-2.35,0.7,ironD,0.3); C(9.8,1.05,0.7,ironD,0.3);
+      blade([[-1.6,-3.8],[0.4,-3.8],[0.4,2.5],[-1.6,2.5]], iron, ironD, 0.45);
+      break; }
+
     case 'fireball': {
-      const fg=g.createRadialGradient(5*S,-6*S,0,5*S,-6*S,4.4*S);
-      fg.addColorStop(0,'#fff3c4'); fg.addColorStop(0.5,'#ff8c3c'); fg.addColorStop(1,'rgba(255,60,0,0)');
-      g.fillStyle=fg; g.beginPath(); g.arc(5*S,-6*S,4.4*S,0,PI2); g.fill(); break; }
+      glow(5.6,-6.2,5.6,'rgba(255,120,30,0.85)');
+      C(5.6,-6.2,2.1,'#ff9a3c',0); C(5.6,-6.2,1.15,'#fff3c4',0);
+      g.fillStyle='rgba(255,150,50,0.55)';            // lángnyelvek
+      for(let k=0;k<4;k++){ const an=(t*0.06)+k*1.57;
+        g.beginPath(); g.moveTo((5.6+Math.cos(an)*2.0)*S,(-6.2+Math.sin(an)*2.0)*S);
+        g.lineTo((5.6+Math.cos(an+0.4)*4.4)*S,(-6.2+Math.sin(an+0.4)*4.4)*S);
+        g.lineTo((5.6+Math.cos(an+0.8)*2.0)*S,(-6.2+Math.sin(an+0.8)*2.0)*S);
+        g.closePath(); g.fill(); }
+      break; }
   }
   g.restore();
 }
@@ -10885,7 +11035,7 @@ function isoDrawWeapon(g, kind, hx, hy, S, faceRight, t){
 /* =========================================================
    TEST-SZILUETTEK
    ---------------------------------------------------------
-   A figura teste EGYETLEN függvényen megy át (isoDrawBody). Ez azért
+   A figura teste EGYETLEN függvényen megy át (isoFigureRaw). Ez azért
    fontos, mert így a rajzolt test később egyetlen ponton cserélhető
    generált képre — a fegyver, az animáció és az effektek maradnak.
 
@@ -10922,183 +11072,6 @@ const ISO_BODY_FOE = {
 
 /* A test kirajzolása. sx,by = a talp középpontja a képernyőn.
    VISSZAADJA a váll magasságát, hogy a kar és a fegyver oda csatlakozzon. */
-function isoDrawBody(g, style, sx, by, S, col, faceRight, t, moving){
-  const dark = shade(col, -0.34), light = shade(col, 0.24);
-  const grad = (y0,y1)=>{ const gr=g.createLinearGradient(sx-6*S,y0,sx+6*S,y1);
-    gr.addColorStop(0, light); gr.addColorStop(1, dark); return gr; };
-  const torsoY = by - 13*S;
-  g.strokeStyle = 'rgba(0,0,0,0.42)'; g.lineWidth = 0.9*S;
-
-  switch(style){
-    case 'plate': {           // páncél: szögletes törzs, széles vállvért
-      g.fillStyle = grad(torsoY-7*S, torsoY+7*S);
-      g.beginPath();
-      g.moveTo(sx-5.4*S, torsoY-5*S); g.lineTo(sx+5.4*S, torsoY-5*S);
-      g.lineTo(sx+4.4*S, torsoY+7*S); g.lineTo(sx-4.4*S, torsoY+7*S);
-      g.closePath(); g.fill(); g.stroke();
-      // vállvértek + tüskék
-      g.fillStyle = light;
-      for(const sgn of [-1,1]){
-        g.beginPath(); g.ellipse(sx+sgn*5.6*S, torsoY-4.6*S, 2.9*S, 2.2*S, 0, 0, PI2); g.fill();
-        g.beginPath();
-        g.moveTo(sx+sgn*5.6*S, torsoY-6.6*S); g.lineTo(sx+sgn*6.6*S, torsoY-9.4*S);
-        g.lineTo(sx+sgn*4.4*S, torsoY-6.9*S); g.closePath(); g.fill();
-      }
-      // mellvért-vonal
-      g.strokeStyle = shade(col,-0.5); g.lineWidth=0.8*S;
-      g.beginPath(); g.moveTo(sx, torsoY-4*S); g.lineTo(sx, torsoY+6*S); g.stroke();
-      return torsoY - 3.4*S; }
-
-    case 'hulk': {            // idomtalan óriás: hatalmas váll, apró fej
-      g.fillStyle = grad(torsoY-9*S, torsoY+8*S);
-      g.beginPath(); g.ellipse(sx, torsoY, 7.6*S, 8.4*S, 0, 0, PI2); g.fill(); g.stroke();
-      g.fillStyle = light;
-      for(const sgn of [-1,1]){
-        g.beginPath(); g.ellipse(sx+sgn*7.2*S, torsoY-4.4*S, 4.0*S, 3.2*S, 0, 0, PI2); g.fill();
-      }
-      return torsoY - 3.0*S; }
-
-    case 'coat': {            // hosszú kabát: keskeny váll, kiszélesedő alj
-      g.fillStyle = grad(torsoY-6*S, torsoY+9*S);
-      g.beginPath();
-      g.moveTo(sx-4.2*S, torsoY-5.6*S); g.lineTo(sx+4.2*S, torsoY-5.6*S);
-      g.lineTo(sx+6.2*S, torsoY+10*S); g.lineTo(sx-6.2*S, torsoY+10*S);
-      g.closePath(); g.fill(); g.stroke();
-      g.strokeStyle = shade(col,-0.5); g.lineWidth=0.7*S;
-      g.beginPath(); g.moveTo(sx, torsoY-5*S); g.lineTo(sx, torsoY+9*S); g.stroke();
-      return torsoY - 4.2*S; }
-
-    case 'bare': {            // meztelen kar: széles váll, keskeny derék
-      g.fillStyle = grad(torsoY-6*S, torsoY+6*S);
-      g.beginPath();
-      g.moveTo(sx-5.8*S, torsoY-4.4*S); g.quadraticCurveTo(sx, torsoY-7.4*S, sx+5.8*S, torsoY-4.4*S);
-      g.lineTo(sx+3.4*S, torsoY+6.6*S); g.lineTo(sx-3.4*S, torsoY+6.6*S);
-      g.closePath(); g.fill(); g.stroke();
-      return torsoY - 3.8*S; }
-
-    case 'robe': {            // köpeny: háromszög alj, a lábat eltakarja
-      g.fillStyle = grad(torsoY-6*S, torsoY+12*S);
-      g.beginPath();
-      g.moveTo(sx-3.8*S, torsoY-5.6*S); g.lineTo(sx+3.8*S, torsoY-5.6*S);
-      const sway = moving ? Math.sin(t*0.8)*1.4*S : 0;
-      g.quadraticCurveTo(sx+8.6*S+sway, torsoY+6*S, sx+7.4*S+sway, torsoY+12.4*S);
-      g.lineTo(sx-7.4*S+sway, torsoY+12.4*S);
-      g.quadraticCurveTo(sx-8.6*S+sway, torsoY+6*S, sx-3.8*S, torsoY-5.6*S);
-      g.closePath(); g.fill(); g.stroke();
-      return torsoY - 4.2*S; }
-
-    case 'hooded': {          // rongyos köpeny: cakkos alsó perem
-      g.fillStyle = grad(torsoY-6*S, torsoY+10*S);
-      g.beginPath();
-      g.moveTo(sx-4.4*S, torsoY-5.4*S); g.lineTo(sx+4.4*S, torsoY-5.4*S);
-      g.lineTo(sx+6.4*S, torsoY+8*S);
-      for(let i=0;i<5;i++){
-        const x = sx + 6.4*S - (i*2.56*S), dy = (i%2? 2.2:0)*S;
-        g.lineTo(x, torsoY+10.4*S - dy);
-      }
-      g.closePath(); g.fill(); g.stroke();
-      return torsoY - 4.0*S; }
-
-    case 'pack': {            // hátizsákos gépész
-      g.fillStyle = shade(col,-0.45);
-      g.beginPath(); g.roundRect
-        ? g.roundRect(sx-(faceRight?7.6:2.0)*S, torsoY-5.6*S, 5.6*S, 9.4*S, 1.4*S)
-        : g.rect(sx-(faceRight?7.6:2.0)*S, torsoY-5.6*S, 5.6*S, 9.4*S);
-      g.fill(); g.stroke();
-      g.fillStyle = grad(torsoY-6*S, torsoY+7*S);
-      g.beginPath(); g.ellipse(sx, torsoY, 4.8*S, 6.6*S, 0, 0, PI2); g.fill(); g.stroke();
-      return torsoY - 3.6*S; }
-
-    case 'blob': {            // felfúvódott bombázó
-      g.fillStyle = grad(torsoY-6*S, torsoY+8*S);
-      g.beginPath(); g.ellipse(sx, torsoY+1*S, 7.0*S, 7.6*S, 0, 0, PI2); g.fill(); g.stroke();
-      return torsoY - 3.0*S; }
-
-    case 'tripod': {          // állványos torony
-      g.strokeStyle = shade(col,-0.3); g.lineWidth = 1.8*S; g.lineCap='round';
-      for(const a of [-0.9, 0, 0.9]){
-        g.beginPath(); g.moveTo(sx, torsoY+2*S);
-        g.lineTo(sx+Math.sin(a)*5.6*S, by); g.stroke();
-      }
-      g.fillStyle = grad(torsoY-4*S, torsoY+3*S);
-      g.beginPath(); g.roundRect ? g.roundRect(sx-4.6*S, torsoY-3.4*S, 9.2*S, 6.4*S, 1.2*S)
-                                 : g.rect(sx-4.6*S, torsoY-3.4*S, 9.2*S, 6.4*S);
-      g.fill(); g.stroke();
-      return torsoY - 1.0*S; }
-
-    case 'float': {           // lebegő varázsló: nincs láb, foszlányos alj
-      const hover = Math.sin(Date.now()/460)*1.6*S;
-      const ty = torsoY - 3*S + hover;
-      g.fillStyle = grad(ty-6*S, ty+12*S);
-      g.beginPath();
-      g.moveTo(sx-3.6*S, ty-5.4*S); g.lineTo(sx+3.6*S, ty-5.4*S);
-      g.quadraticCurveTo(sx+7.0*S, ty+5*S, sx+4.6*S, ty+11*S);
-      for(let i=0;i<4;i++){
-        const x = sx + 4.6*S - (i*3.06*S);
-        g.lineTo(x, ty + (i%2 ? 13.6 : 10.4)*S);
-      }
-      g.quadraticCurveTo(sx-7.0*S, ty+5*S, sx-3.6*S, ty-5.4*S);
-      g.closePath(); g.fill(); g.stroke();
-      return ty - 4.0*S; }
-  }
-  // tartalék: egyszerű törzs
-  g.fillStyle = grad(torsoY-6*S, torsoY+6*S);
-  g.beginPath(); g.ellipse(sx, torsoY, 5.0*S, 6.6*S, 0, 0, PI2); g.fill(); g.stroke();
-  return torsoY - 3.6*S;
-}
-
-/* A fej stílusonként. */
-function isoDrawHead(g, style, sx, hy, S, col){
-  if(style === 'none') return;
-  g.fillStyle = 'rgba(0,0,0,0.3)';
-  g.beginPath(); g.ellipse(sx, hy+3.4*S, 3.4*S, 1.6*S, 0, 0, PI2); g.fill();
-  if(style === 'hood'){
-    // hegyes csuklya, benne árnyék és két izzó szem
-    g.fillStyle = shade(col, -0.2);
-    g.beginPath();
-    g.moveTo(sx, hy-6.4*S);
-    g.quadraticCurveTo(sx+4.6*S, hy-2*S, sx+3.6*S, hy+3.6*S);
-    g.lineTo(sx-3.6*S, hy+3.6*S);
-    g.quadraticCurveTo(sx-4.6*S, hy-2*S, sx, hy-6.4*S);
-    g.closePath(); g.fill();
-    g.fillStyle = 'rgba(8,6,14,0.88)';
-    g.beginPath(); g.ellipse(sx, hy+0.4*S, 2.5*S, 2.9*S, 0, 0, PI2); g.fill();
-    g.fillStyle = shade(col, 0.45);
-    g.beginPath(); g.ellipse(sx-1.1*S, hy, 0.62*S, 0.5*S, 0, 0, PI2); g.fill();
-    g.beginPath(); g.ellipse(sx+1.1*S, hy, 0.62*S, 0.5*S, 0, 0, PI2); g.fill();
-    return;
-  }
-  if(style === 'helm'){
-    // zárt sisak, arcrés
-    g.fillStyle = shade(col, 0.1);
-    g.beginPath(); g.ellipse(sx, hy, 4.0*S, 4.2*S, 0, 0, PI2); g.fill();
-    g.strokeStyle = shade(col,-0.5); g.lineWidth=0.9*S; g.stroke();
-    g.fillStyle = 'rgba(10,12,18,0.9)';
-    g.fillRect(sx-2.6*S, hy-0.5*S, 5.2*S, 1.5*S);
-    g.fillStyle = shade(col, 0.4);
-    g.fillRect(sx-0.4*S, hy-4.0*S, 0.8*S, 3.2*S);   // sisakgerinc
-    return;
-  }
-  if(style === 'goggles'){
-    const hg = g.createRadialGradient(sx-1.4*S, hy-1.6*S, 0.4*S, sx, hy, 4.4*S);
-    hg.addColorStop(0, '#fdf3e2'); hg.addColorStop(1, shade('#e0c9a8', -0.3));
-    g.fillStyle = hg; g.beginPath(); g.arc(sx, hy, 4.0*S, 0, PI2); g.fill();
-    g.fillStyle = '#2a3140'; g.fillRect(sx-3.6*S, hy-1.6*S, 7.2*S, 1.9*S);
-    g.fillStyle = '#6ee7ff';
-    g.beginPath(); g.arc(sx-1.7*S, hy-0.7*S, 0.9*S, 0, PI2); g.fill();
-    g.beginPath(); g.arc(sx+1.7*S, hy-0.7*S, 0.9*S, 0, PI2); g.fill();
-    return;
-  }
-  // csupasz fej, a fényirány szerint árnyalva + osztály-színű perem
-  const hg = g.createRadialGradient(sx-1.4*S, hy-1.6*S, 0.4*S, sx, hy, 4.4*S);
-  hg.addColorStop(0, '#fdf3e2'); hg.addColorStop(1, shade('#e0c9a8', -0.3));
-  g.fillStyle = hg; g.beginPath(); g.arc(sx, hy, 4.0*S, 0, PI2); g.fill();
-  g.strokeStyle = shade(col, 0.1); g.lineWidth = 1.4*S;
-  g.beginPath(); g.arc(sx, hy, 4.0*S, Math.PI*0.92, Math.PI*2.08); g.stroke();
-}
-
-
-
 /* =========================================================
    FIGURA-SÜTÉS: kontúr + cel-árnyékolás
    ---------------------------------------------------------
@@ -11128,10 +11101,13 @@ function figCacheKey(a, opt){
 /* Egy figura kisütése: átlátszó vászon, rajta a figura, körülötte kontúr. */
 function bakeFigure(a, opt, faceRight, phase, moving){
   const S = FIG_BAKE_S * (opt.loadout && opt.loadout.build || 1);
-  const W = Math.ceil(52*S), H = Math.ceil(64*S);
+  // A vászon a figura VALÓS befoglalójára van szabva (kb. 39 S magas
+  // alak + fegyver + kontúr). A régi 64 S magas vászon harmada üres volt,
+  // és ez a gyorsítótárban sok fölösleges memória.
+  const W = Math.ceil(50*S), H = Math.ceil(50*S);
   const c = document.createElement('canvas'); c.width = W; c.height = H;
   const g = c.getContext('2d');
-  const ox = W/2, oy = H - 6*S;        // a talp helye a vásznon
+  const ox = W/2, oy = H - 5*S;        // a talp helye a vásznon
 
   // a figurát egy ideiglenes vászonra rajzoljuk, hogy a kontúrhoz legyen sziluettünk
   const tmp = document.createElement('canvas'); tmp.width=W; tmp.height=H;
@@ -11181,57 +11157,516 @@ function getFigureSprite(a, opt){
 }
 
 
-/* A teljes figura. Az `a` bármelyik Actor lehet: hős, társ vagy ellenfél. */
-/* A NYERS figura: kontúr nélkül, adott léptékben. Ezt süti ki a
-   gyorsítótár, és ezt hívja a közvetlen rajz is, ha nincs sütés. */
+/* =========================================================
+   A FIGURA RAJZA — csontvázra épített, tagolt alak
+   ---------------------------------------------------------
+   Arányok EGYSÉGBEN (u): a talp 0, a fejtető ~49. A figura így kb.
+   5,6 fejnyi — hősies, de nem torz. Minden testalkat ugyanezt a
+   csontvázat használja, csak más szélességgel és más ruhával, így
+   egy helyen állítható az egész készlet.
+
+   A referencia-lapok jellemzői, amiket itt követünk:
+     - tompított szín (a nyers osztályszín túl neon), erős érték-kontraszt
+     - széles váll, keskeny derék, LÁTHATÓ két láb közötti rés
+     - hajlított kar, a fegyver a TEST ELŐTT, kézben — nem karnyújtásnyira
+     - vállvért a vállra simuló lemez, nem lebegő golyó
+   ========================================================= */
+const FIG_RIG = {
+  foot:0, ankle:3.5, knee:13, hip:23, waist:27, chest:34,
+  shoulder:38.5, neck:40.5, headC:45, headR:4.4,
+};
+
+/* Tagolt végtag: felkar+alkar (ill. comb+lábszár), lekerekített ízülettel. */
+function limb(g, x0,y0, x1,y1, x2,y2, w1, w2, col){
+  g.lineCap='round'; g.lineJoin='round';
+  g.strokeStyle = col; g.lineWidth = w1;
+  g.beginPath(); g.moveTo(x0,y0); g.lineTo(x1,y1); g.stroke();
+  g.lineWidth = w2;
+  g.beginPath(); g.moveTo(x1,y1); g.lineTo(x2,y2); g.stroke();
+}
+
+/* A nyers osztályszín neon. A referencia tompább: a szín felét a saját
+   világosságának megfelelő szürke felé húzzuk. */
+function muteCol(hex, amt){
+  const [r,gr,b] = hexToRgb(hex);
+  const l = 0.30*r + 0.59*gr + 0.11*b;
+  const k = amt;
+  return `rgb(${(r+(l-r)*k)|0},${(gr+(l-gr)*k)|0},${(b+(l-b)*k)|0})`;
+}
+/* rgb(...) -> hex, hogy a shade() tovább tudjon dolgozni vele */
+function rgbHex(c){
+  const m = /rgb\((\d+),(\d+),(\d+)\)/.exec(c);
+  if(!m) return c;
+  return '#' + [1,2,3].map(i=>(+m[i]).toString(16).padStart(2,'0')).join('');
+}
+
 function isoFigureRaw(g, a, sx, sy, S_in, opt, faceRightIn){
   opt = opt || {};
   const lo = opt.loadout || ISO_LOADOUT[a.cls] || { w:'none', build:1, col:a.color };
+  const bs = opt.bodyStyle || ISO_BODY[a.cls] || { body:'bare', head:'bare', hip:1 };
   const S = S_in;
-  const col = a.color || lo.col || '#78dc78';
+  const rawCol = a.color || lo.col || '#78dc78';
   const t = (a._walk || 0);
   const moving = (a._spd || 0) > 0.004;
   const faceRight = (faceRightIn !== undefined) ? faceRightIn
                   : (isoProject(Math.cos(a.facing), Math.sin(a.facing), 0).x >= 0);
-  const baseY = sy;
-  const bs = opt.bodyStyle || ISO_BODY[a.cls] || { body:'bare', head:'bare', hip:1 };
+  const F = faceRight ? 1 : -1;
+  const R = FIG_RIG;
+  const U = S * 0.80;                       // egység -> képpont
+  const W = (bs.hip || 1);                  // testalkat-szélesítés
+  const uy = (v)=> sy - v*U;
+  const ux = (v)=> sx + v*U*F*W;
+  const uw = (v)=> v*U*W;                   // vízszintes hossz (előjel nélkül)
+
+  /* --- paletta --------------------------------------------------------
+     A ruha tompított, a fém és a bőr saját színű, a fény meleg. Az
+     akcentus (öv-csat, rúna, szem) marad telített: csak ott van neon,
+     ahol a referencián is van. */
+  const cloth = rgbHex(muteCol(rawCol, 0.46));
+  const base  = shade(cloth, -0.06);
+  const litC  = shade(cloth,  0.30);
+  const darkC = shade(cloth, -0.40);
+  const deepC = shade(cloth, -0.62);
+  const accent = shade(rawCol, 0.18);
+  const leather = '#4a3a2b', leatherD = '#2f251b', leatherL = '#6b5540';
+  const steel = '#7f8a99', steelD = '#3f4855', steelL = '#aeb9c8';
+  const skin = '#cda57e', skinD = '#93714f';
+
+  // --- lépésfázis ---
+  const sw  = moving ? Math.sin(t) : 0;
+  const swB = moving ? Math.sin(t + Math.PI) : 0;
+
+  /* --- testalkat-táblázat: minden ruhához saját váll/derék/csípő ----- */
+  const FIT = {
+    plate:  { sh:8.6, wa:5.2, hi:5.8, arm:3.0 },
+    hulk:   { sh:9.2,  wa:5.6, hi:6.0, arm:3.9 },
+    coat:   { sh:7.0, wa:4.3, hi:5.0, arm:2.5 },
+    bare:   { sh:8.2, wa:4.4, hi:5.2, arm:2.9 },
+    robe:   { sh:6.6, wa:4.6, hi:5.2, arm:2.4 },
+    float:  { sh:6.6, wa:4.6, hi:5.2, arm:2.4 },
+    hooded: { sh:6.8, wa:4.4, hi:5.0, arm:2.4 },
+    pack:   { sh:7.4, wa:4.6, hi:5.2, arm:2.7 },
+    blob:   { sh:7.0, wa:8.4, hi:7.0, arm:2.7 },
+    tripod: { sh:5.0, wa:4.0, hi:4.0, arm:0 },
+  };
+  const fit = FIT[bs.body] || FIT.bare;
+  const shW = fit.sh, waW = fit.wa, hiW = fit.hi;
+  /* Testtartás: a behemót behúzza a nyakát és hosszabb a karja, a bomba-
+     hordó feje pedig a hasára ül. Enélkül a fej a törzs fölött lebeg. */
+  const hunch   = (bs.body==='hulk') ? 3.6 : (bs.body==='blob' ? 3.0 : 0);
+  const armLong = (bs.body==='hulk') ? 4.2 : 0;
+
   const hidesLegs = (bs.body==='robe' || bs.body==='hooded' || bs.body==='float' || bs.body==='tripod');
 
-  // --- LÁBAK: lépésciklus haladáskor. Köpeny/lebegés eltakarja őket. ---
-  if(!hidesLegs){
-    const step = moving ? Math.sin(t)*3.4*S : 0;
-    g.strokeStyle = shade(col, -0.45); g.lineWidth = 2.6*S*(bs.hip||1); g.lineCap = 'round';
-    g.beginPath(); g.moveTo(sx-1.8*S, baseY-7*S); g.lineTo(sx-1.8*S+step, baseY); g.stroke();
-    g.beginPath(); g.moveTo(sx+1.8*S, baseY-7*S); g.lineTo(sx+1.8*S-step, baseY); g.stroke();
+  /* ================= LÁB =================
+     A két láb KÜLÖN csípőpontból indul, ezért van közöttük rés, és
+     ezért nem néz ki féllábúnak álltában sem. */
+  const legTop = hidesLegs ? R.hip-3 : R.hip;
+  const drawLeg = (phase, side, back)=>{
+    const hipX = side*hiW*0.52;
+    const kx = ux(hipX + phase*2.4), ky = uy(R.knee + Math.abs(phase)*0.7);
+    const fx = ux(hipX + phase*4.4), fy = uy(R.foot + Math.max(0, phase)*2.0);
+    const c1 = back ? deepC : darkC;
+    limb(g, ux(hipX), uy(legTop), kx, ky, fx, fy, uw(2.9), uw(2.3), c1);
+    // csizmaszár
+    g.strokeStyle = back ? leatherD : leather; g.lineWidth = uw(2.7); g.lineCap='round';
+    g.beginPath(); g.moveTo(kx, uy(R.ankle+3.2)); g.lineTo(fx, uy(R.ankle-0.6)); g.stroke();
+    // talp
+    g.fillStyle = back ? leatherD : leather;
+    g.beginPath(); g.ellipse(fx + uw(0.9)*F, fy - U*0.4, uw(2.7), U*1.5, 0, 0, PI2); g.fill();
+  };
+  if(!hidesLegs) drawLeg(swB, -1, true);
+
+  /* ================= HÁTSÓ KAR ================= */
+  const armShY = uy(R.shoulder-1.2);
+  const backHand = { x: ux(-shW*0.58 - swB*1.2), y: uy(R.waist+0.2-armLong) };
+  if(fit.arm > 0){
+    limb(g, ux(-shW*0.70), armShY,
+            ux(-shW*0.88 - swB*0.4), uy(R.chest-4.4-armLong*0.5),
+            backHand.x, backHand.y,
+            uw(fit.arm*0.94), uw(fit.arm*0.72), deepC);
+    g.fillStyle = shade(leatherD,-0.1);
+    g.beginPath(); g.arc(backHand.x, backHand.y, uw(fit.arm*0.5), 0, PI2); g.fill();
   }
 
-  /* --- TÖRZS --- egyetlen függvényen át, hogy később képre lehessen
-     cserélni anélkül, hogy a fegyverhez vagy az animációhoz nyúlni kéne.
-     A visszaadott érték a váll magassága: ide csatlakozik a kar. */
-  const shoulderY = isoDrawBody(g, bs.body, sx, baseY, S, col, faceRight, t, moving);
+  /* ================= TÖRZS =================
+     Trapéz: széles váll -> keskeny derék. Ez adja a sziluettet. */
+  const torsoTop = uy(R.shoulder+1.0), torsoBot = uy(R.hip+0.5);
+  const bodyGrad = (w)=>{ const gr = g.createLinearGradient(ux(-w), 0, ux(w), 0);
+    gr.addColorStop(0, litC); gr.addColorStop(0.42, base); gr.addColorStop(1, darkC); return gr; };
+  const torsoPath = (sW, wW, top, bot)=>{
+    g.beginPath();
+    g.moveTo(ux(-sW), top + U*1.0);
+    g.quadraticCurveTo(ux(-sW*0.55), top - U*0.8, ux(0), top - U*1.0);
+    g.quadraticCurveTo(ux(sW*0.55), top - U*0.8, ux(sW), top + U*1.0);
+    g.quadraticCurveTo(ux(wW+0.9), (top+bot)*0.55, ux(wW), bot);
+    g.quadraticCurveTo(ux(0), bot + U*0.9, ux(-wW), bot);
+    g.quadraticCurveTo(ux(-wW-0.9), (top+bot)*0.55, ux(-sW), top + U*1.0);
+    g.closePath();
+  };
+  const inkLine = (w)=>{ g.strokeStyle='rgba(12,10,16,0.55)'; g.lineWidth=Math.max(0.6, U*0.55); g.stroke(); };
 
-  // --- KAROK: a fegyvert tartó kar a vállból indul ---
-  const swing = moving ? Math.sin(t+Math.PI)*2.2*S : 0;
-  const hx = sx + (faceRight ? 6.6*S : -6.6*S), hy = shoulderY + 4.2*S;
-  g.strokeStyle = shade(col, -0.12); g.lineWidth = 2.2*S; g.lineCap='round';
-  g.beginPath(); g.moveTo(sx + (faceRight?3.4:-3.4)*S, shoulderY); g.lineTo(hx, hy); g.stroke();
-  g.beginPath(); g.moveTo(sx - (faceRight?3.4:-3.4)*S, shoulderY);
-  g.lineTo(sx - (faceRight?5.2:-5.2)*S, shoulderY+5*S + swing); g.stroke();
+  /* vállvért: a vállra SIMULÓ lemez, a törzs ívét követi */
+  const pauldron = (sgn, rw, rh, spike)=>{
+    // A vállvért a vállon ÜL: felül kupola, alul a kar felé lemetszve.
+    // Korábban teljes ellipszis volt, és ezért lebegő korongnak látszott.
+    const px = ux(sgn*(shW-1.5)), py = uy(R.shoulder-0.6);
+    const rx = uw(rw), ry = rh*U;
+    g.save();
+    g.beginPath();
+    g.moveTo(px-rx, py+ry*0.42);
+    g.bezierCurveTo(px-rx, py-ry, px+rx, py-ry, px+rx, py+ry*0.42);
+    g.quadraticCurveTo(px+rx*0.55, py+ry*0.95, px, py+ry*0.9);
+    g.quadraticCurveTo(px-rx*0.55, py+ry*0.95, px-rx, py+ry*0.42);
+    g.closePath();
+    g.save(); g.clip();
+    const pg = g.createLinearGradient(px-rx*0.5, py-ry, px+rx*0.6, py+ry);
+    pg.addColorStop(0, steelL); pg.addColorStop(0.45, steel); pg.addColorStop(1, steelD);
+    g.fillStyle = pg; g.fillRect(px-rx*1.2, py-ry*1.2, rx*2.4, ry*2.6);
+    g.strokeStyle='rgba(12,10,16,0.40)'; g.lineWidth=Math.max(0.5,U*0.38);
+    for(let k=1;k<=2;k++){ const yy = py - ry*0.5 + ry*0.62*k;
+      g.beginPath(); g.moveTo(px-rx, yy); g.quadraticCurveTo(px, yy+U*0.8, px+rx, yy); g.stroke(); }
+    g.restore();
+    g.strokeStyle='rgba(12,10,16,0.66)'; g.lineWidth=Math.max(0.6,U*0.5); g.stroke();
+    g.restore();
+    // peremfény a kupola tetején
+    g.strokeStyle='rgba(255,250,235,0.42)'; g.lineWidth=Math.max(0.5,U*0.38); g.lineCap='round';
+    g.beginPath(); g.moveTo(px-rx*0.72, py-ry*0.42);
+    g.quadraticCurveTo(px-rx*0.1, py-ry*0.98, px+rx*0.5, py-ry*0.62); g.stroke();
+    if(spike){ g.fillStyle = steelD;
+      g.beginPath(); g.moveTo(px - uw(rw*0.28), py - ry*0.72);
+      g.lineTo(px + sgn*uw(rw*0.42), py - ry*2.0);
+      g.lineTo(px + uw(rw*0.42), py - ry*0.55); g.closePath(); g.fill();
+      g.strokeStyle='rgba(12,10,16,0.6)'; g.lineWidth=Math.max(0.5,U*0.35); g.stroke(); }
+  };
 
-  // --- FEGYVER ---
+  if(bs.body==='plate' || bs.body==='hulk'){
+    const big = (bs.body==='hulk');
+    g.fillStyle = bodyGrad(shW); torsoPath(shW, waW, torsoTop, torsoBot); g.fill(); inkLine();
+    // mellvért-lemezek
+    g.strokeStyle = deepC; g.lineWidth = Math.max(0.5,U*0.5);
+    for(let k=0;k<3;k++){
+      const y = torsoBot - (torsoBot-torsoTop)*(0.10 + k*0.14);
+      g.beginPath(); g.moveTo(ux(-waW*0.92), y); g.quadraticCurveTo(ux(0), y+U*0.9, ux(waW*0.92), y); g.stroke();
+    }
+    // mellkas-él
+    g.strokeStyle = shade(steelL,-0.1); g.globalAlpha=0.35; g.lineWidth=Math.max(0.5,U*0.45);
+    g.beginPath(); g.moveTo(ux(0), torsoTop+U*1.4); g.lineTo(ux(0), uy(R.waist+2)); g.stroke();
+    g.globalAlpha=1;
+    // nyakvédő
+    g.fillStyle = steelD;
+    g.beginPath(); g.ellipse(ux(0), torsoTop+U*0.4, uw(shW*0.42), U*1.3, 0, 0, PI2); g.fill();
+    // öv + csat
+    g.fillStyle = leather; g.fillRect(ux(-waW)-Math.min(0,uw(waW*2)), uy(R.waist-1.4), Math.abs(uw(waW*2)), U*2.0);
+    g.fillStyle = '#c9a44a'; g.fillRect(ux(-0.9)-Math.min(0,uw(1.8)), uy(R.waist-1.2), Math.abs(uw(1.8)), U*1.6);
+    // combvért
+    if(!hidesLegs){ g.fillStyle = darkC;
+      for(const sgn of [-1,1]){
+        g.beginPath(); g.moveTo(ux(sgn*0.9), torsoBot-U*0.5);
+        g.lineTo(ux(sgn*(waW+1.4)), torsoBot-U*0.5);
+        g.lineTo(ux(sgn*(waW+0.4)), uy(R.hip-5.5));
+        g.lineTo(ux(sgn*1.1), uy(R.hip-4.8)); g.closePath(); g.fill(); inkLine(); } }
+    pauldron(-1, big?3.0:3.2, big?3.6:2.4, !big);
+    pauldron( 1, big?3.0:3.2, big?3.6:2.4, !big);
+
+  } else if(bs.body==='coat'){
+    // kabátszárnyak a törzs MÖGÉ
+    const sway = moving ? sw*1.4 : 0;
+    g.fillStyle = darkC;
+    g.beginPath();
+    g.moveTo(ux(-waW-0.4), uy(R.waist+1));
+    g.quadraticCurveTo(ux(-waW-2.6+sway), uy(14), ux(-waW-1.4+sway), uy(6));
+    g.lineTo(ux(waW+1.4+sway), uy(6));
+    g.quadraticCurveTo(ux(waW+2.6+sway), uy(14), ux(waW+0.4), uy(R.waist+1));
+    g.closePath(); g.fill(); inkLine();
+    g.strokeStyle = deepC; g.lineWidth=Math.max(0.6,U*0.6);
+    g.beginPath(); g.moveTo(ux(0.5), uy(R.waist)); g.lineTo(ux(0.5+sway), uy(6.5)); g.stroke();
+    g.fillStyle = bodyGrad(shW); torsoPath(shW, waW, torsoTop, torsoBot); g.fill(); inkLine();
+    // hajtóka / ing
+    g.fillStyle = litC;
+    g.beginPath(); g.moveTo(ux(-2.0), torsoTop+U*0.4);
+    g.lineTo(ux(2.0), torsoTop+U*0.4); g.lineTo(ux(0.2), uy(R.chest-2.5)); g.closePath(); g.fill();
+    // bőrheveder a mellen
+    g.strokeStyle = leather; g.lineWidth = uw(1.3);
+    g.beginPath(); g.moveTo(ux(-shW*0.6), torsoTop+U*1.4); g.lineTo(ux(waW*0.7), uy(R.waist+0.5)); g.stroke();
+    // öv
+    g.fillStyle = leatherD; g.fillRect(ux(-waW)-Math.min(0,uw(waW*2)), uy(R.waist-0.9), Math.abs(uw(waW*2)), U*1.8);
+    // kis vállpánt
+    g.fillStyle = darkC;
+    for(const sgn of [-1,1]){ g.beginPath();
+      g.ellipse(ux(sgn*(shW-0.5)), uy(R.shoulder-0.4), uw(1.9), U*1.3, 0, 0, PI2); g.fill(); inkLine(); }
+
+  } else if(bs.body==='bare'){
+    g.fillStyle = bodyGrad(shW); torsoPath(shW, waW, torsoTop, torsoBot); g.fill(); inkLine();
+    // izomzat
+    g.strokeStyle = deepC; g.lineWidth=Math.max(0.5,U*0.5); g.globalAlpha=0.65;
+    g.beginPath(); g.moveTo(ux(-shW*0.52), uy(R.chest+0.5));
+    g.quadraticCurveTo(ux(0), uy(R.chest-2.0), ux(shW*0.52), uy(R.chest+0.5)); g.stroke();
+    g.beginPath(); g.moveTo(ux(0), uy(R.chest-1.6)); g.lineTo(ux(0), uy(R.waist+0.5)); g.stroke();
+    for(const yy of [R.waist+1.6, R.waist-0.6]){
+      g.beginPath(); g.moveTo(ux(-waW*0.7), uy(yy)); g.lineTo(ux(waW*0.7), uy(yy)); g.stroke(); }
+    g.globalAlpha=1;
+    // fényes váll-csúcs
+    g.fillStyle = 'rgba(255,246,222,0.16)';
+    g.beginPath(); g.ellipse(ux(-shW*0.55), uy(R.shoulder-1), uw(2.0), U*2.2, 0, 0, PI2); g.fill();
+    // bőrheveder
+    g.strokeStyle = leather; g.lineWidth = uw(1.5);
+    g.beginPath(); g.moveTo(ux(-shW*0.62), torsoTop+U*1.2); g.lineTo(ux(waW*0.8), uy(R.waist)); g.stroke();
+    // szőrme-kötény
+    g.fillStyle = leatherL;
+    g.beginPath(); g.moveTo(ux(-hiW-0.6), torsoBot);
+    g.lineTo(ux(hiW+0.6), torsoBot);
+    g.lineTo(ux(hiW-0.2), uy(R.hip-6.5)); g.lineTo(ux(-hiW+0.2), uy(R.hip-6.5));
+    g.closePath(); g.fill(); inkLine();
+    g.strokeStyle = shade(leatherL,-0.3); g.lineWidth=Math.max(0.5,U*0.45);
+    for(const fx of [-2.4,0,2.4]){ g.beginPath();
+      g.moveTo(ux(fx), torsoBot+U*0.4); g.lineTo(ux(fx*0.9), uy(R.hip-6.2)); g.stroke(); }
+
+  } else if(bs.body==='robe' || bs.body==='float'){
+    const isFloat = (bs.body==='float');
+    const hover = isFloat ? Math.sin((a._walk||0)*0.7)*1.2 : 0;
+    const hemY = isFloat ? uy(6+hover) : uy(1.2);
+    const sway = moving ? sw*1.5 : 0;
+    const rg = g.createLinearGradient(ux(-9), 0, ux(9), 0);
+    rg.addColorStop(0, litC); rg.addColorStop(0.45, base); rg.addColorStop(1, deepC);
+    g.fillStyle = rg;
+    g.beginPath();
+    g.moveTo(ux(-shW*0.86), uy(R.shoulder));
+    g.quadraticCurveTo(ux(-6.0), uy(R.waist), ux(-8.6+sway), uy(12));
+    g.quadraticCurveTo(ux(-8.8+sway), uy(4), ux(-7.6+sway), hemY);
+    if(isFloat){ for(let k=1;k<=5;k++){ const xx = ux(-7.6+sway + k*3.0);
+                   g.lineTo(xx, hemY + (k%2? 3.2:0)*U); } }
+    else { for(let k=1;k<=5;k++){ const xx = ux(-7.6+sway + k*3.0);
+             g.lineTo(xx, hemY + (k%2? 0.8:0)*U); } }
+    g.quadraticCurveTo(ux(8.8+sway), uy(4), ux(6.0), uy(R.waist));
+    g.quadraticCurveTo(ux(shW*0.9), uy(R.chest), ux(shW*0.86), uy(R.shoulder));
+    g.closePath(); g.fill(); inkLine();
+    // redők
+    g.strokeStyle = deepC; g.lineWidth = Math.max(0.5,U*0.55); g.globalAlpha=0.6;
+    for(const fx of [-4.4, -1.6, 1.6, 4.4]){
+      g.beginPath(); g.moveTo(ux(fx*0.5), uy(R.chest-1));
+      g.quadraticCurveTo(ux(fx*1.1+sway*0.5), uy(12), ux(fx*1.5+sway), hemY+U*0.6); g.stroke(); }
+    g.globalAlpha=1;
+    // vállrész sötétebb pelerin
+    g.fillStyle = darkC;
+    g.beginPath(); g.moveTo(ux(-shW*0.95), uy(R.shoulder-0.5));
+    g.quadraticCurveTo(ux(0), uy(R.shoulder+2.2), ux(shW*0.95), uy(R.shoulder-0.5));
+    g.quadraticCurveTo(ux(shW*0.6), uy(R.chest-3), ux(0), uy(R.chest-3.6));
+    g.quadraticCurveTo(ux(-shW*0.6), uy(R.chest-3), ux(-shW*0.95), uy(R.shoulder-0.5));
+    g.closePath(); g.fill(); inkLine();
+    // öv
+    g.fillStyle = accent;
+    g.fillRect(ux(-4.4)-Math.min(0,uw(8.8)), uy(R.waist+0.4), Math.abs(uw(8.8)), U*1.5);
+    g.fillStyle = 'rgba(12,10,16,0.35)';
+    g.fillRect(ux(-4.4)-Math.min(0,uw(8.8)), uy(R.waist-1.1), Math.abs(uw(8.8)), U*0.5);
+
+  } else if(bs.body==='hooded'){
+    const sway = moving ? sw*1.5 : 0;
+    const rg = g.createLinearGradient(ux(-7), 0, ux(7), 0);
+    rg.addColorStop(0, base); rg.addColorStop(1, deepC);
+    g.fillStyle = rg;
+    g.beginPath();
+    g.moveTo(ux(-shW*0.9), uy(R.shoulder));
+    g.quadraticCurveTo(ux(-5.6), uy(R.waist), ux(-6.6+sway), uy(9));
+    for(let k=0;k<6;k++){ const xx = ux(-6.6+sway + k*2.7);
+      g.lineTo(xx, uy(8.4 - (k%2?2.8:0))); }
+    g.quadraticCurveTo(ux(5.6), uy(R.waist), ux(shW*0.9), uy(R.shoulder));
+    g.closePath(); g.fill(); inkLine();
+    g.strokeStyle = 'rgba(8,7,12,0.55)'; g.lineWidth=Math.max(0.5,U*0.5); g.globalAlpha=0.6;
+    for(const fx of [-2.8, 0.4, 3.0]){
+      g.beginPath(); g.moveTo(ux(fx*0.55), uy(R.chest-2));
+      g.quadraticCurveTo(ux(fx+sway*0.5), uy(15), ux(fx*1.25+sway), uy(9)); g.stroke(); }
+    g.globalAlpha=1;
+    // öv + tőrtok
+    g.fillStyle = leatherD;
+    g.fillRect(ux(-waW)-Math.min(0,uw(waW*2)), uy(R.waist-0.7), Math.abs(uw(waW*2)), U*1.5);
+    g.fillStyle = shade(leatherD,0.2);
+    g.beginPath(); g.ellipse(ux(-waW*0.8), uy(R.waist-3), uw(0.9), U*2.4, 0.25*F, 0, PI2); g.fill();
+
+  } else if(bs.body==='pack'){
+    // hátizsák a törzs mögé
+    const bx = ux(-shW*0.55), by = uy(R.chest+3.5);
+    g.fillStyle = '#4d535d';
+    g.save(); g.beginPath();
+    if(g.roundRect) g.roundRect(Math.min(bx, bx+uw(4.8)), by, Math.abs(uw(4.8)), U*11, U*1.2);
+    else g.rect(Math.min(bx, bx+uw(4.8)), by, Math.abs(uw(4.8)), U*11);
+    g.fill(); inkLine(); g.restore();
+    g.strokeStyle = steel; g.lineWidth=Math.max(0.6,U*0.7); g.lineCap='round';
+    g.beginPath(); g.moveTo(ux(-shW*0.35), uy(R.chest+4)); g.lineTo(ux(-shW*0.2), uy(R.shoulder+1.5)); g.stroke();
+    g.fillStyle = bodyGrad(shW); torsoPath(shW, waW, torsoTop, torsoBot); g.fill(); inkLine();
+    // overall-pántok
+    g.strokeStyle = darkC; g.lineWidth = uw(1.2);
+    for(const sgn of [-1,1]){ g.beginPath();
+      g.moveTo(ux(sgn*shW*0.55), torsoTop+U*1.0); g.lineTo(ux(sgn*waW*0.55), uy(R.waist)); g.stroke(); }
+    // szerszámöv
+    g.fillStyle = leather; g.fillRect(ux(-waW)-Math.min(0,uw(waW*2)), uy(R.waist-1.0), Math.abs(uw(waW*2)), U*1.9);
+    g.fillStyle = '#c9a44a';
+    for(const bxx of [-2.6, 0, 2.6]) g.fillRect(ux(bxx)-Math.min(0,uw(1.0)), uy(R.waist-0.8), Math.abs(uw(1.0)), U*1.5);
+
+  } else if(bs.body==='blob'){
+    const bg2 = g.createRadialGradient(ux(-2.5), uy(R.chest), U*1.5, ux(0), uy(R.waist-2), uw(10));
+    bg2.addColorStop(0, litC); bg2.addColorStop(1, darkC);
+    g.fillStyle = bg2;
+    g.beginPath(); g.ellipse(ux(0), uy(R.waist-1.5), uw(8.0), U*10.5, 0, 0, PI2); g.fill(); inkLine();
+    // hevederek + gyutacsok
+    g.strokeStyle = leather; g.lineWidth=uw(1.4);
+    g.beginPath(); g.moveTo(ux(-6.6), uy(R.waist+2)); g.lineTo(ux(6.6), uy(R.waist-2.6)); g.stroke();
+    g.fillStyle = '#c9a44a';
+    for(let k=0;k<3;k++){ g.beginPath();
+      g.arc(ux(-4.2+k*3.6), uy(R.waist+1.2-k*1.5), uw(0.75), 0, PI2); g.fill(); }
+
+  } else if(bs.body==='tripod'){
+    g.strokeStyle = steelD; g.lineWidth = uw(1.8); g.lineCap='round';
+    for(const ang of [-0.8, 0, 0.8]){
+      g.beginPath(); g.moveTo(ux(0), uy(R.waist));
+      g.lineTo(ux(Math.sin(ang)*6.0), uy(R.foot)); g.stroke(); }
+    const mg = g.createLinearGradient(ux(-5), uy(R.chest), ux(5), uy(R.waist));
+    mg.addColorStop(0, steelL); mg.addColorStop(1, steelD);
+    g.fillStyle = mg;
+    g.beginPath();
+    if(g.roundRect) g.roundRect(Math.min(ux(-5),ux(5)), uy(R.chest+2), Math.abs(uw(10)), U*8, U*1.4);
+    else g.rect(Math.min(ux(-5),ux(5)), uy(R.chest+2), Math.abs(uw(10)), U*8);
+    g.fill(); inkLine();
+    g.fillStyle = accent;
+    g.beginPath(); g.arc(ux(0), uy(R.chest-1), uw(1.2), 0, PI2); g.fill();
+  }
+
+  /* ================= ELSŐ LÁB ================= */
+  if(!hidesLegs) drawLeg(sw, 1, false);
+
+  /* ================= ELSŐ KAR + FEGYVER =================
+     A kar HAJLIK: váll -> könyök lefelé-kifelé -> kéz a test ELŐTT,
+     derék-mellkas magasságban. A fegyver a kézpontban ül. */
+  // A könyök LE és kissé hátra, az alkar onnan ELŐRE-FEL: ettől lesz
+  // hajlított a kar. Korábban a könyök kijjebb volt, mint a kéz, ezért
+  // nézett ki vízszintes deszkának.
+  const elbX = shW*0.80 + sw*0.4, elbY = R.chest-4.6-armLong*0.5;
+  const hx = ux(shW*0.60 + 2.0 + sw*0.7);
+  const hy = uy(R.waist + 3.4 - armLong + (moving ? Math.abs(sw)*0.7 : 0));
+  if(fit.arm > 0){
+    limb(g, ux(shW*0.70), armShY,
+            ux(elbX), uy(elbY),
+            hx, hy,
+            uw(fit.arm), uw(fit.arm*0.76), base);
+    // felkar fénye
+    g.strokeStyle = 'rgba(255,246,222,0.18)'; g.lineWidth = uw(fit.arm*0.34); g.lineCap='round';
+    g.beginPath(); g.moveTo(ux(shW*0.68), armShY+U*0.3); g.lineTo(ux(elbX-0.15), uy(elbY+0.5)); g.stroke();
+    // kesztyű
+    g.fillStyle = shade(leatherD, 0.1);
+    g.beginPath(); g.arc(hx, hy, uw(fit.arm*0.56), 0, PI2); g.fill();
+    g.strokeStyle='rgba(12,10,16,0.55)'; g.lineWidth=Math.max(0.5,U*0.4); g.stroke();
+  }
   if(lo.w && lo.w !== 'none') isoDrawWeapon(g, lo.w, hx, hy, S, faceRight, t);
 
-  // --- FEJ ---
-  const headY = shoulderY - 5.4*S;
-  isoDrawHead(g, bs.head, sx, headY, S, col);
+  /* ================= FEJ ================= */
+  if(bs.head !== 'none'){
+    const hX = ux(0.5), hY = uy(R.headC - hunch);
+    g.strokeStyle = skinD; g.lineWidth = uw(hunch ? 3.4 : 2.0); g.lineCap='round';
+    g.beginPath(); g.moveTo(ux(0.2), uy(R.neck+0.4-hunch));
+    g.lineTo(ux(0.4), uy(R.shoulder+0.2-hunch*0.4)); g.stroke();
+    isoDrawHead2(g, bs.head, hX, hY, U*R.headR, col2(cloth), F, skin, skinD, steel, steelL, accent);
+  }
+}
+function col2(c){ return rgbHex(c); }
 
+/* A fej stílusonként. `r` már képpontban van. */
+function isoDrawHead2(g, style, x, y, r, col, F, skin, skinD, steel, steelL, accent){
+  const ink = (w)=>{ g.strokeStyle='rgba(12,10,16,0.6)'; g.lineWidth=Math.max(0.6, r*0.14); g.stroke(); };
+  if(style === 'helm'){
+    // sisak: zárt, orrvédős, arcrés
+    const hg = g.createLinearGradient(x-r, y-r*1.2, x+r*0.8, y+r);
+    hg.addColorStop(0, steelL); hg.addColorStop(0.55, steel); hg.addColorStop(1, shade(steel,-0.45));
+    g.fillStyle = hg;
+    g.beginPath();
+    g.moveTo(x-r, y+r*0.62);
+    g.quadraticCurveTo(x-r*1.02, y-r*1.05, x, y-r*1.18);
+    g.quadraticCurveTo(x+r*1.02, y-r*1.05, x+r, y+r*0.62);
+    g.quadraticCurveTo(x+r*0.55, y+r*1.15, x, y+r*1.15);
+    g.quadraticCurveTo(x-r*0.55, y+r*1.15, x-r, y+r*0.62);
+    g.closePath(); g.fill(); ink();
+    // arcrés
+    g.fillStyle = 'rgba(8,9,14,0.94)';
+    g.beginPath();
+    g.moveTo(x-r*0.68, y-r*0.10); g.lineTo(x+r*0.68, y-r*0.10);
+    g.lineTo(x+r*0.58, y+r*0.30); g.lineTo(x-r*0.58, y+r*0.30);
+    g.closePath(); g.fill();
+    // orrvédő
+    g.fillStyle = steel;
+    g.fillRect(x-r*0.10, y-r*0.10, r*0.20, r*0.42);
+    // taréj
+    g.fillStyle = shade(col, -0.15);
+    g.beginPath(); g.moveTo(x-r*0.16, y-r*1.12);
+    g.quadraticCurveTo(x, y-r*1.75, x+r*0.16, y-r*1.12); g.closePath(); g.fill();
+    // csillanás
+    g.fillStyle = 'rgba(255,250,235,0.35)';
+    g.beginPath(); g.ellipse(x-r*0.45, y-r*0.58, r*0.22, r*0.42, -0.35, 0, PI2); g.fill();
+
+  } else if(style === 'hood'){
+    // csuklya: hegyes csúcs, mély árnyék, két izzó szem
+    g.fillStyle = shade(col, -0.40);
+    g.beginPath();
+    g.moveTo(x + F*r*0.26, y - r*1.95);
+    g.quadraticCurveTo(x + r*1.30, y - r*0.30, x + r*0.92, y + r*1.00);
+    g.quadraticCurveTo(x, y + r*1.30, x - r*0.92, y + r*1.00);
+    g.quadraticCurveTo(x - r*1.30, y - r*0.30, x + F*r*0.26, y - r*1.95);
+    g.closePath(); g.fill(); ink();
+    // a csuklya pereme világosabb
+    g.strokeStyle = shade(col, -0.05); g.lineWidth = r*0.16;
+    g.beginPath();
+    g.moveTo(x - r*0.88, y + r*0.62);
+    g.quadraticCurveTo(x + F*r*0.18, y - r*0.62, x + r*0.88, y + r*0.62); g.stroke();
+    // arcárnyék
+    g.fillStyle = 'rgba(5,4,9,0.94)';
+    g.beginPath(); g.ellipse(x + F*r*0.10, y + r*0.18, r*0.62, r*0.68, 0, 0, PI2); g.fill();
+    // szemek
+    g.fillStyle = accent || shade(col, 0.55);
+    for(const sgn of [-1, 1]){
+      g.beginPath(); g.ellipse(x + F*r*0.10 + sgn*r*0.26, y + r*0.10, r*0.15, r*0.10, 0, 0, PI2); g.fill(); }
+
+  } else if(style === 'goggles'){
+    g.fillStyle = skin; g.beginPath(); g.arc(x, y, r*0.95, 0, PI2); g.fill(); ink();
+    g.fillStyle = skinD;
+    g.beginPath(); g.arc(x, y, r*0.95, Math.PI*0.12, Math.PI*0.88); g.fill();
+    // sisak-kupak
+    g.fillStyle = shade(col, -0.25);
+    g.beginPath(); g.arc(x, y-r*0.18, r*1.02, Math.PI*1.02, PI2); g.fill(); ink();
+    // szemüveg
+    g.fillStyle = '#343b47';
+    g.fillRect(x-r*1.02, y-r*0.36, r*2.04, r*0.58);
+    g.strokeStyle='rgba(12,10,16,0.6)'; g.lineWidth=Math.max(0.5,r*0.1);
+    g.strokeRect(x-r*1.02, y-r*0.36, r*2.04, r*0.58);
+    g.fillStyle = '#7fe6ff';
+    for(const sgn of [-1,1]){
+      g.beginPath(); g.arc(x + sgn*r*0.44, y-r*0.08, r*0.22, 0, PI2); g.fill(); }
+    // állszíj
+    g.strokeStyle = '#4a3a2b'; g.lineWidth=Math.max(0.5,r*0.14);
+    g.beginPath(); g.arc(x, y, r*0.98, Math.PI*0.18, Math.PI*0.82); g.stroke();
+
+  } else {
+    // fedetlen fej: haj, arc, fül
+    g.fillStyle = skin; g.beginPath(); g.ellipse(x, y, r*0.92, r, 0, 0, PI2); g.fill(); ink();
+    g.fillStyle = skinD;
+    g.beginPath(); g.ellipse(x, y, r*0.92, r, 0, Math.PI*0.08, Math.PI*0.92); g.fill();
+    // haj
+    g.fillStyle = shade(col, -0.62);
+    g.beginPath(); g.ellipse(x, y - r*0.30, r*1.00, r*0.82, 0, Math.PI*1.00, PI2); g.fill();
+    g.beginPath(); g.ellipse(x - F*r*0.84, y - r*0.10, r*0.30, r*0.52, 0, 0, PI2); g.fill();
+    // fül
+    g.fillStyle = skinD;
+    g.beginPath(); g.ellipse(x - F*r*0.62, y + r*0.10, r*0.16, r*0.22, 0, 0, PI2); g.fill();
+    // szem + szemöldök
+    g.fillStyle = '#241c14';
+    g.beginPath(); g.ellipse(x + F*r*0.34, y + r*0.06, r*0.11, r*0.15, 0, 0, PI2); g.fill();
+    g.strokeStyle = shade(col, -0.62); g.lineWidth = Math.max(0.5, r*0.12);
+    g.beginPath(); g.moveTo(x + F*r*0.16, y - r*0.22); g.lineTo(x + F*r*0.52, y - r*0.18); g.stroke();
+  }
 }
 
 /* A kifelé látszó rajzoló: árnyék + jelző + a KISÜTÖTT figura + HP-csík. */
 function isoDrawFigure(g, a, sx, sy, z, opt){
   opt = opt || {};
   const lo = opt.loadout || ISO_LOADOUT[a.cls] || { w:'none', build:1, col:a.color };
-  const S = 1.5 * z * (lo.build || 1);
+  const S = 1.72 * z * (lo.build || 1);
   const moving = (a._spd || 0) > 0.004;
   const bob = moving ? Math.sin(a._walk||0)*1.4*z : Math.sin(Date.now()/520)*0.5*z;
   const faceRight = isoProject(Math.cos(a.facing), Math.sin(a.facing), 0).x >= 0;
@@ -11256,8 +11691,9 @@ function isoDrawFigure(g, a, sx, sy, z, opt){
 
   // élet-csík az ellenfelek fölé
   if(opt.hpBar && a.maxHp){
+    // a figura ~39 S magas (49 egység * 0,80), a csík e fölé kerül
     const f = clamp(a.hp/a.maxHp, 0, 1), W = 22*S;
-    const by = sy - bob - 26*S;
+    const by = sy - bob - 44*S;
     g.fillStyle = 'rgba(0,0,0,0.6)'; g.fillRect(sx-W/2, by, W, 2.8*S);
     g.fillStyle = f>0.5 ? '#7bd88f' : (f>0.25 ? '#ffd166' : '#ff5c7c');
     g.fillRect(sx-W/2, by, W*f, 2.8*S);
