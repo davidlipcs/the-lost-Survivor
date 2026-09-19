@@ -10881,6 +10881,223 @@ function isoDrawWeapon(g, kind, hx, hy, S, faceRight, t){
   g.restore();
 }
 
+
+/* =========================================================
+   TEST-SZILUETTEK
+   ---------------------------------------------------------
+   A figura teste EGYETLEN függvényen megy át (isoDrawBody). Ez azért
+   fontos, mert így a rajzolt test később egyetlen ponton cserélhető
+   generált képre — a fegyver, az animáció és az effektek maradnak.
+
+   A sziluettek a koncepciólapokat követik: a páncélos tömbszerű, a
+   köpenyes alja kiszélesedik, a csuklyás feje hegyes, a meztelen karú
+   berserker válla széles, a varázsló pedig lebeg, nincs is lába.
+   ========================================================= */
+const ISO_BODY = {
+  tank:        { body:'plate',  head:'helm',    hip:1.15 },
+  sniper:      { body:'coat',   head:'bare',    hip:0.92 },
+  berserker:   { body:'bare',   head:'bare',    hip:1.05 },
+  mage:        { body:'robe',   head:'hood',    hip:1.00 },
+  assassin:    { body:'hooded', head:'hood',    hip:0.86 },
+  support:     { body:'robe',   head:'hood',    hip:0.96 },
+  necromancer: { body:'robe',   head:'hood',    hip:0.96 },
+  hunter:      { body:'coat',   head:'bare',    hip:0.96 },
+  engineer:    { body:'pack',   head:'goggles', hip:1.02 },
+  sealbearer:  { body:'plate',  head:'helm',    hip:1.08 },
+  grandmaster: { body:'plate',  head:'helm',    hip:1.12 },
+  godlike:     { body:'robe',   head:'hood',    hip:1.10 },
+};
+const ISO_BODY_FOE = {
+  grunt:     { body:'plate',  head:'helm',  hip:1.00 },
+  scout:     { body:'bare',   head:'bare',  hip:0.84 },
+  tank:      { body:'hulk',   head:'helm',  hip:1.40 },
+  sniper:    { body:'plate',  head:'helm',  hip:0.96 },
+  bomber:    { body:'blob',   head:'bare',  hip:1.25 },
+  medic:     { body:'robe',   head:'hood',  hip:0.94 },
+  charger:   { body:'bare',   head:'helm',  hip:1.02 },
+  turret:    { body:'tripod', head:'none',  hip:1.05 },
+  swarmling: { body:'bare',   head:'bare',  hip:0.70 },
+  wizard:    { body:'float',  head:'hood',  hip:1.00 },
+};
+
+/* A test kirajzolása. sx,by = a talp középpontja a képernyőn.
+   VISSZAADJA a váll magasságát, hogy a kar és a fegyver oda csatlakozzon. */
+function isoDrawBody(g, style, sx, by, S, col, faceRight, t, moving){
+  const dark = shade(col, -0.34), light = shade(col, 0.24);
+  const grad = (y0,y1)=>{ const gr=g.createLinearGradient(sx-6*S,y0,sx+6*S,y1);
+    gr.addColorStop(0, light); gr.addColorStop(1, dark); return gr; };
+  const torsoY = by - 13*S;
+  g.strokeStyle = 'rgba(0,0,0,0.42)'; g.lineWidth = 0.9*S;
+
+  switch(style){
+    case 'plate': {           // páncél: szögletes törzs, széles vállvért
+      g.fillStyle = grad(torsoY-7*S, torsoY+7*S);
+      g.beginPath();
+      g.moveTo(sx-5.4*S, torsoY-5*S); g.lineTo(sx+5.4*S, torsoY-5*S);
+      g.lineTo(sx+4.4*S, torsoY+7*S); g.lineTo(sx-4.4*S, torsoY+7*S);
+      g.closePath(); g.fill(); g.stroke();
+      // vállvértek + tüskék
+      g.fillStyle = light;
+      for(const sgn of [-1,1]){
+        g.beginPath(); g.ellipse(sx+sgn*5.6*S, torsoY-4.6*S, 2.9*S, 2.2*S, 0, 0, PI2); g.fill();
+        g.beginPath();
+        g.moveTo(sx+sgn*5.6*S, torsoY-6.6*S); g.lineTo(sx+sgn*6.6*S, torsoY-9.4*S);
+        g.lineTo(sx+sgn*4.4*S, torsoY-6.9*S); g.closePath(); g.fill();
+      }
+      // mellvért-vonal
+      g.strokeStyle = shade(col,-0.5); g.lineWidth=0.8*S;
+      g.beginPath(); g.moveTo(sx, torsoY-4*S); g.lineTo(sx, torsoY+6*S); g.stroke();
+      return torsoY - 3.4*S; }
+
+    case 'hulk': {            // idomtalan óriás: hatalmas váll, apró fej
+      g.fillStyle = grad(torsoY-9*S, torsoY+8*S);
+      g.beginPath(); g.ellipse(sx, torsoY, 7.6*S, 8.4*S, 0, 0, PI2); g.fill(); g.stroke();
+      g.fillStyle = light;
+      for(const sgn of [-1,1]){
+        g.beginPath(); g.ellipse(sx+sgn*7.2*S, torsoY-4.4*S, 4.0*S, 3.2*S, 0, 0, PI2); g.fill();
+      }
+      return torsoY - 3.0*S; }
+
+    case 'coat': {            // hosszú kabát: keskeny váll, kiszélesedő alj
+      g.fillStyle = grad(torsoY-6*S, torsoY+9*S);
+      g.beginPath();
+      g.moveTo(sx-4.2*S, torsoY-5.6*S); g.lineTo(sx+4.2*S, torsoY-5.6*S);
+      g.lineTo(sx+6.2*S, torsoY+10*S); g.lineTo(sx-6.2*S, torsoY+10*S);
+      g.closePath(); g.fill(); g.stroke();
+      g.strokeStyle = shade(col,-0.5); g.lineWidth=0.7*S;
+      g.beginPath(); g.moveTo(sx, torsoY-5*S); g.lineTo(sx, torsoY+9*S); g.stroke();
+      return torsoY - 4.2*S; }
+
+    case 'bare': {            // meztelen kar: széles váll, keskeny derék
+      g.fillStyle = grad(torsoY-6*S, torsoY+6*S);
+      g.beginPath();
+      g.moveTo(sx-5.8*S, torsoY-4.4*S); g.quadraticCurveTo(sx, torsoY-7.4*S, sx+5.8*S, torsoY-4.4*S);
+      g.lineTo(sx+3.4*S, torsoY+6.6*S); g.lineTo(sx-3.4*S, torsoY+6.6*S);
+      g.closePath(); g.fill(); g.stroke();
+      return torsoY - 3.8*S; }
+
+    case 'robe': {            // köpeny: háromszög alj, a lábat eltakarja
+      g.fillStyle = grad(torsoY-6*S, torsoY+12*S);
+      g.beginPath();
+      g.moveTo(sx-3.8*S, torsoY-5.6*S); g.lineTo(sx+3.8*S, torsoY-5.6*S);
+      const sway = moving ? Math.sin(t*0.8)*1.4*S : 0;
+      g.quadraticCurveTo(sx+8.6*S+sway, torsoY+6*S, sx+7.4*S+sway, torsoY+12.4*S);
+      g.lineTo(sx-7.4*S+sway, torsoY+12.4*S);
+      g.quadraticCurveTo(sx-8.6*S+sway, torsoY+6*S, sx-3.8*S, torsoY-5.6*S);
+      g.closePath(); g.fill(); g.stroke();
+      return torsoY - 4.2*S; }
+
+    case 'hooded': {          // rongyos köpeny: cakkos alsó perem
+      g.fillStyle = grad(torsoY-6*S, torsoY+10*S);
+      g.beginPath();
+      g.moveTo(sx-4.4*S, torsoY-5.4*S); g.lineTo(sx+4.4*S, torsoY-5.4*S);
+      g.lineTo(sx+6.4*S, torsoY+8*S);
+      for(let i=0;i<5;i++){
+        const x = sx + 6.4*S - (i*2.56*S), dy = (i%2? 2.2:0)*S;
+        g.lineTo(x, torsoY+10.4*S - dy);
+      }
+      g.closePath(); g.fill(); g.stroke();
+      return torsoY - 4.0*S; }
+
+    case 'pack': {            // hátizsákos gépész
+      g.fillStyle = shade(col,-0.45);
+      g.beginPath(); g.roundRect
+        ? g.roundRect(sx-(faceRight?7.6:2.0)*S, torsoY-5.6*S, 5.6*S, 9.4*S, 1.4*S)
+        : g.rect(sx-(faceRight?7.6:2.0)*S, torsoY-5.6*S, 5.6*S, 9.4*S);
+      g.fill(); g.stroke();
+      g.fillStyle = grad(torsoY-6*S, torsoY+7*S);
+      g.beginPath(); g.ellipse(sx, torsoY, 4.8*S, 6.6*S, 0, 0, PI2); g.fill(); g.stroke();
+      return torsoY - 3.6*S; }
+
+    case 'blob': {            // felfúvódott bombázó
+      g.fillStyle = grad(torsoY-6*S, torsoY+8*S);
+      g.beginPath(); g.ellipse(sx, torsoY+1*S, 7.0*S, 7.6*S, 0, 0, PI2); g.fill(); g.stroke();
+      return torsoY - 3.0*S; }
+
+    case 'tripod': {          // állványos torony
+      g.strokeStyle = shade(col,-0.3); g.lineWidth = 1.8*S; g.lineCap='round';
+      for(const a of [-0.9, 0, 0.9]){
+        g.beginPath(); g.moveTo(sx, torsoY+2*S);
+        g.lineTo(sx+Math.sin(a)*5.6*S, by); g.stroke();
+      }
+      g.fillStyle = grad(torsoY-4*S, torsoY+3*S);
+      g.beginPath(); g.roundRect ? g.roundRect(sx-4.6*S, torsoY-3.4*S, 9.2*S, 6.4*S, 1.2*S)
+                                 : g.rect(sx-4.6*S, torsoY-3.4*S, 9.2*S, 6.4*S);
+      g.fill(); g.stroke();
+      return torsoY - 1.0*S; }
+
+    case 'float': {           // lebegő varázsló: nincs láb, foszlányos alj
+      const hover = Math.sin(Date.now()/460)*1.6*S;
+      const ty = torsoY - 3*S + hover;
+      g.fillStyle = grad(ty-6*S, ty+12*S);
+      g.beginPath();
+      g.moveTo(sx-3.6*S, ty-5.4*S); g.lineTo(sx+3.6*S, ty-5.4*S);
+      g.quadraticCurveTo(sx+7.0*S, ty+5*S, sx+4.6*S, ty+11*S);
+      for(let i=0;i<4;i++){
+        const x = sx + 4.6*S - (i*3.06*S);
+        g.lineTo(x, ty + (i%2 ? 13.6 : 10.4)*S);
+      }
+      g.quadraticCurveTo(sx-7.0*S, ty+5*S, sx-3.6*S, ty-5.4*S);
+      g.closePath(); g.fill(); g.stroke();
+      return ty - 4.0*S; }
+  }
+  // tartalék: egyszerű törzs
+  g.fillStyle = grad(torsoY-6*S, torsoY+6*S);
+  g.beginPath(); g.ellipse(sx, torsoY, 5.0*S, 6.6*S, 0, 0, PI2); g.fill(); g.stroke();
+  return torsoY - 3.6*S;
+}
+
+/* A fej stílusonként. */
+function isoDrawHead(g, style, sx, hy, S, col){
+  if(style === 'none') return;
+  g.fillStyle = 'rgba(0,0,0,0.3)';
+  g.beginPath(); g.ellipse(sx, hy+3.4*S, 3.4*S, 1.6*S, 0, 0, PI2); g.fill();
+  if(style === 'hood'){
+    // hegyes csuklya, benne árnyék és két izzó szem
+    g.fillStyle = shade(col, -0.2);
+    g.beginPath();
+    g.moveTo(sx, hy-6.4*S);
+    g.quadraticCurveTo(sx+4.6*S, hy-2*S, sx+3.6*S, hy+3.6*S);
+    g.lineTo(sx-3.6*S, hy+3.6*S);
+    g.quadraticCurveTo(sx-4.6*S, hy-2*S, sx, hy-6.4*S);
+    g.closePath(); g.fill();
+    g.fillStyle = 'rgba(8,6,14,0.88)';
+    g.beginPath(); g.ellipse(sx, hy+0.4*S, 2.5*S, 2.9*S, 0, 0, PI2); g.fill();
+    g.fillStyle = shade(col, 0.45);
+    g.beginPath(); g.ellipse(sx-1.1*S, hy, 0.62*S, 0.5*S, 0, 0, PI2); g.fill();
+    g.beginPath(); g.ellipse(sx+1.1*S, hy, 0.62*S, 0.5*S, 0, 0, PI2); g.fill();
+    return;
+  }
+  if(style === 'helm'){
+    // zárt sisak, arcrés
+    g.fillStyle = shade(col, 0.1);
+    g.beginPath(); g.ellipse(sx, hy, 4.0*S, 4.2*S, 0, 0, PI2); g.fill();
+    g.strokeStyle = shade(col,-0.5); g.lineWidth=0.9*S; g.stroke();
+    g.fillStyle = 'rgba(10,12,18,0.9)';
+    g.fillRect(sx-2.6*S, hy-0.5*S, 5.2*S, 1.5*S);
+    g.fillStyle = shade(col, 0.4);
+    g.fillRect(sx-0.4*S, hy-4.0*S, 0.8*S, 3.2*S);   // sisakgerinc
+    return;
+  }
+  if(style === 'goggles'){
+    const hg = g.createRadialGradient(sx-1.4*S, hy-1.6*S, 0.4*S, sx, hy, 4.4*S);
+    hg.addColorStop(0, '#fdf3e2'); hg.addColorStop(1, shade('#e0c9a8', -0.3));
+    g.fillStyle = hg; g.beginPath(); g.arc(sx, hy, 4.0*S, 0, PI2); g.fill();
+    g.fillStyle = '#2a3140'; g.fillRect(sx-3.6*S, hy-1.6*S, 7.2*S, 1.9*S);
+    g.fillStyle = '#6ee7ff';
+    g.beginPath(); g.arc(sx-1.7*S, hy-0.7*S, 0.9*S, 0, PI2); g.fill();
+    g.beginPath(); g.arc(sx+1.7*S, hy-0.7*S, 0.9*S, 0, PI2); g.fill();
+    return;
+  }
+  // csupasz fej, a fényirány szerint árnyalva + osztály-színű perem
+  const hg = g.createRadialGradient(sx-1.4*S, hy-1.6*S, 0.4*S, sx, hy, 4.4*S);
+  hg.addColorStop(0, '#fdf3e2'); hg.addColorStop(1, shade('#e0c9a8', -0.3));
+  g.fillStyle = hg; g.beginPath(); g.arc(sx, hy, 4.0*S, 0, PI2); g.fill();
+  g.strokeStyle = shade(col, 0.1); g.lineWidth = 1.4*S;
+  g.beginPath(); g.arc(sx, hy, 4.0*S, Math.PI*0.92, Math.PI*2.08); g.stroke();
+}
+
+
 /* A teljes figura. Az `a` bármelyik Actor lehet: hős, társ vagy ellenfél. */
 function isoDrawFigure(g, a, sx, sy, z, opt){
   opt = opt || {};
@@ -10908,43 +11125,36 @@ function isoDrawFigure(g, a, sx, sy, z, opt){
   }
 
   const baseY = sy - bob;
-  // --- LÁBAK: lépésciklus haladáskor, egymás mellett álláskor ---
-  const step = moving ? Math.sin(t)*3.4*S : 0;
-  const legC = shade(col, -0.45);
-  g.strokeStyle = legC; g.lineWidth = 2.6*S; g.lineCap = 'round';
-  g.beginPath(); g.moveTo(sx-1.8*S, baseY-7*S); g.lineTo(sx-1.8*S+step, baseY); g.stroke();
-  g.beginPath(); g.moveTo(sx+1.8*S, baseY-7*S); g.lineTo(sx+1.8*S-step, baseY); g.stroke();
+  const bs = opt.bodyStyle || ISO_BODY[a.cls] || { body:'bare', head:'bare', hip:1 };
+  const hidesLegs = (bs.body==='robe' || bs.body==='hooded' || bs.body==='float' || bs.body==='tripod');
 
-  // --- TÖRZS ---
-  const torsoY = baseY - 13*S;
-  const tg = g.createLinearGradient(sx-5*S, torsoY-6*S, sx+5*S, torsoY+6*S);
-  tg.addColorStop(0, shade(col, 0.22)); tg.addColorStop(1, shade(col, -0.30));
-  g.fillStyle = tg;
-  g.beginPath(); g.ellipse(sx, torsoY, 5.0*S, 6.6*S, 0, 0, PI2); g.fill();
-  g.strokeStyle = 'rgba(0,0,0,0.35)'; g.lineWidth = 0.9*S; g.stroke();
+  // --- LÁBAK: lépésciklus haladáskor. Köpeny/lebegés eltakarja őket. ---
+  if(!hidesLegs){
+    const step = moving ? Math.sin(t)*3.4*S : 0;
+    g.strokeStyle = shade(col, -0.45); g.lineWidth = 2.6*S*(bs.hip||1); g.lineCap = 'round';
+    g.beginPath(); g.moveTo(sx-1.8*S, baseY-7*S); g.lineTo(sx-1.8*S+step, baseY); g.stroke();
+    g.beginPath(); g.moveTo(sx+1.8*S, baseY-7*S); g.lineTo(sx+1.8*S-step, baseY); g.stroke();
+  }
 
-  // --- KARoK: a fegyvert tartó kar a törzsből indul ---
+  /* --- TÖRZS --- egyetlen függvényen át, hogy később képre lehessen
+     cserélni anélkül, hogy a fegyverhez vagy az animációhoz nyúlni kéne.
+     A visszaadott érték a váll magassága: ide csatlakozik a kar. */
+  const shoulderY = isoDrawBody(g, bs.body, sx, baseY, S, col, faceRight, t, moving);
+
+  // --- KAROK: a fegyvert tartó kar a vállból indul ---
   const swing = moving ? Math.sin(t+Math.PI)*2.2*S : 0;
-  const hx = sx + (faceRight ? 6.2*S : -6.2*S), hy = torsoY + 1.2*S;
-  g.strokeStyle = shade(col, -0.15); g.lineWidth = 2.2*S;
-  g.beginPath(); g.moveTo(sx + (faceRight?3:-3)*S, torsoY-2*S); g.lineTo(hx, hy); g.stroke();
-  g.beginPath(); g.moveTo(sx - (faceRight?3:-3)*S, torsoY-2*S);
-  g.lineTo(sx - (faceRight?5:-5)*S, torsoY+3*S + swing); g.stroke();
+  const hx = sx + (faceRight ? 6.6*S : -6.6*S), hy = shoulderY + 4.2*S;
+  g.strokeStyle = shade(col, -0.12); g.lineWidth = 2.2*S; g.lineCap='round';
+  g.beginPath(); g.moveTo(sx + (faceRight?3.4:-3.4)*S, shoulderY); g.lineTo(hx, hy); g.stroke();
+  g.beginPath(); g.moveTo(sx - (faceRight?3.4:-3.4)*S, shoulderY);
+  g.lineTo(sx - (faceRight?5.2:-5.2)*S, shoulderY+5*S + swing); g.stroke();
 
   // --- FEGYVER ---
   if(lo.w && lo.w !== 'none') isoDrawWeapon(g, lo.w, hx, hy, S, faceRight, t);
 
-  // --- FEJ: nyakárnyék + fény-folt a rögzített fényirány szerint ---
-  const headY = torsoY - 9.4*S;
-  g.fillStyle = 'rgba(0,0,0,0.3)';
-  g.beginPath(); g.ellipse(sx, headY+3.4*S, 3.4*S, 1.6*S, 0, 0, PI2); g.fill();
-  const hg = g.createRadialGradient(sx-1.4*S, headY-1.6*S, 0.4*S, sx, headY, 4.4*S);
-  hg.addColorStop(0, '#fdf3e2'); hg.addColorStop(1, shade('#e0c9a8', -0.3));
-  g.fillStyle = hg;
-  g.beginPath(); g.arc(sx, headY, 4.0*S, 0, PI2); g.fill();
-  // sisak/csuklya-perem az osztály színében — messziről ez azonosít
-  g.strokeStyle = shade(col, 0.1); g.lineWidth = 1.5*S;
-  g.beginPath(); g.arc(sx, headY, 4.0*S, Math.PI*0.92, Math.PI*2.08); g.stroke();
+  // --- FEJ ---
+  const headY = shoulderY - 5.4*S;
+  isoDrawHead(g, bs.head, sx, headY, S, col);
 
   // --- élet-csík az ellenfelek fölé ---
   if(opt.hpBar && a.maxHp){
@@ -11125,7 +11335,8 @@ function isoDraw(){
   const actors = sc.actors.filter(a=>a.alive).map(a=>({
     kind:'actor', wx:a.wx, wy:a.wy, wz:a.wz,
     draw:(g,sx,sy,z)=> isoDrawFigure(g, a, sx, sy, z, {
-      loadout: a.team==='foe' ? ISO_ENEMY_LOADOUT[a.etype] : ISO_LOADOUT[a.cls],
+      loadout:   a.team==='foe' ? ISO_ENEMY_LOADOUT[a.etype] : ISO_LOADOUT[a.cls],
+      bodyStyle: a.team==='foe' ? ISO_BODY_FOE[a.etype]      : ISO_BODY[a.cls],
       hpBar: a.team==='foe',
     }),
   }));
