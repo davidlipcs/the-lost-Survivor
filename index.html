@@ -11098,33 +11098,102 @@ function isoDrawHead(g, style, sx, hy, S, col){
 }
 
 
+
+/* =========================================================
+   FIGURA-SÜTÉS: kontúr + cel-árnyékolás
+   ---------------------------------------------------------
+   Ami a koncepciórajzokat "rajzolttá" teszi, az nem a szín, hanem a
+   VASTAG SÖTÉT KONTÚR és a kemény árnyék-perem. Canvas-ban ezt úgy
+   kapjuk meg, hogy a figurát egyszer kirajzoljuk egy külön vászonra,
+   alá nyolc irányban eltolva egy sötét másolatot (ez adja a körvonalat),
+   majd a kész képet használjuk.
+
+   Mivel ez drága, típusonként EGYSZER sül ki, és utána képkockánként
+   egyetlen drawImage. Ugyanaz a trükk, amit az index-17 az ellenfelekre
+   már használ — most a teljes figurára.
+   ========================================================= */
+const FIG_CACHE = {};
+const FIG_BAKE_S = 4.2;      // milyen léptékben sütünk (ennél nagyobbra nem nagyítunk)
+
+function figCacheKey(a, opt){
+  const lo = opt.loadout || {}, bs = opt.bodyStyle || {};
+  // a lépés-fázist 8 állásra kerekítjük: ennyi elég a járáshoz, és nyolcszor
+  // kevesebb sütés, mint folytonosan
+  const ph = Math.round(((a._walk||0) % PI2) / PI2 * 8) % 8;
+  const mv = ((a._spd||0) > 0.004) ? 1 : 0;
+  const dir = opt.faceRight ? 1 : 0;
+  return [bs.body||'x', bs.head||'x', lo.w||'x', a.color||'x', mv, mv?ph:0, dir].join('|');
+}
+
+/* Egy figura kisütése: átlátszó vászon, rajta a figura, körülötte kontúr. */
+function bakeFigure(a, opt, faceRight, phase, moving){
+  const S = FIG_BAKE_S * (opt.loadout && opt.loadout.build || 1);
+  const W = Math.ceil(52*S), H = Math.ceil(64*S);
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const g = c.getContext('2d');
+  const ox = W/2, oy = H - 6*S;        // a talp helye a vásznon
+
+  // a figurát egy ideiglenes vászonra rajzoljuk, hogy a kontúrhoz legyen sziluettünk
+  const tmp = document.createElement('canvas'); tmp.width=W; tmp.height=H;
+  const tg = tmp.getContext('2d');
+  const stub = { cls:a.cls, color:a.color, facing: faceRight?0:Math.PI,
+                 _walk: phase, _spd: moving?0.02:0, team:a.team, hp:1, maxHp:1 };
+  isoFigureRaw(tg, stub, ox, oy, S, opt, faceRight);
+
+  // 1. KONTÚR: nyolc irányba eltolt, sötétre színezett másolat
+  const ow = Math.max(1.6, S*0.55);
+  g.save();
+  for(let i=0;i<8;i++){
+    const an = i*(PI2/8);
+    g.drawImage(tmp, Math.cos(an)*ow, Math.sin(an)*ow);
+  }
+  g.globalCompositeOperation = 'source-in';
+  g.fillStyle = 'rgba(10,9,14,0.95)'; g.fillRect(0,0,W,H);
+  g.restore();
+
+  // 2. maga a figura a kontúr fölé
+  g.drawImage(tmp, 0, 0);
+
+  // 3. CEL-FÉNY: kemény peremfény a bal-felső élen
+  const lit = document.createElement('canvas'); lit.width=W; lit.height=H;
+  const lg = lit.getContext('2d');
+  lg.drawImage(tmp, -S*0.5, -S*0.5);
+  lg.globalCompositeOperation = 'destination-out';
+  lg.drawImage(tmp, S*0.7, S*0.7);
+  lg.globalCompositeOperation = 'source-in';
+  lg.fillStyle = 'rgba(255,248,225,0.30)'; lg.fillRect(0,0,W,H);
+  g.drawImage(lit, 0, 0);
+
+  return { c, ox, oy, S };
+}
+function getFigureSprite(a, opt){
+  const key = figCacheKey(a, opt);
+  let sp = FIG_CACHE[key];
+  if(sp) return sp;
+  const moving = ((a._spd||0) > 0.004);
+  const ph = moving ? (Math.round(((a._walk||0) % PI2) / PI2 * 8) % 8) * (PI2/8) : 0;
+  sp = bakeFigure(a, opt, !!opt.faceRight, ph, moving);
+  // a gyorsítótár ne hízzon a végtelenségig
+  const keys = Object.keys(FIG_CACHE);
+  if(keys.length > 400) delete FIG_CACHE[keys[0]];
+  FIG_CACHE[key] = sp;
+  return sp;
+}
+
+
 /* A teljes figura. Az `a` bármelyik Actor lehet: hős, társ vagy ellenfél. */
-function isoDrawFigure(g, a, sx, sy, z, opt){
+/* A NYERS figura: kontúr nélkül, adott léptékben. Ezt süti ki a
+   gyorsítótár, és ezt hívja a közvetlen rajz is, ha nincs sütés. */
+function isoFigureRaw(g, a, sx, sy, S_in, opt, faceRightIn){
   opt = opt || {};
   const lo = opt.loadout || ISO_LOADOUT[a.cls] || { w:'none', build:1, col:a.color };
-  const S = 1.5 * z * (lo.build || 1);          // alap méretlépték
+  const S = S_in;
   const col = a.color || lo.col || '#78dc78';
   const t = (a._walk || 0);
   const moving = (a._spd || 0) > 0.004;
-  // a nézési irány képernyőn: az iso vetítés miatt a világ-szöget vetítjük
-  const fv = isoProject(Math.cos(a.facing), Math.sin(a.facing), 0);
-  const faceRight = fv.x >= 0;
-  const bob = moving ? Math.sin(t)*1.4*z : Math.sin(Date.now()/520)*0.5*z;
-
-  // --- vetett árnyék a talajon (a rombusz arányával lapítva) ---
-  g.save(); g.globalAlpha = 0.34; g.fillStyle = '#000';
-  g.beginPath(); g.ellipse(sx, sy, 11*S, 11*S*(ISO.TH/ISO.TW), 0, 0, PI2); g.fill();
-  g.restore();
-
-  // --- irányjelző ék a talajon: egyértelművé teszi, merre néz ---
-  if(opt.marker !== false){
-    g.save(); g.translate(sx, sy); g.scale(1, ISO.TH/ISO.TW); g.rotate(a.facing);
-    g.fillStyle = (a.team==='foe') ? 'rgba(255,92,124,0.5)' : 'rgba(110,231,255,0.5)';
-    g.beginPath(); g.moveTo(21*S,0); g.lineTo(11*S,6*S); g.lineTo(11*S,-6*S); g.closePath(); g.fill();
-    g.restore();
-  }
-
-  const baseY = sy - bob;
+  const faceRight = (faceRightIn !== undefined) ? faceRightIn
+                  : (isoProject(Math.cos(a.facing), Math.sin(a.facing), 0).x >= 0);
+  const baseY = sy;
   const bs = opt.bodyStyle || ISO_BODY[a.cls] || { body:'bare', head:'bare', hip:1 };
   const hidesLegs = (bs.body==='robe' || bs.body==='hooded' || bs.body==='float' || bs.body==='tripod');
 
@@ -11156,12 +11225,42 @@ function isoDrawFigure(g, a, sx, sy, z, opt){
   const headY = shoulderY - 5.4*S;
   isoDrawHead(g, bs.head, sx, headY, S, col);
 
-  // --- élet-csík az ellenfelek fölé ---
+}
+
+/* A kifelé látszó rajzoló: árnyék + jelző + a KISÜTÖTT figura + HP-csík. */
+function isoDrawFigure(g, a, sx, sy, z, opt){
+  opt = opt || {};
+  const lo = opt.loadout || ISO_LOADOUT[a.cls] || { w:'none', build:1, col:a.color };
+  const S = 1.5 * z * (lo.build || 1);
+  const moving = (a._spd || 0) > 0.004;
+  const bob = moving ? Math.sin(a._walk||0)*1.4*z : Math.sin(Date.now()/520)*0.5*z;
+  const faceRight = isoProject(Math.cos(a.facing), Math.sin(a.facing), 0).x >= 0;
+
+  // vetett árnyék a talajon, a rombusz arányával lapítva
+  g.save(); g.globalAlpha = 0.34; g.fillStyle = '#000';
+  g.beginPath(); g.ellipse(sx, sy, 11*S, 11*S*(ISO.TH/ISO.TW), 0, 0, PI2); g.fill();
+  g.restore();
+
+  // irányjelző ék a talajon
+  if(opt.marker !== false){
+    g.save(); g.translate(sx, sy); g.scale(1, ISO.TH/ISO.TW); g.rotate(a.facing);
+    g.fillStyle = (a.team==='foe') ? 'rgba(255,92,124,0.5)' : 'rgba(110,231,255,0.5)';
+    g.beginPath(); g.moveTo(21*S,0); g.lineTo(11*S,6*S); g.lineTo(11*S,-6*S); g.closePath(); g.fill();
+    g.restore();
+  }
+
+  // a kisütött, kontúros figura — képkockánként egyetlen drawImage
+  const sp = getFigureSprite(a, Object.assign({}, opt, { faceRight }));
+  const k = S / sp.S;
+  g.drawImage(sp.c, sx - sp.ox*k, (sy - bob) - sp.oy*k, sp.c.width*k, sp.c.height*k);
+
+  // élet-csík az ellenfelek fölé
   if(opt.hpBar && a.maxHp){
     const f = clamp(a.hp/a.maxHp, 0, 1), W = 22*S;
-    g.fillStyle = 'rgba(0,0,0,0.55)'; g.fillRect(sx-W/2, headY-9*S, W, 2.8*S);
+    const by = sy - bob - 26*S;
+    g.fillStyle = 'rgba(0,0,0,0.6)'; g.fillRect(sx-W/2, by, W, 2.8*S);
     g.fillStyle = f>0.5 ? '#7bd88f' : (f>0.25 ? '#ffd166' : '#ff5c7c');
-    g.fillRect(sx-W/2, headY-9*S, W*f, 2.8*S);
+    g.fillRect(sx-W/2, by, W*f, 2.8*S);
   }
 }
 
