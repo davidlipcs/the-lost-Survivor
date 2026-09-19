@@ -1376,6 +1376,12 @@ const TRANSLATIONS = {
     questsToday: '📋 Today\u2019s quests', ladderHeading: '📜 Reward ladder (60 levels)',
     ladderLevel: (n)=> `Level ${n}`,
     stickMove: 'MOVE', stickAim: 'AIM + FIRE',
+    isoFoesLeft: (n)=> n + (n===1 ? ' enemy left' : ' enemies left'),
+    isoWinTitle: 'KINGDOM TAKEN', isoLoseTitle: 'YOU FELL',
+    isoWinText: 'The last defender is down. The land is yours.',
+    isoLoseText: 'The attack failed. You can try again from the map.',
+    isoAb_dash: 'Dash', isoAb_blast: 'Shockwave', isoAb_mend: 'Mend',
+    isoFoesTitle: 'ENEMIES',
     strangerSpeaker: 'Stranger', dlgOk: 'All right',
     companionScene: [
       'Leaving the farm behind, the two of you head on into the unknown.',
@@ -1739,6 +1745,12 @@ const TRANSLATIONS = {
     questsToday: '📋 Mai küldetések', ladderHeading: '📜 Jutalom-létra (60 szint)',
     ladderLevel: (n)=> `Szint ${n}`,
     stickMove: 'MOZGÁS', stickAim: 'CÉLZÁS + LÖVÉS',
+    isoFoesLeft: (n)=> n + ' ellenfél maradt',
+    isoWinTitle: 'A KIRÁLYSÁG ELESETT', isoLoseTitle: 'ELESTÉL',
+    isoWinText: 'Az utolsó védő is a földön. A föld a tiéd.',
+    isoLoseText: 'A támadás elbukott. A térképről újra nekifuthatsz.',
+    isoAb_dash: 'Kitörés', isoAb_blast: 'Lökéshullám', isoAb_mend: 'Gyógyulás',
+    isoFoesTitle: 'ELLENFÉL',
     strangerSpeaker: 'Idegen', dlgOk: 'Rendben',
     companionScene: [
       'A farmot magatok mögött hagyva tovább vágtok neki az ismeretlennek.',
@@ -12680,6 +12692,271 @@ function isoDrawFigure(g, a, sx, sy, z, opt){
 
 /* Ellenfél a jelenetben. Ugyanaz az Actor-interfész, mint a hősé — csak
    az `etype` mondja meg, melyik fajta, és ebből jön a fegyvere is. */
+
+/* =========================================================
+   KÉPESSÉGEK A MISSZIÓBAN
+   ---------------------------------------------------------
+   A felülnézeti képesség-rendszer a `game` objektumra épül (abilities,
+   buffs, cooldown-ok), a misszióban pedig nincs `game` — ezért eddig a
+   képesség-sáv üres maradt, és a Q/E/R nem csinált semmit.
+
+   Ez itt egy KIS, de valódi készlet, ami a misszió saját terében
+   dolgozik. Nem a teljes, osztályonkénti pecsét-kínálat: három
+   képesség, amit minden hős használhat. A teljes rendszer akkor kerül
+   át, ha a két mód egy motorra kerül.
+   ========================================================= */
+const ISO_ABILITIES = [
+  { id:'dash',  key:'q', icon:'💨', cdMax:210 },
+  { id:'blast', key:'e', icon:'💥', cdMax:390 },
+  { id:'mend',  key:'r', icon:'✨', cdMax:540 },
+];
+function isoAbilityName(id){ return T('isoAb_'+id); }
+
+function isoBuildAbilityBar(sc){
+  abilityBarEl.innerHTML = '';
+  sc.abilities = ISO_ABILITIES.map(a=>({ ...a, cd:0 }));
+  for(const ab of sc.abilities){
+    const el = document.createElement('div');
+    el.className = 'abIcon unlocked';
+    el.title = isoAbilityName(ab.id);
+    el.innerHTML = `<span>${ab.icon}</span><span class="key">${displayKey(ab.key)}</span>`;
+    const press = (e)=>{ e.preventDefault(); keys[ab.key] = true; };
+    const release = (e)=>{ e.preventDefault(); keys[ab.key] = false; };
+    el.addEventListener('pointerdown', press); el.addEventListener('pointerup', release);
+    el.addEventListener('pointerleave', release); el.addEventListener('pointercancel', release);
+    ab._el = el; abilityBarEl.appendChild(el);
+  }
+  abilityBarEl.classList.remove('hidden');
+  ultBtnEl.classList.add('hidden');       // az ultit még nem hozzuk át
+}
+
+function isoUseAbility(sc, ab){
+  const h = sc.hero;
+  if(ab.id === 'dash'){
+    // gyors kitörés a nézés irányába, falon nem visz át
+    for(let i=0;i<14;i++) isoMoveActor(sc.map, h, Math.cos(h.facing)*0.11, Math.sin(h.facing)*0.11);
+    for(let i=0;i<8;i++){ const an=h.facing+Math.PI+(Math.random()-0.5);
+      sc.puffs.push({ wx:h.wx, wy:h.wy, vx:Math.cos(an)*0.03, vy:Math.sin(an)*0.03,
+                      life:20, r:0.1, color:'#9fd8ff' }); }
+  } else if(ab.id === 'blast'){
+    // lökéshullám: sebez és ellök mindenkit a közelben
+    const R = 3.2;
+    for(const a of sc.actors){
+      if(!a.alive || a.team !== 'foe') continue;
+      const d = Math.hypot(a.wx-h.wx, a.wy-h.wy);
+      if(d > R) continue;
+      const an = Math.atan2(a.wy-h.wy, a.wx-h.wx);
+      isoHurt(sc, a, 34 + 26*(1 - d/R), an);
+      a.wx += Math.cos(an)*0.8; a.wy += Math.sin(an)*0.8;
+    }
+    for(let i=0;i<22;i++){ const an=i/22*PI2;
+      sc.puffs.push({ wx:h.wx+Math.cos(an)*0.6, wy:h.wy+Math.sin(an)*0.6,
+                      vx:Math.cos(an)*0.09, vy:Math.sin(an)*0.09,
+                      life:24, r:0.16, color:'#ffd8a0' }); }
+  } else if(ab.id === 'mend'){
+    const heal = Math.round(h.maxHp*0.32);
+    h.hp = Math.min(h.maxHp, h.hp + heal);
+    sc.floaters.push({ wx:h.wx, wy:h.wy, text:'+'+heal, life:40, color:'#7dffb0' });
+    for(let i=0;i<12;i++){ const an=Math.random()*PI2;
+      sc.puffs.push({ wx:h.wx+Math.cos(an)*0.4, wy:h.wy+Math.sin(an)*0.4,
+                      vx:0, vy:-0.03, life:30, r:0.1, color:'#8affc1' }); }
+  }
+}
+
+/* A sáv léptetése: visszatöltés és a hátralévő idő kiírása. */
+function isoTickAbilities(sc){
+  if(!sc.abilities) return;
+  for(const ab of sc.abilities){
+    if(ab.cd > 0) ab.cd--;
+    const el = ab._el; if(!el) continue;
+    let ov = el.querySelector('.cd'), ring = el.querySelector('.cdRing');
+    if(ab.cd > 0){
+      if(!ov){ ov = document.createElement('div'); ov.className='cd'; el.appendChild(ov); }
+      if(!ring){ ring = document.createElement('div'); ring.className='cdRing'; el.appendChild(ring); }
+      ov.textContent = Math.ceil(ab.cd/60*10)/10;
+      ring.style.setProperty('--cd', (clamp(ab.cd/ab.cdMax,0,1)*100).toFixed(1)+'%');
+    } else {
+      if(ov) ov.remove();
+      if(ring) ring.remove();
+      if(sc.state === 'playing' && keys[ab.key]){
+        keys[ab.key] = false;           // egy lenyomás egy használat
+        ab.cd = ab.cdMax;
+        isoUseAbility(sc, ab);
+      }
+    }
+  }
+}
+
+/* =========================================================
+   HARC AZ IZOMETRIKUS MISSZIÓBAN
+   ---------------------------------------------------------
+   Eddig a misszió séta-prototípus volt: lehetett járkálni, a fegyverek
+   látszottak, de lövedék, sebzés és botkormány nem volt — így nem
+   lehetett se sebezni, se meghalni, se nyerni.
+
+   A lövedékek CSEMPE-térben élnek (wx, wy), mint a szereplők, tehát a
+   falakkal és a vízzel ugyanaz az isoTileSolid dönt, ami a mozgásnál.
+   A fegyver adatai az osztályból (CLASSES) és az ellenfél-táblából
+   (ENEMY_DEFS) jönnek, hogy a két mód ne csússzon szét.
+   ========================================================= */
+const ISO_PX_PER_TILE = 64;      // a felülnézeti képpont-értékek átváltása
+
+/* Egy lövedék. A `team` dönti el, kit talál el. */
+function isoSpawnBullet(sc, from, ang, opt){
+  opt = opt || {};
+  const sp = (opt.speed || 7) / ISO_PX_PER_TILE;
+  sc.bullets.push({
+    wx: from.wx + Math.cos(ang)*(from.r + 0.15),
+    wy: from.wy + Math.sin(ang)*(from.r + 0.15),
+    vx: Math.cos(ang)*sp, vy: Math.sin(ang)*sp,
+    r: (opt.r || 5) / ISO_PX_PER_TILE,
+    dmg: opt.dmg || 10,
+    team: from.team,
+    color: opt.color || (from.team==='foe' ? '#ff5c7c' : (from.color || '#6ee7ff')),
+    life: opt.life || 150,
+    pierce: opt.pierce || 0,
+  });
+}
+
+/* Sebzés egy szereplőn. Visszaadja, hogy meghalt-e. */
+function isoHurt(sc, a, dmg, srcAng){
+  if(!a.alive) return false;
+  a.hp -= dmg;
+  a.hitFlash = 6;
+  sc.floaters.push({ wx:a.wx, wy:a.wy, text:Math.round(dmg)+'', life:34,
+                     color: a.team==='foe' ? '#ffd166' : '#ff5c7c' });
+  if(srcAng !== undefined){        // apró lökés, hogy legyen súlya a találatnak
+    a.wx += Math.cos(srcAng)*0.06; a.wy += Math.sin(srcAng)*0.06;
+  }
+  if(a.hp <= 0){
+    a.alive = false;
+    for(let i=0;i<10;i++){
+      const an = Math.random()*PI2, s = 0.02+Math.random()*0.05;
+      sc.puffs.push({ wx:a.wx, wy:a.wy, vx:Math.cos(an)*s, vy:Math.sin(an)*s,
+                      life:26, r:0.12+Math.random()*0.16, color:a.color||'#ff5c7c' });
+    }
+    return true;
+  }
+  return false;
+}
+
+/* A hős fegyvere az osztályából. Ugyanaz a tűzgyorsaság és sebzés, mint
+   felülnézetben — a két mód ne érződjön más játéknak. */
+function isoHeroShoot(sc, h){
+  const c = CLASSES[h.cls] || CLASSES.tank;
+  if(h.fireT > 0) return false;
+  h.fireT = c.fireRate;
+  const n = c.bulletCount || 1;
+  const spread = (n > 1) ? 0.16 : 0;
+  for(let i=0;i<n;i++){
+    const off = (n>1) ? (i - (n-1)/2) * spread : 0;
+    isoSpawnBullet(sc, h, h.facing + off,
+      { dmg:c.bulletDmg, speed:c.bulletSpeed, r:5, color:h.color });
+  }
+  isoStrike(h);
+  return true;
+}
+
+/* Ellenfél támadása: a lövő lő, a közelharcos ütőtávolból sebez. */
+function isoFoeAttack(sc, a){
+  const h = sc.hero;
+  const d = Math.hypot(h.wx-a.wx, h.wy-a.wy);
+  const ang = Math.atan2(h.wy-a.wy, h.wx-a.wx);
+  const ranged = a.range > 0.7;
+  const reach = ranged ? a.range : (a.r + h.r + 0.35);
+  if(d > reach*1.05) return false;
+  if(a.atkT > 0) return false;
+  a.atkT = ranged ? 78 : 52;
+  isoStrike(a);
+  if(ranged) isoSpawnBullet(sc, a, ang, { dmg:a.dmg, speed:5.4, r:5 });
+  else isoHurt(sc, h, a.dmg, ang);
+  return true;
+}
+
+/* A társ a legközelebbi ellenfélre lő. */
+function isoCompanionShoot(sc, a){
+  if(a.fireT > 0) return false;
+  let best = null, bd = 1e9;
+  for(const o of sc.actors){
+    if(!o.alive || o.team !== 'foe') continue;
+    const d = Math.hypot(o.wx-a.wx, o.wy-a.wy);
+    if(d < bd){ bd = d; best = o; }
+  }
+  if(!best || bd > 7) return false;
+  const c = CLASSES[a.cls] || CLASSES.tank;
+  a.fireT = c.fireRate * 1.25;
+  a.facing = Math.atan2(best.wy-a.wy, best.wx-a.wx);
+  isoSpawnBullet(sc, a, a.facing, { dmg:c.bulletDmg*0.7, speed:c.bulletSpeed, r:4, color:a.color });
+  isoStrike(a);
+  return true;
+}
+
+/* A lövedékek, füstök és sebzésszámok léptetése. */
+function isoTickBullets(sc){
+  const map = sc.map;
+  for(let i=sc.bullets.length-1; i>=0; i--){
+    const b = sc.bullets[i];
+    b.wx += b.vx; b.wy += b.vy; b.life--;
+    let gone = (b.life <= 0) || isoTileSolid(map, b.wx, b.wy);
+    if(!gone){
+      for(const a of sc.actors){
+        if(!a.alive || a.team === b.team) continue;
+        if(Math.hypot(a.wx-b.wx, a.wy-b.wy) > a.r + b.r) continue;
+        isoHurt(sc, a, b.dmg, Math.atan2(b.vy, b.vx));
+        if(b.pierce > 0){ b.pierce--; } else { gone = true; }
+        break;
+      }
+    }
+    if(gone) sc.bullets.splice(i,1);
+  }
+  for(let i=sc.puffs.length-1; i>=0; i--){
+    const p = sc.puffs[i];
+    p.wx += p.vx; p.wy += p.vy; p.vx *= 0.9; p.vy *= 0.9; p.life--;
+    if(p.life <= 0) sc.puffs.splice(i,1);
+  }
+  for(let i=sc.floaters.length-1; i>=0; i--){
+    const f = sc.floaters[i];
+    f.wy -= 0.008; f.life--;
+    if(f.life <= 0) sc.floaters.splice(i,1);
+  }
+}
+
+/* Lövedékek, füst és sebzésszámok kirajzolása a jelenetbe. */
+function isoDrawCombat(g, sc){
+  const z = isoCam.zoom;
+  for(const p of sc.puffs){
+    const s = isoToScreen(p.wx, p.wy, 0);
+    const a = clamp(p.life/26, 0, 1);
+    g.globalAlpha = a*0.7; g.fillStyle = p.color;
+    g.beginPath(); g.arc(s.x, s.y - 14*z, p.r*ISO.TW*z*(1.3-a*0.4), 0, PI2); g.fill();
+  }
+  g.globalAlpha = 1;
+  g.save(); g.globalCompositeOperation = 'lighter';
+  for(const b of sc.bullets){
+    const s = isoToScreen(b.wx, b.wy, 0);
+    const t = isoToScreen(b.wx - b.vx*2.2, b.wy - b.vy*2.2, 0);
+    const R = Math.max(2, b.r*ISO.TW*z);
+    g.strokeStyle = rgbaAny(b.color, 0.5); g.lineWidth = R*1.2; g.lineCap='round';
+    g.beginPath(); g.moveTo(t.x, t.y - 18*z); g.lineTo(s.x, s.y - 18*z); g.stroke();
+    g.fillStyle = b.color;
+    g.beginPath(); g.arc(s.x, s.y - 18*z, R, 0, PI2); g.fill();
+    g.fillStyle = '#fff';
+    g.beginPath(); g.arc(s.x, s.y - 18*z, R*0.45, 0, PI2); g.fill();
+  }
+  g.restore();
+  g.textAlign='center'; g.textBaseline='alphabetic';
+  for(const f of sc.floaters){
+    const s = isoToScreen(f.wx, f.wy, 0);
+    const a = clamp(f.life/34, 0, 1);
+    g.globalAlpha = a;
+    g.font = 'bold '+Math.round(14*z)+'px Trebuchet MS';
+    g.lineWidth = 3.5; g.strokeStyle = 'rgba(4,6,10,0.9)';
+    g.strokeText(f.text, s.x, s.y - 52*z);
+    g.fillStyle = f.color; g.fillText(f.text, s.x, s.y - 52*z);
+  }
+  g.globalAlpha = 1;
+}
+
 function makeIsoFoe(etype, wx, wy){
   const d = ENEMY_DEFS[etype] || ENEMY_DEFS.grunt;
   const a = makeActor({ cls:'tank', team:'foe', brain:'foe', wx, wy,
@@ -12739,7 +13016,10 @@ function isoStartScene(mapId, opts){
       actors.push(makeIsoFoe(pool[i], sp.x + Math.cos(a)*1.4, sp.y + Math.sin(a)*1.4));
     }
   }
-  isoScene = { map, actors, hero, t: 0, state: 'playing' };
+  isoScene = { map, actors, hero, t: 0, state: 'playing',
+               kingdom: opts.kingdom || null,
+               bullets: [], puffs: [], floaters: [], result: null };
+  isoBuildAbilityBar(isoScene);
   isoCam._initialised = false;
   isoCam.zoom = 1; isoCam.targetZoom = 1;
   isoCamFollow(hero.wx, hero.wy, map, true);
@@ -12757,7 +13037,10 @@ function isoHandleEscape(){
   if(confirm(T('isoLeaveConfirm'))) isoEndScene();
   return true;
 }
-function isoActive(){ return !!(isoScene && isoScene.state === 'playing'); }
+/* A hurok akkor is a miénk, amikor a misszió már véget ért: a záró
+   felirat még látszik pár másodpercig, és addig se a régi aréna fusson. */
+function isoActive(){ return !!(isoScene && (isoScene.state === 'playing' || isoScene.state === 'over')); }
+function isoPlaying(){ return !!(isoScene && isoScene.state === 'playing'); }
 
 /* A helyi bemenet iránya VILÁG-koordinátában.
    Fontos: a billentyűk a KÉPERNYŐN értendők (W = felfelé a képernyőn), de a
@@ -12795,14 +13078,39 @@ function isoStrike(a){
   a._atk = 1; return true;
 }
 
+/* Célzás a misszióban. Érintőn a jobb bot szöge, gépen az egér a
+   képernyőn — azt vissza kell vetíteni a rombuszrácsra, különben 45
+   fokkal mellé lőnél. Kontrolleren a jobb analóg. */
+function isoAimAngle(hero){
+  if(input.right.active){
+    const d = screenDirToArena(Math.cos(input.right.angle), Math.sin(input.right.angle));
+    return Math.atan2(d.y, d.x);
+  }
+  if(pad.connected && pad.aiming){
+    const d = screenDirToArena(pad.ax, pad.ay);
+    return Math.atan2(d.y, d.x);
+  }
+  if(input.touchMode) return null;
+  const s = isoToScreen(hero.wx, hero.wy, 0);
+  const dx = mouse.x - s.x, dy = mouse.y - (s.y - 20);
+  if(Math.hypot(dx,dy) < 4) return null;
+  const d = screenDirToArena(dx, dy);
+  return Math.atan2(d.y, d.x);
+}
+
 function isoUpdate(){
   if(!isoActive()) return;
   const sc = isoScene, map = sc.map;
   sc.t++;
+  if(sc.overT > 0 && --sc.overT === 0){ isoEndScene(); return; }
+  if(sc.state !== 'playing'){ isoTickBullets(sc); return; }
   for(const a of sc.actors){
     if(!a.alive) continue;
-    // a támadás-mozdulat lecsengése
+    // a támadás-mozdulat lecsengése és az újratöltés
     if(a._atk > 0) a._atk = Math.max(0, a._atk - 1/ATK_FRAMES);
+    if(a.fireT > 0) a.fireT--;
+    if(a.atkT > 0) a.atkT--;
+    if(a.hitFlash > 0) a.hitFlash--;
     let dir = null;
     if(a.brain === 'human') dir = isoInputDir();
     else if(a.brain === 'ai') dir = isoCompanionDir(sc, a);
@@ -12821,24 +13129,49 @@ function isoUpdate(){
     a._spd += (sp - a._spd) * 0.25;
     a._walk += sp * 9;
 
-    /* --- TÁMADÁS-MOZDULAT ---------------------------------------------
-       Itt még CSAK az animáció indul el: lövedék és sebzés az 5. fázis.
-       Így látszik a csapás és a torkolattűz, de a harcrendszert nem
-       előlegezzük meg. */
+    /* --- TÁMADÁS --- */
     if(a.brain === 'human'){
-      if(isoFirePressed()) isoStrike(a);
+      // a célzás felülírja a járás-irányt: oda nézel, ahova lősz
+      const aim = isoAimAngle(a);
+      if(aim !== null) a.facing = aim;
+      if(isoFirePressed()) isoHeroShoot(sc, a);
+    } else if(a.team === 'foe'){
+      isoFoeAttack(sc, a);
     } else {
-      const tgt = (a.team === 'foe') ? sc.hero
-                : sc.actors.find(o=>o.alive && o.team==='foe');
-      if(tgt){
-        const d = Math.hypot(tgt.wx-a.wx, tgt.wy-a.wy);
-        const reach = (a.range > 0.5) ? a.range : 1.3;
-        a.atkT = (a.atkT || 0) + 1;
-        if(d < reach*1.1 && a.atkT > 78){ a.atkT = 0; isoStrike(a); }
-      }
+      isoCompanionShoot(sc, a);
     }
   }
+
+  isoTickBullets(sc);
+  isoTickAbilities(sc);
+
+  /* --- GYŐZELEM / VERESÉG ---
+     Enélkül a misszió sosem ér véget: lehetne lőni, de semmi nem
+     történne attól, hogy az utolsó ellenfél is elesik. */
+  if(!sc.result){
+    if(sc.hero.hp <= 0){ sc.hero.alive = false; sc.result = 'lose'; isoFinish(sc); }
+    else if(!sc.actors.some(a=>a.alive && a.team==='foe')){ sc.result = 'win'; isoFinish(sc); }
+  }
+
   isoCamFollow(sc.hero.wx, sc.hero.wy, map, false);
+}
+
+/* A misszió vége. Győzelemnél a királyság a miénk lesz, ugyanazon az
+   úton, ahogy a felülnézetes hódító csata is elfoglalta. */
+function isoFinish(sc){
+  sc.state = 'over';
+  const won = (sc.result === 'win');
+  if(won && sc.kingdom){
+    const st = conquestState();
+    if(st && st.owned && !st.owned.includes(sc.kingdom)){
+      st.owned.push(sc.kingdom);
+      profile.coins = (profile.coins||0) + 250;
+      saveProfile();
+    }
+  }
+  // A záró felirat a jelenetbe kerül, nem DOM-képernyőre: a misszióhoz
+  // nincs `game` objektum, amire a felülnézetes győzelmi képernyő épül.
+  sc.overT = 150;
 }
 
 /* Ideiglenes társ-AI: követi a hőst, tartja a távolságot.
@@ -12886,6 +13219,64 @@ function isoDraw(){
     }),
   }));
   isoRender(ctx, sc.map, actors);
+  isoDrawCombat(ctx, sc);
+  isoDrawHud(ctx, sc);
+}
+
+/* A misszió kezelőfelülete: élet, hátralévő ellenfél és — érintőn — a
+   két botkormány. Ez eddig teljesen hiányzott a misszióból, ezért nem
+   lehetett mobilon irányítani, és nem látszott, hogy fogy-e az életed. */
+/* A MEGLÉVŐ kezelőfelületet töltjük fel a misszió adataival, nem rajzolunk
+   másodikat a vászonra. Korábban a panel a `game` objektumból élt, ami a
+   misszióban nincs — ezért mutatott üres/elavult adatot, és a vászonra
+   rajzolt saját csík rá is csúszott. */
+function isoUpdateDomHud(sc){
+  const hero = sc.hero;
+  const hf = clamp(hero.hp/hero.maxHp, 0, 1);
+  const fill = document.getElementById('hpBarFill');
+  if(fill) fill.style.width = (hf*100).toFixed(1)+'%';
+  const lvl = document.getElementById('lvlLabel');
+  if(lvl) lvl.textContent = Math.max(0, Math.round(hero.hp)) + ' / ' + Math.round(hero.maxHp);
+  const xp = document.getElementById('xpBarFill');
+  if(xp) xp.style.width = '0%';
+  const foes = sc.actors.filter(a=>a.alive && a.team==='foe').length;
+  const wn = document.getElementById('waveNum');
+  if(wn) wn.textContent = foes;
+  const ec = document.getElementById('enemyCount');
+  if(ec) ec.textContent = T('isoFoesLeft', foes);
+  const wt = document.getElementById('waveTitle');
+  if(wt) wt.textContent = T('isoFoesTitle');
+  const mt = document.getElementById('modeTag');
+  if(mt) mt.textContent = sc.map && sc.map.name ? sc.map.name : '';
+  for(const id of ['eliteTag','elementTag']){
+    const e = document.getElementById(id); if(e) e.textContent = '';
+  }
+}
+
+function isoDrawHud(g, sc){
+  const w = canvas.width, h = canvas.height;
+  isoUpdateDomHud(sc);
+  // záró felirat
+  if(sc.result){
+    const won = sc.result === 'win';
+    g.save();
+    g.fillStyle = 'rgba(6,8,14,0.6)'; g.fillRect(0, h*0.32, w, 150);
+    g.textAlign='center'; g.textBaseline='middle';
+    g.font = 'bold 44px Trebuchet MS';
+    g.fillStyle = won ? '#ffd166' : '#ff5c7c';
+    g.fillText(won ? T('isoWinTitle') : T('isoLoseTitle'), w/2, h*0.32+58);
+    g.font = '16px Trebuchet MS'; g.fillStyle = 'rgba(255,255,255,0.85)';
+    g.fillText(won ? T('isoWinText') : T('isoLoseText'), w/2, h*0.32+104);
+    g.restore();
+  }
+
+  // érintős botkormányok — ugyanazok, mint a felülnézetben
+  if(input.touchMode){
+    if(input.left.active) drawStick(g, input.left, '#6ee7ff');
+    else drawStickHint(g, 96, h-110, '#6ee7ff', T('stickMove'));
+    if(input.right.active) drawStick(g, input.right, '#ff5c7c');
+    else drawStickHint(g, w-96, h-110, '#ff5c7c', T('stickAim'));
+  }
 }
 
 const STEP_MS = 1000/60;
