@@ -4972,21 +4972,27 @@ function drawEnemyLive(g, en, p, lightFx, nowT){
   // talaj-árnyék (rögzített fényirány)
   g.beginPath(); g.ellipse(en.x+R*LIGHT.sx*0.6+ox*0.5, en.y+R*0.55+oy*0.5, R*0.95*sx, R*0.4*sy, 0,0,PI2);
   g.fillStyle='rgba(0,0,0,0.4)'; g.fill();
-  // lüktető, típus-színű aura — sprite, nem elmosás
+  /* Lüktető, típus-színű aura. Felülnézetben ez a korong körül izzott;
+     45 fokban az álló figura eltakarja a nagy részét, ezért kisebb és
+     halványabb: a TALPÁNÁL marad meg fény-tócsaként. Így a típus színe
+     továbbra is elárulja, mi jön, de nem festünk fölösleges képpontot. */
   const pulse = 0.55 + 0.25*Math.sin(nowT/260 + en.x*0.05);
-  const gs = glowSprite(en.color, R*1.75);
-  g.globalAlpha = pulse*(lightFx?0.3:0.5);
-  g.drawImage(gs.c, en.x-gs.S+ox, en.y-gs.S+oy, gs.S*2, gs.S*2);
+  const gs = glowSprite(en.color, R*1.05);
+  g.globalAlpha = pulse*(lightFx?0.22:0.38);
+  g.drawImage(gs.c, en.x-gs.S+ox, en.y-gs.S+oy+R*0.35, gs.S*2, gs.S*2);
   g.globalAlpha = 1;
-  // test
-  g.save(); g.translate(en.x+ox, en.y+oy); g.rotate(face+tilt); g.scale(sx,sy);
-  g.drawImage(sp.c, -sp.S, -sp.S, sp.S*2, sp.S*2);
+  // test — álló izometrikus figura. A típusonkénti nyúlás/dőlés
+  // (sx, sy, tilt) megmarad, csak most egy alakra hat, nem korongra.
+  g.save();
+  g.translate(en.x+ox, en.y+oy); g.scale(sx, sy); g.translate(-en.x, -en.y);
+  isoDrawFigure(g, arenaIsoActor(en, true), en.x, en.y, arenaIsoZ(en), arenaIsoOpt(en, true));
   g.restore();
   // bombázó gyújtózsinór-szikra
   if(en.type==='bomber' && !lightFx){ const bx=en.x-Math.cos(face)*R*0.85+ox, by=en.y-Math.sin(face)*R*0.85+oy;
     g.fillStyle=(VFX.t&2)?'#ffd24a':'#fff'; g.beginPath(); g.arc(bx,by,2.2,0,PI2); g.fill(); }
   // hp-csík (lekerekített, sötét kerettel, elszíneződik ahogy fogy)
-  const hf = clamp(en.hp/en.maxHp,0,1), bw=Math.max(26, R*1.9), bx=en.x-bw/2, by=en.y-R-12;
+  const hf = clamp(en.hp/en.maxHp,0,1), bw=Math.max(26, R*1.9), bx=en.x-bw/2,
+        by=en.y - R - 12 - 34*arenaIsoZ(en);   // az álló figura magasabb, mint a korong volt
   g.fillStyle='rgba(6,8,12,0.75)'; rr(g,bx-1,by-1,bw+2,6,3); g.fill();
   g.fillStyle = hf>0.5 ? '#ff5c7c' : (hf>0.25 ? '#ff8a5c' : '#ffd166'); rr(g,bx,by,bw*hf,4,2); g.fill();
   g.fillStyle='rgba(255,255,255,0.25)'; rr(g,bx,by,bw*hf,1.5,1); g.fill();
@@ -6884,12 +6890,24 @@ function update(){
   // --- Célzás + tüzelés (érintő vagy egér) ---
   let firing;
   const padCombat = pad.connected && (pad.aiming || pad.firing);   // kontroller célzás/tüzelés aktív
-  if(input.right.active){ p.facing = input.right.angle; firing = input.right.fire; }
-  else if(padCombat){ if(pad.aiming) p.facing = Math.atan2(pad.ay, pad.ax); firing = pad.firing; }
+  if(input.right.active){
+    const d = screenDirToArena(Math.cos(input.right.angle), Math.sin(input.right.angle));
+    p.facing = Math.atan2(d.y, d.x); firing = input.right.fire;
+  }
+  else if(padCombat){
+    if(pad.aiming){ const d = screenDirToArena(pad.ax, pad.ay); p.facing = Math.atan2(d.y, d.x); }
+    firing = pad.firing;
+  }
   else if(input.touchMode){ firing = false; }
-  else { p.facing = Math.atan2(mouse.y-p.y, mouse.x-p.x); firing = mouse.down; }
+  else {
+    // Az egér KÉPERNYŐ-koordinátában van, a hős a világban. 45 fokos
+    // nézetben a kettő nem ugyanaz: vissza kell vetíteni, különben a
+    // hős elfordulva lőne oda, ahova mutatsz.
+    const mw = screenToArena(mouse.x, mouse.y);
+    p.facing = Math.atan2(mw.y-p.y, mw.x-p.x); firing = mouse.down;
+    input.aimX = mw.x; input.aimY = mw.y;
+  }
   if(input.right.active || padCombat || input.touchMode){ input.aimX = p.x+Math.cos(p.facing)*300; input.aimY = p.y+Math.sin(p.facing)*300; }
-  else { input.aimX = mouse.x; input.aimY = mouse.y; }
 
   // --- Bokorba rejtőzés: kevés van belőle, és tüzeléskor azonnal eláruld magad ---
   let inBushNow = false;
@@ -6921,6 +6939,15 @@ function update(){
   }
   let mag = Math.hypot(mvx,mvy);
   if(mag>1){ mvx/=mag; mvy/=mag; mag=1; }
+  /* A bemenet KÉPERNYŐBEN gondolkodik: a "W" fölfelé visz a képen. A
+     mozgás viszont a világban történik, és a kettő 45 fokban el van
+     forgatva egymáshoz képest. Vissza kell forgatni, különben a
+     billentyűk átlósan vinnének. A hosszt megtartjuk, hogy a botkormány
+     félig kinyomva továbbra is félsebességet adjon. */
+  if(mag > 0.0001){
+    const d = screenDirToArena(mvx, mvy);
+    mvx = d.x*mag; mvy = d.y*mag;
+  }
   let sp = p.speed * (p.surgeActive>0 ? 1.5 : 1);
   if(p.dashing > 0){ sp = p.speed * 3.0; p.dashing--; }
   if(p.hazSlow>0){ if(p.dashing<=0) sp *= 0.5; p.hazSlow--; }   // fagyzóna lassítás
@@ -8919,32 +8946,268 @@ function updateHud(){
 /* =========================================================
    RAJZOLÁS
    ========================================================= */
+/* A padló EGYSZER sül ki vetítve. Elforgatott mátrix alatt egy teljes
+   képernyős kép minden képkockán újramintázódik, és ez vitte el a
+   képkockasebesség jó részét (58 -> 42). A padló viszont nem változik,
+   tehát elég egyszer megrajzolni és utána 1:1-ben rátenni. A rázás nem
+   sül bele: azt a lerakásnál toljuk el. */
+let _arenaFloor = null, _arenaFloorKey = '';
+function arenaFloorLayer(w, h, th){
+  const A = ARENA_ISO;
+  const key = [canvas.width, canvas.height, w, h, (th && th.bg) || '-',
+               (th && th.gridColor) || '-',
+               groundTexture ? groundTexture.width+'x'+groundTexture.height : '-'].join('|');
+  if(_arenaFloor && _arenaFloorKey === key) return _arenaFloor;
+  const c = document.createElement('canvas');
+  c.width = canvas.width; c.height = canvas.height;
+  const g = c.getContext('2d');
+  g.setTransform(A.k, A.k*0.5, -A.k, A.k*0.5, A.ox, A.oy);
+  if(th && th.bg){
+    g.fillStyle = th.bg; g.fillRect(0,0,w,h);
+    g.strokeStyle = th.gridColor || 'rgba(110,231,255,0.05)';
+    g.lineWidth = 1/A.k; g.beginPath();
+    for(let x=0;x<=w;x+=96){ g.moveTo(x,0); g.lineTo(x,h); }
+    for(let y=0;y<=h;y+=96){ g.moveTo(0,y); g.lineTo(w,y); }
+    g.stroke();
+  } else if(groundTexture && groundTexture.width===w && groundTexture.height===h){
+    g.drawImage(groundTexture, 0, 0);
+  } else {
+    g.fillStyle = '#0c0f14'; g.fillRect(0,0,w,h);
+  }
+  g.strokeStyle = 'rgba(150,190,230,0.22)'; g.lineWidth = 3/A.k;
+  g.strokeRect(0, 0, w, h);
+  _arenaFloor = c; _arenaFloorKey = key;
+  return c;
+}
+
+/* Az akadály 45 fokban OSZLOP, nem tábla. A kisütött, lapos akadály-
+   réteg vetítve csak egy megnyírt folt volt — semmi mélység. Itt minden
+   akadály kap magasságot, és bekerül a mélységi sorrendbe, tehát a hős
+   TAKARÁSBA kerülhet mögötte. Ettől lesz tere a képnek.
+
+   A forma a sugárból jön, a szín a fejezet stílusából; a rombolhatók a
+   saját színüket viszik, és sérülten meg is repednek. */
+const ARENA_PILLAR_COL = {
+  ruins:  ['#6a6f7a', '#3b3f47'],
+  forest: ['#5d6a54', '#333a2e'],
+  farm:   ['#7a6a4c', '#443b2a'],
+  cave:   ['#5a5560', '#322f38'],
+  snow:   ['#8d99a6', '#4d555f'],
+  lava:   ['#6b4b40', '#39241e'],
+};
+function arenaDrawPillar(g, o, theme, dmgF){
+  const base = ARENA_PILLAR_COL[theme] || ARENA_PILLAR_COL.ruins;
+  const col  = o.destructible ? (o.dcol || '#6b563a') : base[0];
+  const dark = o.destructible ? shade(col, -0.5) : base[1];
+  /* A talp a VALÓDI vetített lenyomat. Egy r sugarú talajkör vetítve
+     olyan ellipszis, aminek a fél-szélessége r*k*gyök2, a fél-magassága
+     ennek a fele. Ha ezt elmulasztjuk, és a világ-sugarat rajzoljuk ki,
+     az akadály másfélszer szélesebbnek látszik, mint amekkora — pont ez
+     tette őket óriási hordókká. */
+  const A = ARENA_ISO;
+  const r  = o.r * A.k * Math.SQRT2;
+  const hh = r * 0.5;
+  const hgt = o.r * A.k * (o.destructible ? 1.25 : 1.6);
+
+  // vetett árnyék a talajon
+  g.fillStyle = 'rgba(0,0,0,0.34)';
+  g.beginPath(); g.ellipse(o.x + r*0.16, o.y + hh*0.5, r*1.06, hh*1.05, 0, 0, PI2); g.fill();
+
+  // oldalfal: a talp íve fölött függőleges test
+  g.beginPath();
+  g.moveTo(o.x - r, o.y);
+  g.lineTo(o.x - r, o.y - hgt);
+  g.lineTo(o.x + r, o.y - hgt);
+  g.lineTo(o.x + r, o.y);
+  g.ellipse(o.x, o.y, r, hh, 0, 0, Math.PI);
+  g.closePath();
+  const sg = g.createLinearGradient(o.x - r, 0, o.x + r, 0);
+  sg.addColorStop(0, shade(col, 0.16)); sg.addColorStop(0.45, col); sg.addColorStop(1, dark);
+  g.fillStyle = sg; g.fill();
+  g.strokeStyle = 'rgba(8,9,14,0.6)'; g.lineWidth = 1.4; g.stroke();
+
+  // fedlap
+  g.beginPath(); g.ellipse(o.x, o.y - hgt, r, hh, 0, 0, PI2);
+  g.fillStyle = shade(col, 0.30); g.fill();
+  g.strokeStyle = 'rgba(8,9,14,0.5)'; g.lineWidth = 1.2; g.stroke();
+  // fény a fedlap bal-felső peremén
+  g.strokeStyle = 'rgba(255,248,228,0.28)'; g.lineWidth = 1.6;
+  g.beginPath(); g.ellipse(o.x, o.y - hgt, r*0.86, hh*0.82, 0, Math.PI*1.05, PI2*0.98); g.stroke();
+
+  // sérülés: repedések a rombolható fedezéken
+  if(o.destructible && dmgF < 0.999){
+    const rnd = seedRand(o);
+    g.strokeStyle = `rgba(12,10,14,${0.35 + (1-dmgF)*0.5})`; g.lineWidth = 1.6;
+    const n = Math.round((1-dmgF)*5) + 1;
+    for(let i=0;i<n;i++){
+      const a = rnd()*PI2, y0 = o.y - hgt*rnd();
+      g.beginPath(); g.moveTo(o.x + Math.cos(a)*r*0.8, y0);
+      g.lineTo(o.x + Math.cos(a)*r*0.2, y0 + hgt*0.3*rnd());
+      g.stroke();
+    }
+  }
+}
+
+/* Az aréna szereplőiből izometrikus Actor. A fő játék ellenfelei és
+   hősei eddig FELÜLNÉZETI korongok voltak, a hódító missziók viszont már
+   álló figurákat használtak. 45 fokban a korong ránézésre lapos folt, a
+   figura pedig áll — ezért a fő játék is a figurákra vált, ugyanarra a
+   készletre. A játékmenet nem változik: ez csak a test rajza.
+
+   Az objektumot a szereplőn tároljuk, hogy ne szemeteljünk képkockánként. */
+function arenaIsoActor(e, foe){
+  const a = e._isoA || (e._isoA = {});
+  a.cls   = foe ? 'tank' : (e.cls || 'tank');
+  a.etype = foe ? (e.type || 'grunt') : undefined;
+  a.color = e.color;
+  a.team  = foe ? 'foe' : 'ally';
+  a.hp = e.hp; a.maxHp = e.maxHp;
+  a.facing = (e.facing !== undefined) ? e.facing : (e._isoFace || 0);
+  // járásfázis a tényleges elmozdulásból
+  const dx = e.x - (e._ipx === undefined ? e.x : e._ipx);
+  const dy = e.y - (e._ipy === undefined ? e.y : e._ipy);
+  e._ipx = e.x; e._ipy = e.y;
+  const sp = Math.hypot(dx, dy);
+  if(sp > 0.05) e._isoFace = Math.atan2(dy, dx);
+  a._spd = sp * 0.02;
+  a._walk = (a._walk || 0) + sp * 0.32;
+  a._atk = e._atk || 0;
+  return a;
+}
+/* Milyen figurát kapjon egy aréna-szereplő. */
+function arenaIsoOpt(e, foe){
+  return foe
+    ? { loadout: ISO_ENEMY_LOADOUT[e.type] || ISO_ENEMY_LOADOUT.grunt,
+        bodyStyle: ISO_BODY_FOE[e.type]    || ISO_BODY_FOE.grunt,
+        marker:false, hpBar:false, shadow:false }
+    : { loadout: ISO_LOADOUT[e.cls] || ISO_LOADOUT.tank,
+        bodyStyle: ISO_BODY[e.cls]  || ISO_BODY.tank, marker:false, hpBar:false };
+}
+/* Mekkora legyen. Az isoDrawFigure S = 1,72*z*build; a z-t úgy állítjuk,
+   hogy a figura a szereplő sugarához illjen. */
+/* A léptéket DURVÁN kerekítjük. Enélkül minden eltérő sugarú ellenfél
+   külön léptéket kérne, és mivel a kisütés lépték szerint is gyorsítótáraz,
+   a tár folyamatosan újrasütne — ez vitte el a képkockákat. Négy lépcső
+   bőven elég ahhoz, hogy egy kis futár és egy behemót más méretű legyen. */
+function arenaIsoZ(e){
+  const raw = clamp((e.r || 14) / 19, 0.45, 1.6);
+  return Math.round(raw / 0.25) * 0.25 || 0.5;
+}
+
+/* =========================================================
+   45 FOKOS NÉZET A FŐ JÁTÉKRA
+   ---------------------------------------------------------
+   A játékmenet NEM változik: minden ütközés, hullám, sebzés, célzás és
+   képesség ugyanabban a sík (x,y) világban számolódik, mint eddig. Csak
+   a VETÍTÉS más. Ez azért megy ilyen olcsón, mert az izometria affin
+   leképezés, tehát egyetlen vászon-mátrix elintézi:
+
+       képernyőX = (x - y) * k
+       képernyőY = (x + y) * k/2
+
+   A talajon FEKVŐ dolgok (padló, veszélyzóna, méregfelhő, gyűrűk,
+   lövedéknyomok) ezzel a mátrixszal rajzolódnak, és helyesen lesznek
+   belőlük rombuszok — ez pont a kívánt hatás.
+
+   Az ÁLLÓ alakok (hős, társ, ellenfél, boss) NEM mehetnek át rajta,
+   mert megnyírná őket. Azokat az arenaUpright() a vetített pontra teszi,
+   de képernyő-térben rajzolja. Mivel minden alak-rajzoló ABSZOLÚT
+   világkoordinátákkal dolgozik, elég egyetlen eltolás — a rajzolók
+   belsejéhez nem kell hozzányúlni.
+   ========================================================= */
+const ARENA_ISO = { k:1, ox:0, oy:0, sx:0, sy:0 };
+
+function arenaIsoFit(w, h){
+  const A = ARENA_ISO;
+  // az egész arénának látszania kell: a rombusz befoglalója (w+h) széles
+  // és (w+h)/2 magas, ezt illesztjük a vászonba
+  A.k  = Math.min(canvas.width/(w+h), 2*canvas.height/(w+h));
+  A.ox = h*A.k;
+  A.oy = (canvas.height - (w+h)*A.k*0.5)*0.5;
+  return A;
+}
+function arenaToScreen(x, y){
+  const A = ARENA_ISO;
+  return { x:(x-y)*A.k + A.ox + A.sx, y:(x+y)*A.k*0.5 + A.oy + A.sy };
+}
+/* A vetítés inverze. Ez kell a célzáshoz: az egér képernyőn van, a hős
+   a világban. Enélkül 45 fokkal elfordulva lőne. */
+function screenToArena(sx, sy){
+  const A = ARENA_ISO;
+  const a = (sx - A.ox - A.sx)/A.k, b = (sy - A.oy - A.sy)/(A.k*0.5);
+  return { x:(b+a)*0.5, y:(b-a)*0.5 };
+}
+/* Képernyő-irány -> világ-irány. A botkormány és a WASD képernyőben
+   gondolkodik ("fel"), a mozgás a világban történik. */
+function screenDirToArena(dx, dy){
+  const A = ARENA_ISO;
+  const a = dx/A.k, b = dy/(A.k*0.5);
+  const x = (b+a)*0.5, y = (b-a)*0.5;
+  const L = Math.hypot(x,y) || 1;
+  return { x:x/L, y:y/L };
+}
+/* Belépés a talajsíkba. Innentől minden rajz izometrikus. */
+function arenaGroundBegin(g){
+  const A = ARENA_ISO;
+  g.save();
+  g.setTransform(1,0,0,1,0,0);
+  g.translate(A.sx, A.sy);
+  g.transform(A.k, A.k*0.5, -A.k, A.k*0.5, A.ox, A.oy);
+}
+function arenaGroundEnd(g){ g.restore(); }
+/* Az álló alakok nagyítása. A talaj vetítve összemegy (k ~ 0,6), az
+   alakok viszont eredeti méretben rajzolódnának, és elvesznének a
+   rombuszon. Ez a szorzó hozza vissza őket olvasható méretre — ettől
+   lesz olyan az arány, mint egy izometrikus játékban: a karakter magas
+   a csempéhez képest. A találati sugár NEM változik, tehát az alak egy
+   kicsit nagyobb, mint a sebezhető teste: ez inkább nagyvonalú, mint
+   igazságtalan. */
+const ARENA_FIG_SCALE = 1.5;
+
+/* Egy ÁLLÓ alak a vetített helyén, nyírás nélkül. */
+function arenaUpright(g, x, y, fn, scale){
+  const A = ARENA_ISO;
+  const S = (scale === undefined) ? ARENA_FIG_SCALE : scale;
+  g.save();
+  g.setTransform(1,0,0,1,0,0);
+  g.translate(A.sx, A.sy);
+  const sx = (x-y)*A.k + A.ox, sy = (x+y)*A.k*0.5 + A.oy;
+  g.translate(sx, sy);
+  if(S !== 1) g.scale(S, S);
+  g.translate(-x, -y);              // az (x,y) világpont a helyére kerül
+  fn();
+  g.restore();
+}
+/* Mélység szerinti sorrend: a rombuszrácson az (x+y) a "távolság". */
+function arenaDepth(e){ return (e.x||0) + (e.y||0); }
+
 function draw(){
   const w=canvas.width, h=canvas.height;
   ctx.clearRect(0,0,w,h);
   const nowT = Date.now();
-  // a rázást a teljes világ-rajzra tesszük rá; a HUD DOM-elem, azt nem érinti
+  // A rázás a teljes világ-rajzra kerül, a HUD-ra nem. Most nem a
+  // vászon-mátrixba tesszük, hanem eltárolt eltolásként, mert a világ
+  // rajza ide-oda vált a talajsík és a képernyő-tér között.
   const shaking = shakeT>0 && shakeMag>0;
+  const A = arenaIsoFit(w, h);
   if(shaking){
     const amp = shakeMag * (shakeT/12);
-    ctx.save();
-    ctx.translate((Math.random()*2-1)*amp, (Math.random()*2-1)*amp);
-  }
+    A.sx = (Math.random()*2-1)*amp; A.sy = (Math.random()*2-1)*amp;
+  } else { A.sx = 0; A.sy = 0; }
+
+  // a vászon háttere (a rombuszon kívüli rész)
   const th = (game && game.chapter) ? game.chapter.theme : null;
-  if(th && th.bg){
-    ctx.fillStyle=th.bg; ctx.fillRect(0,0,w,h);
-    ctx.strokeStyle = th.gridColor || 'rgba(110,231,255,0.05)'; ctx.lineWidth=1; ctx.beginPath();
-    for(let x=0;x<w;x+=48){ ctx.moveTo(x,0); ctx.lineTo(x,h); }
-    for(let y=0;y<h;y+=48){ ctx.moveTo(0,y); ctx.lineTo(w,y); }
-    ctx.stroke();
-  } else if(groundTexture && groundTexture.width===w && groundTexture.height===h){
-    ctx.drawImage(groundTexture, 0, 0);
-  } else {
-    ctx.fillStyle = '#0c0f14'; ctx.fillRect(0,0,w,h);
-  }
-  if(!game){ if(shaking) ctx.restore(); return; }
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.fillStyle = '#080a0e'; ctx.fillRect(0,0,w,h);
+  if(!game) return;
   const p = game.player;
   const lightFx = fxLight();
+
+  // a kisütött padló, 1:1-ben; a rázás itt jön rá
+  ctx.drawImage(arenaFloorLayer(w, h, th), A.sx, A.sy);
+
+  /* ====== TALAJSÍK: innentől minden izometrikus ====== */
+  arenaGroundBegin(ctx);
 
   // környezeti veszélyzónák (padló-réteg, lüktető, lágy széllel)
   game.hazards.forEach(hz=>{
@@ -8960,22 +9223,15 @@ function draw(){
     ctx.save(); ctx.setLineDash([6,8]); ctx.lineWidth=1; ctx.strokeStyle=`rgba(${c2},0.35)`; ctx.beginPath(); ctx.arc(hz.x,hz.y,hz.r*0.62,nowT/900,nowT/900+PI2); ctx.stroke(); ctx.restore();
   });
 
-  // statikus akadályok: egyszer kisütött réteg; a rombolhatók élőben (törés-fokozattal)
-  ctx.drawImage(getObstacleLayer(w,h), 0, 0);
   const theme = obstTheme();
-  game.obstacles.forEach(o=>{
-    if(!o.destructible) return;
-    const dmgF = clamp(o.hp/(o.maxHp||o.hp||1),0,1);
-    drawObstacleShadow(ctx,o,theme); drawObstacleBody(ctx,o,theme,dmgF);
-  });
 
-  // robbanó hordók + rejtett ládák
-  game.barrels.forEach(bar=>drawExplosiveBarrel(ctx,bar,nowT));
-  game.crates.forEach(cr=>drawCrate(ctx,cr,nowT));
+  // robbanó hordók + rejtett ládák — ezek ÁLLNAK, nem fekszenek
+  game.barrels.forEach(bar=> arenaUpright(ctx, bar.x, bar.y, ()=>drawExplosiveBarrel(ctx,bar,nowT)));
+  game.crates.forEach(cr=> arenaUpright(ctx, cr.x, cr.y, ()=>drawCrate(ctx,cr,nowT)));
 
-  // por, füst, törmelék és halál-animációk a talaj fölött, az élő szereplők alatt
+  // por, füst, törmelék a talajon; a haláljelenetek álló alakok
   drawPuffs(ctx);
-  drawDeaths(ctx, p);
+  if(game.deaths) for(const d of game.deaths) arenaUpright(ctx, d.x, d.y, ()=>drawDeaths(ctx, p, d));
   drawDebris(ctx);
 
   // xp orbok: lüktető fény-mag, körülötte forgó szikra
@@ -9050,8 +9306,20 @@ function draw(){
     ctx.strokeStyle=`rgba(255,240,180,${a})`; ctx.lineWidth=2.5; ctx.stroke();
   });
 
-  // idézett ágyúk / szolgák
-  game.turrets.forEach(t=>{
+  /* ====== ÁLLÓ SZEREPLŐK, MÉLYSÉG SZERINT ======
+     A rombuszrácson az (x+y) mondja meg, ki van előrébb. Enélkül a
+     távolabbi ellenfél a közelebbi elé kerülhetne. */
+  const standing = [];
+  const stand = (x, y, fn, scale)=> standing.push({ d:x+y, x, y, fn, scale });
+
+  // az akadályok is ÁLLNAK: együtt rendeződnek a szereplőkkel, tehát a
+  // hős eltűnhet egy közelebbi oszlop mögött
+  game.obstacles.forEach(o=>{
+    const dmgF = clamp(o.hp/(o.maxHp||o.hp||1),0,1);
+    stand(o.x, o.y, ()=> arenaDrawPillar(ctx, o, theme, dmgF), 1);
+  });
+
+  game.turrets.forEach(t=> stand(t.x, t.y, ()=>{
     if(t.mobile){
       ctx.beginPath(); ctx.ellipse(t.x+3,t.y+8,9,4,0,0,PI2); ctx.fillStyle='rgba(0,0,0,0.35)'; ctx.fill();
       const col = t.skeleton ? '#d8d0e8' : (t.beast ? '#c98a4a' : p.color);
@@ -9066,10 +9334,10 @@ function draw(){
       const an = nearest ? Math.atan2(nearest.y-t.y,nearest.x-t.x) : -Math.PI/2;
       ctx.strokeStyle='#dfe6ec'; ctx.lineWidth=t.heavy?5:4; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(t.x,t.y); ctx.lineTo(t.x+Math.cos(an)*16,t.y+Math.sin(an)*16); ctx.stroke();
     }
-  });
+  }));
 
   // drónok: gyémánt-test forgó rotorral, körözés a hős körül
-  game.drones.forEach(dr=>{
+  game.drones.forEach(dr=> stand(dr.x, dr.y, ()=>{
     ctx.save(); ctx.translate(dr.x,dr.y);
     ctx.beginPath(); ctx.ellipse(3,10,8,3,0,0,PI2); ctx.fillStyle='rgba(0,0,0,0.3)'; ctx.fill();
     ctx.rotate(nowT/90); ctx.strokeStyle='rgba(200,230,255,0.45)'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(-13,0); ctx.lineTo(13,0); ctx.moveTo(0,-13); ctx.lineTo(0,13); ctx.stroke();
@@ -9079,19 +9347,62 @@ function draw(){
     ctx.strokeStyle= dr.heal ? '#8affc1' : '#6ee7ff'; ctx.lineWidth=1.5; ctx.stroke();
     ctx.fillStyle = dr.heal ? '#3ddc97' : '#ff5c7c'; ctx.beginPath(); ctx.arc(2,0,2.2,0,PI2); ctx.fill();
     ctx.restore();
-  });
+  }));
 
   // ellenfelek (sprite-alapú, típusfüggő mozgás-karakterrel)
   game.enemies.forEach(en=>{
     const margin = en.r*3 + 20;
     if(en.x < -margin || en.x > w+margin || en.y < -margin || en.y > h+margin) return;
-    drawEnemyLive(ctx, en, p, lightFx, nowT);
+    stand(en.x, en.y, ()=> drawEnemyLive(ctx, en, p, lightFx, nowT));
   });
 
-  // boss + életcsík (név, keret, fényes töltés)
   if(game.boss){
     const b = game.boss;
-    drawBoss(ctx, b, Math.atan2(p.y-b.y, p.x-b.x));
+    stand(b.x, b.y, ()=> drawBoss(ctx, b, Math.atan2(p.y-b.y, p.x-b.x)));
+  }
+
+  // ---- JÁTÉKOS ----
+  stand(p.x, p.y, ()=>{
+    if(p.buffs.invisible>0) ctx.globalAlpha = 0.4;
+    const pz = arenaIsoZ(p);
+    isoDrawFigure(ctx, arenaIsoActor(p, false), p.x, p.y, pz, arenaIsoOpt(p, false));
+    ctx.globalAlpha = 1;
+    // a hős neve: a tömegben ez mondja meg, melyik alak vagy te
+    if(p.name){
+      ctx.font='bold 11px Trebuchet MS'; ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+      const ny = p.y - p.r - 14 - 40*pz;
+      ctx.lineWidth=3; ctx.strokeStyle='rgba(4,6,10,0.9)'; ctx.strokeText(p.name, p.x, ny);
+      ctx.fillStyle='#e8f4ff'; ctx.fillText(p.name, p.x, ny);
+    }
+  });
+
+  // ---- AI BARÁT ----
+  if(game.companion && game.companion.alive){
+    const comp = game.companion;
+    comp._vx = comp.x - (comp._px===undefined?comp.x:comp._px); comp._vy = comp.y - (comp._py===undefined?comp.y:comp._py);
+    comp._px = comp.x; comp._py = comp.y;
+    if(!comp.head) comp.head='commando';
+    stand(comp.x, comp.y, ()=>{
+      ctx.save();
+      if(comp.hitFlash>0) ctx.globalAlpha = 0.6;
+      isoDrawFigure(ctx, arenaIsoActor(comp, false), comp.x, comp.y, arenaIsoZ(comp), arenaIsoOpt(comp, false));
+      ctx.restore();
+      const bw=34, bh=4, bx=comp.x-bw/2, by=comp.y-comp.r-16-34*arenaIsoZ(comp);
+      ctx.fillStyle='rgba(6,8,12,0.75)'; rr(ctx,bx-1,by-1,bw+2,bh+2,3); ctx.fill();
+      ctx.fillStyle='#7dffb0'; rr(ctx,bx,by,bw*clamp(comp.hp/comp.maxHp,0,1),bh,2); ctx.fill();
+      ctx.font='9px Trebuchet MS'; ctx.fillStyle='rgba(255,255,255,0.7)'; ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+      if(CLASSES[comp.cls]) ctx.fillText(clsTxt(comp.cls,'label'), comp.x, by-4);
+    });
+  }
+
+  // mélység szerint hátulról előre
+  standing.sort((a,b)=> a.d - b.d);
+  for(const u of standing) arenaUpright(ctx, u.x, u.y, u.fn, u.scale);
+
+  // boss életcsík: KÉPERNYŐ-tér, a kép tetején
+  if(game.boss){
+    const b = game.boss;
+    ctx.save(); ctx.setTransform(1,0,0,1,0,0);
     const bx=w/2-160, by=22, bw=320, bh=10, hf=clamp(b.hp/b.maxHp,0,1), bcol=b.col||'#ff5c7c';
     ctx.fillStyle='rgba(6,8,12,0.8)'; rr(ctx,bx-3,by-3,bw+6,bh+6,6); ctx.fill();
     ctx.strokeStyle=rgbaAny(bcol,0.6); ctx.lineWidth=1; ctx.stroke();
@@ -9101,6 +9412,7 @@ function draw(){
     if(b.name){ ctx.font='bold 11px Trebuchet MS'; ctx.textAlign='center'; ctx.textBaseline='alphabetic';
       ctx.lineWidth=3; ctx.strokeStyle='rgba(4,6,10,0.85)'; ctx.strokeText(b.name.toUpperCase(), w/2, by+bh+16);
       ctx.fillStyle=bcol; ctx.fillText(b.name.toUpperCase(), w/2, by+bh+16); }
+    ctx.restore();
   }
 
   // lövedékek: additív fény, nyomvonallal
@@ -9141,54 +9453,34 @@ function draw(){
   // lökéshullám-gyűrűk
   drawRings(ctx);
 
-  // ---- JÁTÉKOS ----
-  if(p.buffs.invisible>0) ctx.globalAlpha = 0.4;
-  drawPlayer(ctx, p);
-  ctx.globalAlpha = 1;
+  // a talajon fekvő hatások: ezek HELYESEN nyílnak meg a rombuszon
+  drawTankAura(ctx, p);   // a Tank sebző körzete
+  drawRuneWalls(ctx);     // a Mágus rúnafalai
+  drawSwings(ctx);        // közelharci ívek (Tank, Berserker)
+  drawPickups(ctx);       // földön heverő mágikus tárgyak
 
-  // ---- AI BARÁT ----
-  if(game.companion && game.companion.alive){
-    const comp = game.companion;
-    comp._vx = comp.x - (comp._px===undefined?comp.x:comp._px); comp._vy = comp.y - (comp._py===undefined?comp.y:comp._py);
-    comp._px = comp.x; comp._py = comp.y;
-    ctx.save();
-    if(comp.hitFlash>0) ctx.globalAlpha = 0.6;
-    if(!comp.head) comp.head='commando';
-    drawHeroFigure(ctx, comp, { name:false });
-    ctx.restore();
-    // apró HP-csík a barát feje fölött
-    const bw=34, bh=4, bx=comp.x-bw/2, by=comp.y-comp.r-16;
-    ctx.fillStyle='rgba(6,8,12,0.75)'; rr(ctx,bx-1,by-1,bw+2,bh+2,3); ctx.fill();
-    ctx.fillStyle='#7dffb0'; rr(ctx,bx,by,bw*clamp(comp.hp/comp.maxHp,0,1),bh,2); ctx.fill();
-    ctx.font='9px Trebuchet MS'; ctx.fillStyle='rgba(255,255,255,0.7)'; ctx.textAlign='center'; ctx.textBaseline='alphabetic';
-    if(CLASSES[comp.cls]) ctx.fillText(clsTxt(comp.cls,'label'), comp.x, by-4);
-  }
+  /* ====== VISSZA KÉPERNYŐ-TÉRBE ====== */
+  arenaGroundEnd(ctx);
+  ctx.setTransform(1,0,0,1,0,0);
 
-  // légkör: köd + porszemcsék a szereplők fölött, hogy tér legyen a kép
-  drawAmbient(ctx, w, h, nowT, lightFx);
-
-  // ---- lebegő sebzésszámok (még a világ-koordinátákban) ----
+  // lebegő sebzésszámok: a vetített pont fölött, de nem megnyírva
   if(game.floaters && game.floaters.length){
     ctx.textAlign='center'; ctx.textBaseline='alphabetic';
     game.floaters.forEach(f=>{
       const a = clamp(f.life/22, 0, 1);
       const pop = f.big ? 1 + Math.max(0, (f.life-44)/10)*0.6 : 1;
+      const sp = arenaToScreen(f.x, f.y);
       ctx.globalAlpha = a;
       ctx.font = `bold ${Math.round((f.big?19:13)*pop)}px Trebuchet MS`;
       ctx.lineWidth = 3.5; ctx.strokeStyle = 'rgba(4,6,10,0.9)';
-      ctx.strokeText(f.text, f.x, f.y);
-      ctx.fillStyle = f.color; ctx.fillText(f.text, f.x, f.y);
+      ctx.strokeText(f.text, sp.x, sp.y);
+      ctx.fillStyle = f.color; ctx.fillText(f.text, sp.x, sp.y);
     });
     ctx.globalAlpha = 1;
   }
 
-  // innentől képernyő-koordináták: a kezelőfelületet nem rázzuk
-  if(shaking) ctx.restore();
-
-  drawTankAura(ctx, p);   // a Tank sebző körzete
-  drawRuneWalls(ctx);     // a Mágus rúnafalai
-  drawPickups(ctx);  // földön heverő mágikus tárgyak
-  drawSwings(ctx);   // közelharci ívek (Tank, Berserker)
+  // légkör: köd + porszemcsék a szereplők fölött, hogy tér legyen a kép
+  drawAmbient(ctx, w, h, nowT, lightFx);
 
   // villanások + kromatikus perem-lüktetés
   drawScreenFx(ctx, w, h);
@@ -12350,9 +12642,11 @@ function isoDrawFigure(g, a, sx, sy, z, opt){
   const faceRight = isoProject(Math.cos(a.facing), Math.sin(a.facing), 0).x >= 0;
 
   // vetett árnyék a talajon, a rombusz arányával lapítva
-  g.save(); g.globalAlpha = 0.34; g.fillStyle = '#000';
-  g.beginPath(); g.ellipse(sx, sy, 11*S, 11*S*(ISO.TH/ISO.TW), 0, 0, PI2); g.fill();
-  g.restore();
+  if(opt.shadow !== false){
+    g.save(); g.globalAlpha = 0.34; g.fillStyle = '#000';
+    g.beginPath(); g.ellipse(sx, sy, 11*S, 11*S*(ISO.TH/ISO.TW), 0, 0, PI2); g.fill();
+    g.restore();
+  }
 
   // irányjelző ék a talajon
   if(opt.marker !== false){
