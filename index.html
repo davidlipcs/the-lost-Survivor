@@ -66,6 +66,10 @@
   #modeTag{ font-size:calc(10px*var(--ui-scale)); color:var(--gold); margin-top:2px; }
   #eliteTag{ font-size:calc(12px*var(--ui-scale)); margin-top:3px; letter-spacing:2px; line-height:1; }
   #eliteTag:empty{ display:none; }
+  #elementTag{ font-size:calc(11px*var(--ui-scale)); margin-top:4px; line-height:1.3; }
+  #elementTag:empty{ display:none; }
+  #elementTag .el{ opacity:0.35; margin:0 2px; }
+  #elementTag .el.on{ opacity:1; font-weight:bold; }
 
   /* pause gomb */
   #pauseBtn{ position:absolute; top: max(calc(10px*var(--ui-scale)), env(safe-area-inset-top)); left:50%; transform:translateX(-50%);
@@ -262,6 +266,8 @@
     background:#ff5c7c; color:#0a0e14; font-size:9px; font-weight:bold; display:flex; align-items:center; justify-content:center; }
   /* a felerősített pecsét ugyanúgy látszik, mint a visszafogott — különben a
      játékos nem tudja, hogy megérte elővenni azt, amit sosem használt */
+  .classCard .buyLock{ background:#2a2114; border-color:#6b5a2a; color:#ffd166; }
+  .abCell .buyTag{ background:#1b2c3a; border:1px solid #2f5d7a; color:#8fd8ff; }
   .abCell .buffDot{ position:absolute; bottom:-6px; right:-6px; width:14px; height:14px; border-radius:50%;
     background:#7dffb0; color:#0a0e14; font-size:9px; font-weight:bold; display:flex; align-items:center; justify-content:center; }
   .abCell .upgBadge{ position:absolute; bottom:-6px; left:-6px; min-width:14px; height:14px; border-radius:7px;
@@ -506,6 +512,7 @@
       <div id="enemyCount">0 ellenfél</div>
       <div id="modeTag"></div>
       <div id="eliteTag" title=""></div>
+      <div id="elementTag" title=""></div>
     </div>
   </div>
 
@@ -1279,6 +1286,12 @@ const TRANSLATIONS = {
     item_bonehoard_name: 'Bone Hoard', item_hmark_name: "Hunter's Mark",
     item_overclock_name: 'Overclock Module',
     enemy_wizard: 'Wizard',
+    heroPrice: (c)=> `💰 ${c} — tap to buy`,
+    heroBuyConfirm: (n,c)=> `Buy ${n} for ${c} coins?`,
+    notEnoughCoins: (need,have)=> `Not enough coins: ${need} needed, you have ${have}.`,
+    eliteBuyConfirm: (n,c)=> `Unlock the elite seal "${n}" for ${c} shards?`,
+    elem_fire: 'Fire — explodes on impact', elem_frost: 'Frost — slows, freezes on the third hit',
+    elem_poison: 'Poison — leaves a spreading cloud',
     sumTitle: 'THIS RUN',
     sumTime: 'Time', sumKills: 'Kills', sumWave: 'Wave',
     sumUlts: 'Ultimates', sumSeals: 'Seals cast', sumDamage: 'Damage taken',
@@ -1619,6 +1632,12 @@ const TRANSLATIONS = {
     item_bonehoard_name: 'Csontgyűjtő', item_hmark_name: 'Nyomkövető jel',
     item_overclock_name: 'Túltöltő modul',
     enemy_wizard: 'Varázsló',
+    heroPrice: (c)=> `💰 ${c} — koppints a vásárláshoz`,
+    heroBuyConfirm: (n,c)=> `Megveszed: ${n} — ${c} arany?`,
+    notEnoughCoins: (need,have)=> `Nincs elég arany: ${need} kell, neked ${have} van.`,
+    eliteBuyConfirm: (n,c)=> `Feloldod a(z) „${n}” elit pecsétet ${c} kristályért?`,
+    elem_fire: 'Tűz — becsapódáskor robban', elem_frost: 'Jég — lassít, harmadik találatra fagyaszt',
+    elem_poison: 'Méreg — terjedő felhőt hagy',
     sumTitle: 'EZ A FUTAM',
     sumTime: 'Idő', sumKills: 'Ölések', sumWave: 'Hullám',
     sumUlts: 'Ultimate', sumSeals: 'Pecsét', sumDamage: 'Kapott seb.',
@@ -2195,6 +2214,8 @@ profile.totalRuns = profile.totalRuns || 0;                // lejátszott meccse
 /* Trófeák. A megszerzettek id-listája, mellette néhány élettartam-számláló,
    amit eddig nem vezettünk. Mind hiányozhat a régi mentésből — ilyenkor
    nulláról indulnak, a korábbi haladás nem vész el tőlük. */
+profile.ownedHeroes = profile.ownedHeroes || [];            // megvásárolt hősök
+profile.eliteUnlocks = profile.eliteUnlocks || {};          // kasztonként megvett elit képességek
 profile.trophies = profile.trophies || [];                 // megszerzett trófeák id-listája
 profile.heroWins = profile.heroWins || {};                 // hősönkénti győzelmek: id -> db
 profile.totalCoinsEarned = profile.totalCoinsEarned || 0;  // valaha szerzett pénz (a költés nem csökkenti)
@@ -2722,7 +2743,7 @@ const CLASSES = {
 // TESZT MÓD: ha true, minden hős és pecsét azonnal elérhető, szintkövetelmény nélkül —
 // ha később vissza akarod kapcsolni a normál, fokozatos feloldást, írd false-ra.
 const TEST_MODE_UNLOCK_ALL = false;
-function isClassUnlocked(id){ return TEST_MODE_UNLOCK_ALL || isAdminUser() || profileLevel() >= CLASSES[id].req; }
+function isClassUnlocked(id){ return TEST_MODE_UNLOCK_ALL || isAdminUser() || heroOwned(id); }
 
 /* =========================================================
    KÉPESSÉGEK (adatvezérelt, 22 db) — run(p, rank)
@@ -2730,6 +2751,13 @@ function isClassUnlocked(id){ return TEST_MODE_UNLOCK_ALL || isAdminUser() || pr
 const ABILITIES = {
   dash:{ label:'Dash', icon:'💨', req:1, cdMax:150, maxRank:3, desc:'Gyors kitérés, rövid sebezhetetlenség.',
     run(p,r){ p.dashing=10+r*2; p.invuln=10+r*2; addParticles(p.x,p.y,p.color,10); } },
+  bulwark:{ label:'Bástya', icon:'🏰', req:1, cdMax:520, maxRank:3, cls:'tank',
+    desc:'A sebző aurád rövid időre kétszer akkora és sokkal erősebb.',
+    run(p,r){ p.buffs.bulwark = Math.max(p.buffs.bulwark||0, 150 + r*40);
+      addRing(p.x,p.y,'#c9a06a',TANK_AURA.radius*1.7,20,4); addShake(3,6); } },
+  runewall:{ label:'Rúnafal', icon:'🔯', req:1, cdMax:600, maxRank:3, cls:'mage',
+    desc:'Öt másodperces rúnafal magad köré: a bent lévőket kilöki és sebzi, a belépőket visszatolja.',
+    run(p,r){ spawnRuneWall(p, r); } },
   shield:{ label:'Pajzs', icon:'🛡️', req:1, cdMax:420, maxRank:3, desc:'Átmeneti sebezhetetlenség.',
     run(p,r){ p.shieldActive=60+r*25; } },
   fireball:{ label:'Tűzgolyó', icon:'🔥', req:1, cdMax:260, maxRank:4, desc:'Terjedő robbanás, terület-sebzés.',
@@ -2823,43 +2851,294 @@ const ABILITIES = {
     run(p,r){ for(let i=0;i<3;i++){ game.meteors.push({x:input.aimX+(Math.random()-0.5)*70,y:input.aimY+(Math.random()-0.5)*70,t:0,delay:14+i*16,r:65+r*7,dmg:16+r*6,exploded:false,color:'#ffb347'}); } } },
 
   // ---- "Epikus" pecsétek — 10 rangig fejleszthetők, sokkal több játékkal, de a csúcson félelmetesek ----
-  apocalypse:{ label:'Apokalipszis', icon:'☄️', req:3, cdMax:820, maxRank:10, epic:true,
-    desc:'Hosszú töltés után hatalmas becsapódás. Rangonként drámaian erősödik — igazi erejét csak a legmagasabb (10.) rangon éri el.',
-    run(p,r){ game.meteors.push({x:input.aimX,y:input.aimY,t:0,delay:55,r:130+r*16,dmg:60+r*38,exploded:false,color:'#ff2d55'}); } },
-  eternalshield:{ label:'Örök Pajzs', icon:'🛡️', req:3, cdMax:700, maxRank:10, epic:true,
-    desc:'Hosszú sebezhetetlenség. Minél magasabb a rangja, annál tovább tart — a 10. rangon szinte megállíthatatlanná tesz.',
-    run(p,r){ p.shieldActive=Math.max(p.shieldActive, 70+r*48); } },
-  doomarrow:{ label:'Végzet Nyila', icon:'🏹', req:3, cdMax:480, maxRank:10, epic:true,
-    desc:'Áthatoló lövedék, ami rangonként egyre nagyobb sebzést halmoz — a 10. rangon szinte bármit egy csapásra elintéz.',
-    run(p,r){ const a=p.facing, len=1400, dmg=40+r*32; game.beams.push({x:p.x,y:p.y,a,life:9});
-      game.enemies.forEach(en=>{ const dx=en.x-p.x,dy=en.y-p.y, proj=dx*Math.cos(a)+dy*Math.sin(a), perp=Math.abs(-dx*Math.sin(a)+dy*Math.cos(a));
-        if(proj>0&&proj<len&&perp<en.r+12){ en.hp-=dmg; en.hitFlash=8; addUltCharge(dmg*0.25); } });
-      if(game.boss){ const dx=game.boss.x-p.x,dy=game.boss.y-p.y, proj=dx*Math.cos(a)+dy*Math.sin(a), perp=Math.abs(-dx*Math.sin(a)+dy*Math.cos(a));
-        if(proj>0&&proj<len&&perp<game.boss.r+12){ game.boss.hp-=dmg; game.boss.hitFlash=8; } } } },
+  /* ---------- KASZT-KIZÁRÓLAGOS MAGAS SZINTŰ KÉPESSÉGEK ----------
+     Mindegyik EGY kaszté. Így a hatásuk külön hangolható, és nem fordulhat
+     elő, hogy egy erős képesség minden kaszton egyformán elsül. */
 
-  // ---- "Legendás" pecsétek — jóval magasabb szinten nyílnak, mint az epikusok,
-  //      és már 1. rangon is erősek, de ugyanúgy 10 rangig fejlődnek tovább ----
-  judgment:{ label:'Végítélet', icon:'⚡', req:8, cdMax:880, maxRank:10, legendary:true,
-    desc:'Már az első rangon is félelmetes erejű villámcsapás, ami rangonként tovább nő.',
-    run(p,r){ game.meteors.push({x:input.aimX,y:input.aimY,t:0,delay:40,r:140+r*12,dmg:130+r*34,exploded:false,color:'#fff5c2'}); } },
-  deathcrown:{ label:'Halál Koronája', icon:'👑', req:8, cdMax:760, maxRank:10, legendary:true,
-    desc:'Azonnali, súlyos robbanás körülötted — már az első rangon is komoly csapás, nem csak a csúcson.',
-    run(p,r){ aoeDamage(p.x,p.y,170+r*10,110+r*32,'#c9a6ff'); knockback(p.x,p.y,200+r*12,60+r*8); addParticles(p.x,p.y,'#c9a6ff',34); } },
-  immortal:{ label:'Halhatatlanság', icon:'✨', req:8, cdMax:840, maxRank:10, legendary:true,
-    desc:'Már alapból hosszú sebezhetetlenség, ami rangonként tovább nő.',
-    run(p,r){ p.shieldActive=Math.max(p.shieldActive, 140+r*42); } },
-  allpiercer:{ label:'Mindent Átdöfő', icon:'🔱', req:8, cdMax:580, maxRank:10, legendary:true,
-    desc:'Erős, áthatoló energianyaláb — már az első rangon is komoly sebzést oszt, nem csak magas rangon.',
-    run(p,r){ const a=p.facing, len=1500, dmg=95+r*28; game.beams.push({x:p.x,y:p.y,a,life:10});
-      game.enemies.forEach(en=>{ const dx=en.x-p.x,dy=en.y-p.y, proj=dx*Math.cos(a)+dy*Math.sin(a), perp=Math.abs(-dx*Math.sin(a)+dy*Math.cos(a));
-        if(proj>0&&proj<len&&perp<en.r+13){ en.hp-=dmg; en.hitFlash=8; addUltCharge(dmg*0.25); } });
-      if(game.boss){ const dx=game.boss.x-p.x,dy=game.boss.y-p.y, proj=dx*Math.cos(a)+dy*Math.sin(a), perp=Math.abs(-dx*Math.sin(a)+dy*Math.cos(a));
-        if(proj>0&&proj<len&&perp<game.boss.r+13){ game.boss.hp-=dmg; game.boss.hitFlash=8; } } } },
-  mistform:{ label:'Köddéválás', icon:'🌫️', req:8, cdMax:780, maxRank:10, legendary:true,
-    desc:'Köddé válsz — az ellenfelek elvesztik a nyomod, és a régi helyed felé rontanak, míg te elsétálhatsz onnan. Rangonként tovább tart.',
-    run(p,r){ p.buffs.invisible=Math.max(p.buffs.invisible, 60+r*24); game._invisPt={x:p.x,y:p.y}; addParticles(p.x,p.y,'#8b8fa3',24); } },
+  // TANK — kitartás és terület-uralom
+  quake:{ label:'Földrengés', icon:'🌋', req:1, cdMax:620, maxRank:3, cls:'tank', epic:true,
+    desc:'A föld megrázkódik körülötted: nagy területen sebez és megbénít.',
+    run(p,r){ const R=190+r*22;
+      game.enemies.forEach(en=>{ if(dist(en.x,en.y,p.x,p.y)<R){ en.hp-=26+r*10; en.hitFlash=8; en.frozen=Math.max(en.frozen||0,40+r*10); } });
+      if(game.boss&&dist(game.boss.x,game.boss.y,p.x,p.y)<R) game.boss.hp-=20+r*8;
+      addRing(p.x,p.y,'#c9a06a',R,26,6); addShake(9,18); addPuff(p.x,p.y,'#6a6058',10,40,2.4); } },
+  taunt:{ label:'Kihívás', icon:'📢', req:1, cdMax:520, maxRank:3, cls:'tank', epic:true,
+    desc:'Magadhoz rántod a közelieket, és páncélt kapsz.',
+    run(p,r){ const R=250+r*30;
+      game.enemies.forEach(en=>{ if(dist(en.x,en.y,p.x,p.y)<R){ const a=Math.atan2(p.y-en.y,p.x-en.x);
+        en.x+=Math.cos(a)*70; en.y+=Math.sin(a)*70; en.hitFlash=4; } });
+      p.buffs.masterShield=Math.max(p.buffs.masterShield||0,90+r*25);
+      addRing(p.x,p.y,'#ffd166',R,22,4); } },
+  spikeburst:{ label:'Tüskerobbanás', icon:'🔱', req:1, cdMax:470, maxRank:3, cls:'tank', epic:true,
+    desc:'A páncélod tüskéi kirobbannak: a közeliek nagyot sérülnek.',
+    run(p,r){ const R=130+r*16;
+      game.enemies.forEach(en=>{ if(dist(en.x,en.y,p.x,p.y)<R){ en.hp-=34+r*14; en.hitFlash=8;
+        const a=Math.atan2(en.y-p.y,en.x-p.x); en._knock=8; en._kdir=a; } });
+      addRing(p.x,p.y,'#c9a06a',R,20,5); addParticles(p.x,p.y,'#c9a06a',22); } },
+  immortal:{ label:'Halhatatlanság', icon:'♾️', req:1, cdMax:1500, maxRank:2, cls:'tank', legendary:true,
+    desc:'Rövid ideig nem lehet megölni.',
+    run(p,r){ p.shieldActive=Math.max(p.shieldActive,150+r*50); p.invuln=Math.max(p.invuln,150+r*50);
+      p.hp=Math.min(p.maxHp,p.hp+p.maxHp*0.25); addRing(p.x,p.y,'#ffe9a8',110,26,5); addFlash('#ffe9a8',0.12,14); } },
+  lastwall:{ label:'Utolsó Fal', icon:'🧱', req:1, cdMax:1300, maxRank:2, cls:'tank', legendary:true,
+    desc:'Amíg áll, a sebzés nagy részét elnyeled, és az aurád pusztít.',
+    run(p,r){ p.buffs.masterShield=Math.max(p.buffs.masterShield||0,240+r*60);
+      p.buffs.bulwark=Math.max(p.buffs.bulwark||0,240+r*60);
+      addRing(p.x,p.y,'#c9a06a',TANK_AURA.radius*1.7,26,6); addShake(5,10); } },
+
+  // MESTERLÖVÉSZ — egyetlen tökéletes lövés
+  headhunter:{ label:'Fejvadász', icon:'🎯', req:1, cdMax:560, maxRank:3, cls:'sniper', epic:true,
+    desc:'A leggyengébb ellenfelet azonnal kivégzi.',
+    run(p,r){ let best=null,bl=1e9;
+      game.enemies.forEach(en=>{ if(en.hp<bl){bl=en.hp;best=en;} });
+      if(best){ best.hp-=90+r*45; best.hitFlash=10; addRing(best.x,best.y,'#3ddc97',50,18,4);
+        addFloater(best.x,best.y-30,Math.round(90+r*45),'#3ddc97',true); } } },
+  ghostbullet:{ label:'Szellemgolyó', icon:'👻', req:1, cdMax:430, maxRank:3, cls:'sniper', epic:true,
+    desc:'Falakon is átmegy, és mindenkit eltalál a vonalában.',
+    run(p,r){ game.bullets.push({ x:p.x,y:p.y, vx:Math.cos(p.facing)*16, vy:Math.sin(p.facing)*16,
+      r:6, life:120, dmg:30+r*14, pierce:true, ghost:true, trail:'#bfe9ff' }); } },
+  overwatch:{ label:'Fedezőtűz', icon:'🔭', req:1, cdMax:700, maxRank:3, cls:'sniper', epic:true,
+    desc:'Sorozatban lelövi a legközelebbi ellenfeleket.',
+    run(p,r){ const t=nearestEnemies(p.x,p.y,600,3+r);
+      t.forEach((en,i)=>setTimeout(()=>{ if(!game||!en) return; en.hp-=26+r*10; en.hitFlash=8;
+        addParticles(en.x,en.y,'#3ddc97',6); }, i*110)); } },
+  allpiercer:{ label:'Mindent Átdöfő', icon:'🏹', req:1, cdMax:1250, maxRank:2, cls:'sniper', legendary:true,
+    desc:'Egyetlen lövés, ami mindenen átmegy.',
+    run(p,r){ for(let i=0;i<3;i++){ const a=p.facing+(i-1)*0.06;
+      game.bullets.push({ x:p.x,y:p.y, vx:Math.cos(a)*20, vy:Math.sin(a)*20, r:8, life:140,
+        dmg:70+r*35, pierce:true, ghost:true, crit:true, trail:'#eaffb0' }); }
+      addShake(6,12); } },
+  deadeye:{ label:'Halálpontos', icon:'☠️', req:1, cdMax:1400, maxRank:2, cls:'sniper', legendary:true,
+    desc:'Egy ideig minden lövésed kritikus és áthatoló.',
+    run(p,r){ p.buffs.precision=Math.max(p.buffs.precision||0,220+r*70); addFlash('#3ddc97',0.10,12); } },
+
+  // BERSERKER — minél véresebb, annál erősebb
+  bloodstorm:{ label:'Vérvihar', icon:'🌪️', req:1, cdMax:540, maxRank:3, cls:'berserker', epic:true,
+    desc:'Pörögve kaszabolsz mindenkit magad körül, és gyógyulsz belőle.',
+    run(p,r){ const R=150+r*18; let n=0;
+      game.enemies.forEach(en=>{ if(dist(en.x,en.y,p.x,p.y)<R){ en.hp-=30+r*12; en.hitFlash=8; n++; } });
+      p.hp=Math.min(p.maxHp,p.hp+n*(6+r*3));
+      addRing(p.x,p.y,'#ff5c7c',R,22,5); addShake(5,10); } },
+  rampage:{ label:'Tombolás', icon:'💢', req:1, cdMax:620, maxRank:3, cls:'berserker', epic:true,
+    desc:'Sokkal gyorsabb és erősebb leszel egy időre.',
+    run(p,r){ p.buffs.berserk=Math.max(p.buffs.berserk||0,200+r*60);
+      p.surgeActive=Math.max(p.surgeActive,200+r*60); addFlash('#ff5c7c',0.10,12); } },
+  decapitate:{ label:'Lefejezés', icon:'🪓', req:1, cdMax:500, maxRank:3, cls:'berserker', epic:true,
+    desc:'Az előtted lévőt óriási sebzés éri, sebesültet azonnal megöl.',
+    run(p,r){ const t=nearestEnemies(p.x,p.y,110,1)[0]; if(!t) return;
+      const d=(t.hp < t.maxHp*0.35) ? t.hp+1 : 55+r*24;
+      t.hp-=d; t.hitFlash=10; addRing(t.x,t.y,'#ff5c7c',60,18,5); addShake(6,11);
+      addFloater(t.x,t.y-30,Math.round(d),'#ff5c7c',true); } },
+  undying:{ label:'Halálraszánt', icon:'🩸', req:1, cdMax:1350, maxRank:2, cls:'berserker', legendary:true,
+    desc:'Nem eshetsz el, és minden találatod gyógyít.',
+    run(p,r){ p.buffs.berserkUlt=Math.max(p.buffs.berserkUlt||0,220+r*70);
+      p.buffs.lifesteal=Math.max(p.buffs.lifesteal||0,220+r*70);
+      p.invuln=Math.max(p.invuln,60); addFlash('#ff2d55',0.14,14); } },
+  warcry:{ label:'Harci Üvöltés', icon:'📣', req:1, cdMax:1200, maxRank:2, cls:'berserker', legendary:true,
+    desc:'A közeliek megdermednek a félelemtől, te pedig feltöltődsz.',
+    run(p,r){ game.enemies.forEach(en=>{ if(dist(en.x,en.y,p.x,p.y)<320){ en.frozen=Math.max(en.frozen||0,90+r*30); en.hitFlash=6; } });
+      p.buffs.berserk=Math.max(p.buffs.berserk||0,180); addRing(p.x,p.y,'#ffd166',320,26,5); addShake(7,14); } },
+
+  // MÁGUS — elemek és tér
+  meteorshower:{ label:'Meteorzápor', icon:'☄️', req:1, cdMax:700, maxRank:3, cls:'mage', epic:true,
+    desc:'Több meteor csapódik be szétszórva.',
+    run(p,r){ for(let i=0;i<4+r;i++) game.meteors.push({ x:input.aimX+(Math.random()-0.5)*220,
+      y:input.aimY+(Math.random()-0.5)*220, t:0, delay:20+i*10, r:78, dmg:24+r*9,
+      exploded:false, color:'#ff8c3c' }); } },
+  singularity:{ label:'Szingularitás', icon:'🌀', req:1, cdMax:640, maxRank:3, cls:'mage', epic:true,
+    desc:'Örvény, ami behúzza és marja az ellenfeleket.',
+    run(p,r){ game.clouds.push({ x:input.aimX, y:input.aimY, r:110+r*12, life:180,
+      dmg:4+r*2, color:'#9d5cff', pull:2.4 }); addRing(input.aimX,input.aimY,'#9d5cff',110+r*12,20,4); } },
+  fusion:{ label:'Elemfúzió', icon:'🔆', req:1, cdMax:580, maxRank:3, cls:'mage', epic:true,
+    desc:'Mindhárom elem egyszerre sül el körülötted.',
+    run(p,r){ const R=170+r*18;
+      game.enemies.forEach(en=>{ if(dist(en.x,en.y,p.x,p.y)<R){
+        en.hp-=28+r*11; en.hitFlash=8; en.slowT=Math.max(en.slowT||0,100); } });
+      game.clouds.push({ x:p.x, y:p.y, r:R*0.8, life:150, dmg:3+r*2, color:'#7bd88f' });
+      addRing(p.x,p.y,'#ff8c3c',R,20,5); addRing(p.x,p.y,'#8fd8ff',R*0.7,18,4); } },
+  apocalypse:{ label:'Apokalipszis', icon:'💥', req:1, cdMax:1400, maxRank:2, cls:'mage', legendary:true,
+    desc:'A pálya nagy részét elnyeli a tűz.',
+    run(p,r){ for(let i=0;i<8;i++) game.meteors.push({ x:60+Math.random()*(canvas.width-120),
+      y:60+Math.random()*(canvas.height-120), t:0, delay:16+i*7, r:110, dmg:46+r*18,
+      exploded:false, color:'#ff8c3c' }); addShake(8,16); } },
+  timefreeze:{ label:'Időzár', icon:'⏳', req:1, cdMax:1300, maxRank:2, cls:'mage', legendary:true,
+    desc:'Megáll az idő az ellenfeleknek.',
+    run(p,r){ game.slowT=Math.max(game.slowT||0,200+r*70);
+      game.enemies.forEach(en=>{ en.frozen=Math.max(en.frozen||0,120+r*40); });
+      addFlash('#8fd8ff',0.14,16); } },
+
+  // ORGYILKOS — eltűnés és kivégzés
+  clones:{ label:'Árnyékmások', icon:'👥', req:1, cdMax:620, maxRank:3, cls:'assassin', epic:true,
+    desc:'Árnyék-másaid harcolnak melletted.',
+    run(p,r){ for(let i=0;i<2+r;i++) game.turrets.push({ x:p.x+(Math.random()-0.5)*60,
+      y:p.y+(Math.random()-0.5)*60, life:300, fireCd:0, dmg:9+r*3, mobile:true, skeleton:true }); } },
+  deathmark:{ label:'Haláljel', icon:'🎴', req:1, cdMax:540, maxRank:3, cls:'assassin', epic:true,
+    desc:'Megjelölt célpont sokkal többet sérül tőled.',
+    run(p,r){ const t=nearestEnemies(p.x,p.y,360,1)[0]; if(!t) return;
+      t.marked=Math.max(t.marked||0,300); t.markMul=1.6+r*0.2;
+      addRing(t.x,t.y,'#c9a6ff',t.r*2.4,18,4); } },
+  vanish:{ label:'Elenyészés', icon:'🌫️', req:1, cdMax:500, maxRank:3, cls:'assassin', epic:true,
+    desc:'Eltűnsz, és a következő csapásod kritikus.',
+    run(p,r){ p.buffs.invisible=Math.max(p.buffs.invisible||0,120+r*40);
+      p.buffs.precision=Math.max(p.buffs.precision||0,60+r*20); addParticles(p.x,p.y,'#c9a6ff',18); } },
+  mistform:{ label:'Köddéválás', icon:'💨', req:1, cdMax:1250, maxRank:2, cls:'assassin', legendary:true,
+    desc:'Köddé válsz: sebezhetetlen és láthatatlan.',
+    run(p,r){ p.buffs.invisible=Math.max(p.buffs.invisible||0,200+r*60);
+      p.invuln=Math.max(p.invuln,200+r*60); p.surgeActive=Math.max(p.surgeActive,200);
+      addParticles(p.x,p.y,'#c9a6ff',26); } },
+  thousandcuts:{ label:'Ezer Vágás', icon:'🗡️', req:1, cdMax:1350, maxRank:2, cls:'assassin', legendary:true,
+    desc:'Villámgyors sorozat a körülötted állókra.',
+    run(p,r){ const t=nearestEnemies(p.x,p.y,220,6);
+      t.forEach((en,i)=>setTimeout(()=>{ if(!game||!en) return;
+        en.hp-=30+r*14; en.hitFlash=8; addParticles(en.x,en.y,'#c9a6ff',5); }, i*70));
+      addShake(5,10); } },
+
+  // TÁMOGATÓ — életben tartás
+  massheal:{ label:'Nagy Gyógyítás', icon:'💚', req:1, cdMax:560, maxRank:3, cls:'support', epic:true,
+    desc:'Téged és a társadat is erősen gyógyít.',
+    run(p,r){ const h=p.maxHp*(0.30+r*0.08); p.hp=Math.min(p.maxHp,p.hp+h); tetherShare(h);
+      if(game.companion&&game.companion.alive) game.companion.hp=Math.min(game.companion.maxHp,game.companion.hp+game.companion.maxHp*(0.3+r*0.08));
+      addRing(p.x,p.y,'#8affc1',90,20,4); } },
+  sanctuary:{ label:'Menedék', icon:'⛪', req:1, cdMax:680, maxRank:3, cls:'support', epic:true,
+    desc:'Gyógyító kör, ami benned és a társadban is dolgozik.',
+    run(p,r){ game.clouds.push({ x:p.x, y:p.y, r:120+r*14, life:260, heal:0.6+r*0.2, color:'#8affc1' });
+      addRing(p.x,p.y,'#8affc1',120+r*14,20,4); } },
+  guardian:{ label:'Őrangyal', icon:'😇', req:1, cdMax:640, maxRank:3, cls:'support', epic:true,
+    desc:'A társad sebezhetetlen lesz egy időre, és feláll, ha elesett.',
+    run(p,r){ const c=game.companion; if(!c) return;
+      if(!c.alive){ c.alive=true; c.retreating=false; c.hp=c.maxHp*0.5; c.x=p.x-40; c.y=p.y+40; }
+      c.invuln=Math.max(c.invuln||0,150+r*50); addRing(c.x,c.y,'#ffe9a8',60,20,4); } },
+  eternalshield:{ label:'Örök Pajzs', icon:'🛡️', req:1, cdMax:1300, maxRank:2, cls:'support', legendary:true,
+    desc:'Hosszú, erős pajzs mindkettőtöknek.',
+    run(p,r){ p.shieldActive=Math.max(p.shieldActive,200+r*60);
+      if(game.companion&&game.companion.alive) game.companion.invuln=Math.max(game.companion.invuln||0,200+r*60);
+      addRing(p.x,p.y,'#6ee7ff',100,24,5); } },
+  rebirth:{ label:'Újjászületés', icon:'🕊️', req:1, cdMax:1500, maxRank:2, cls:'support', legendary:true,
+    desc:'Teljes életerő nektek, és minden lassítás lekerül rólatok.',
+    run(p,r){ p.hp=p.maxHp; p.hazSlow=0; p.invuln=Math.max(p.invuln,80);
+      const c=game.companion; if(c){ c.alive=true; c.retreating=false; c.hp=c.maxHp; c.invuln=Math.max(c.invuln||0,80); }
+      addFlash('#8affc1',0.16,18); addRing(p.x,p.y,'#8affc1',140,28,6); } },
+
+  // NEKROMANTA — a holtak serege
+  boneprison:{ label:'Csontbörtön', icon:'🦴', req:1, cdMax:580, maxRank:3, cls:'necromancer', epic:true,
+    desc:'Csontketrec fogja meg a közelieket.',
+    run(p,r){ game.enemies.forEach(en=>{ if(dist(en.x,en.y,input.aimX,input.aimY)<130+r*14){
+      en.frozen=Math.max(en.frozen||0,110+r*30); en.hp-=12+r*5; } });
+      addRing(input.aimX,input.aimY,'#c8b8e8',130+r*14,20,4); } },
+  soulharvest:{ label:'Lélekaratás', icon:'🌑', req:1, cdMax:620, maxRank:3, cls:'necromancer', epic:true,
+    desc:'Elszívja a közeliek életét, és neked adja.',
+    run(p,r){ let n=0;
+      game.enemies.forEach(en=>{ if(dist(en.x,en.y,p.x,p.y)<220+r*20){ en.hp-=22+r*10; en.hitFlash=8; n++; } });
+      p.hp=Math.min(p.maxHp,p.hp+n*(7+r*3)); addRing(p.x,p.y,'#9d5cff',220+r*20,22,5); } },
+  plague:{ label:'Dögvész', icon:'🦠', req:1, cdMax:660, maxRank:3, cls:'necromancer', epic:true,
+    desc:'Terjedő járvány, ami sokáig mar.',
+    run(p,r){ game.clouds.push({ x:input.aimX, y:input.aimY, r:120+r*16, life:320, dmg:4+r*2, color:'#7bd88f' });
+      addRing(input.aimX,input.aimY,'#7bd88f',120+r*16,20,4); } },
+  deathcrown:{ label:'Halál Koronája', icon:'👑', req:1, cdMax:1450, maxRank:2, cls:'necromancer', legendary:true,
+    desc:'Minden legyőzött ellenfél szolgaként kel fel.',
+    run(p,r){ p.buffs.deathcrown=Math.max(p.buffs.deathcrown||0,280+r*80);
+      addRing(p.x,p.y,'#9d5cff',120,24,5); addFlash('#9d5cff',0.12,14); } },
+  armyofdead:{ label:'Holtak Serege', icon:'💀', req:1, cdMax:1500, maxRank:2, cls:'necromancer', legendary:true,
+    desc:'Csontvázak hada áll melléd.',
+    run(p,r){ for(let i=0;i<6+r*2;i++){ const a=Math.random()*PI2, d=40+Math.random()*90;
+      game.turrets.push({ x:p.x+Math.cos(a)*d, y:p.y+Math.sin(a)*d, life:420, fireCd:0,
+        dmg:10+r*4, mobile:true, skeleton:true }); }
+      addRing(p.x,p.y,'#9d5cff',160,24,5); } },
+
+  // VADÁSZ — csapdák és távolság
+  volley:{ label:'Nyílzápor', icon:'🏹', req:1, cdMax:520, maxRank:3, cls:'hunter', epic:true,
+    desc:'Nyílzápor legyezőben, mindegyik lassít.',
+    run(p,r){ const n=7+r*2; for(let i=0;i<n;i++){ const a=p.facing+(i-(n-1)/2)*0.13;
+      game.bullets.push({ x:p.x,y:p.y, vx:Math.cos(a)*11, vy:Math.sin(a)*11, r:4, life:70,
+        dmg:14+r*6, slow:60, trail:'#7dffb0' }); } } },
+  beastpack:{ label:'Falka', icon:'🐺', req:1, cdMax:680, maxRank:3, cls:'hunter', epic:true,
+    desc:'Vadállat-falka támad melletted.',
+    run(p,r){ for(let i=0;i<2+r;i++) game.turrets.push({ x:p.x+(Math.random()-0.5)*70,
+      y:p.y+(Math.random()-0.5)*70, life:420, fireCd:0, dmg:11+r*4, mobile:true, beast:true }); } },
+  trapfield:{ label:'Csapdamező', icon:'🕸️', req:1, cdMax:600, maxRank:3, cls:'hunter', epic:true,
+    desc:'Csapdák gyűrűje köréd.',
+    run(p,r){ for(let i=0;i<5+r;i++){ const a=i*(PI2/(5+r));
+      game.traps.push({ x:p.x+Math.cos(a)*120, y:p.y+Math.sin(a)*120, r:34, dmg:20+r*8, root:70+r*15, armed:true }); } } },
+  doomarrow:{ label:'Végzet Nyila', icon:'🎯', req:1, cdMax:1300, maxRank:2, cls:'hunter', legendary:true,
+    desc:'Egyetlen nyíl, ami mindenen átmegy és lassít.',
+    run(p,r){ game.bullets.push({ x:p.x,y:p.y, vx:Math.cos(p.facing)*17, vy:Math.sin(p.facing)*17,
+      r:8, life:150, dmg:80+r*36, pierce:true, slow:140, crit:true, trail:'#7dffb0' }); addShake(5,10); } },
+  huntersmoon:{ label:'Vadászhold', icon:'🌙', req:1, cdMax:1400, maxRank:2, cls:'hunter', legendary:true,
+    desc:'Minden ellenfél lelassul, és többet sérül tőled.',
+    run(p,r){ game.enemies.forEach(en=>{ en.slowT=Math.max(en.slowT||0,240+r*70);
+      en.marked=Math.max(en.marked||0,240+r*70); en.markMul=1.4; });
+      addFlash('#7dffb0',0.12,14); } },
+
+  // GÉPÉSZ — gépek és terület
+  turretfort:{ label:'Ágyúerőd', icon:'🏭', req:1, cdMax:700, maxRank:3, cls:'engineer', epic:true,
+    desc:'Több nehéz ágyú egyszerre.',
+    run(p,r){ for(let i=0;i<2+r;i++){ const a=i*(PI2/(2+r));
+      game.turrets.push({ x:p.x+Math.cos(a)*70, y:p.y+Math.sin(a)*70, life:400, fireCd:0, dmg:12+r*5, heavy:true }); } } },
+  emp:{ label:'EMP-lökés', icon:'⚡', req:1, cdMax:560, maxRank:3, cls:'engineer', epic:true,
+    desc:'Leállítja a gépeket és megbénítja a közelieket.',
+    run(p,r){ const R=230+r*24;
+      game.enemies.forEach(en=>{ if(dist(en.x,en.y,p.x,p.y)<R){ en.frozen=Math.max(en.frozen||0,90+r*25);
+        if(en.type==='turret') en.hp-=40+r*16; en.hitFlash=6; } });
+      game.enemyBullets.length=0; addRing(p.x,p.y,'#6ee7ff',R,22,5); addFlash('#6ee7ff',0.10,12); } },
+  shieldgen:{ label:'Pajzsgenerátor', icon:'🔋', req:1, cdMax:640, maxRank:3, cls:'engineer', epic:true,
+    desc:'Pajzs neked és a társadnak, plusz javító-drón.',
+    run(p,r){ p.shieldActive=Math.max(p.shieldActive,110+r*35);
+      game.drones.push({ x:p.x, y:p.y, ang:Math.random()*6, life:360, fireCd:0, heal:1 });
+      if(game.companion&&game.companion.alive) game.companion.invuln=Math.max(game.companion.invuln||0,90+r*30);
+      addRing(p.x,p.y,'#6ee7ff',80,20,4); } },
+  rocketbarrage:{ label:'Rakétazápor', icon:'🚀', req:1, cdMax:1300, maxRank:2, cls:'engineer', legendary:true,
+    desc:'Rakéták sorozata a célpont köré.',
+    run(p,r){ for(let i=0;i<7+r*2;i++) game.meteors.push({ x:input.aimX+(Math.random()-0.5)*260,
+      y:input.aimY+(Math.random()-0.5)*260, t:0, delay:12+i*6, r:72, dmg:34+r*14,
+      exploded:false, color:'#ffb347' }); addShake(7,14); } },
+  warmachine:{ label:'Hadigép', icon:'🤖', req:1, cdMax:1450, maxRank:2, cls:'engineer', legendary:true,
+    desc:'Teljes géppark: ágyúk, drónok, pajzs.',
+    run(p,r){ for(let i=0;i<4;i++){ const a=i*(PI2/4);
+        game.turrets.push({ x:p.x+Math.cos(a)*80, y:p.y+Math.sin(a)*80, life:460, fireCd:0, dmg:13+r*5, heavy:true }); }
+      for(let i=0;i<2;i++) game.drones.push({ x:p.x, y:p.y, ang:i*3.1, life:420, fireCd:0, dmg:10+r*4 });
+      p.shieldActive=Math.max(p.shieldActive,120); addRing(p.x,p.y,'#6ee7ff',140,24,5); } },
+
 };
-function isAbilityUnlocked(id){ return TEST_MODE_UNLOCK_ALL || isAdminUser() || profileLevel() >= (ABILITIES[id].req||1); }
+/* Egy képesség akkor használható, ha a VÁLASZTOTT KASZT készletében van.
+   Az alapok azonnal járnak a kaszt feloldásával; az elit képességeket meg
+   kell venni. A profil-szint már nem kapuzza őket — a kaszt teszi. */
+function isAbilityUnlocked(id, cls){
+  if(TEST_MODE_UNLOCK_ALL || isAdminUser()) return true;
+  const a = ABILITIES[id]; if(!a) return false;
+  const c = cls || chosenClass;
+  if(classKnowsAll(c)) return true;
+  if(a.epic || a.legendary){
+    return a.cls === c && eliteOwned(c, id);
+  }
+  return classAbilityPool(c).includes(id);
+}
+/* Látszik-e egyáltalán a rácson? Az elit képességek akkor is látszanak,
+   ha még nem vetted meg — különben nem tudnád, mi van a kasztodban. */
+function isAbilityInPool(id, cls){
+  const c = cls || chosenClass;
+  if(classKnowsAll(c)) return true;
+  return classAbilityPool(c).includes(id);
+}
+const CLASS_BASE_ABILITIES = {
+  tank:        ['shield','shockwave','mirrorshield','adrenaline','heal','grenade','dash','bulwark'],
+  sniper:      ['railgun','multishot','dash','blink','shotgun','adrenaline','strike'],
+  berserker:   ['berserk','lifesteal','dash','shockwave','adrenaline','bloodmagic','surge'],
+  mage:        ['fireball','ice','chain','meteor','poison','timewarp','blink','runewall'],
+  assassin:    ['dash','blink','lifesteal','surge','shotgun','adrenaline','strike'],
+  support:     ['heal','healcloud','shield','drone','mirrorshield','adrenaline','timewarp'],
+  necromancer: ['raise','soulbomb','boneward','poison','bloodmagic','lifesteal','chain'],
+  hunter:      ['snaretrap','beast','piercingshot','multishot','dash','poison','surge'],
+  engineer:    ['minefield','laserwall','repairdrone','turret','drone','mortar','cluster','grenade'],
+};
+
+/* A hős-árak a hívás ELŐTT kellenek: a függvények hoistolódnak, egy const
+   viszont nem — a definíciója előtti hivatkozás kivételt dob. */
+const HERO_PRICES = {
+  tank: 0, sniper: 0, berserker: 0,          // a kezdő három ingyen
+  mage: 900, support: 900, necromancer: 1200,
+  assassin: 1500, hunter: 1500, engineer: 1800,
+  sealbearer: 6000, grandmaster: 12000, godlike: 25000,
+};
+grandfatherHeroes();   // a régi, szint-alapú feloldások jóváírása
 runDailyHeroBalanceCheck();
 
 /* =========================================================
@@ -4929,6 +5208,8 @@ function renderClassCards(){
   classRow.innerHTML='';
   Object.entries(CLASSES).forEach(([id,c])=>{
     const unlocked = isClassUnlocked(id);
+    const owned = heroOwned(id);
+    const price = heroPrice(id);
     const bal = heroBalanceMult(id);
     let balTag = '';
     if(bal.hp<0.995 || bal.dmg<0.995) balTag = `<div class="cLine" style="color:#ff8a9d;">${T('nerfTag', Math.round((bal.hp+bal.dmg)/2*100))}</div>`;
@@ -4946,11 +5227,19 @@ function renderClassCards(){
       `<div class="cLine"><span class="b">▼</span> ${clsTxt(id,'weak')}</div>`+
       `<div class="cUlt">${ULTIMATES[c.ult].icon} ${ultTxt(c.ult,'label')}</div>`+
       sealedTag + bestTag + balTag +
-      (unlocked?'':`<div class="lockTag">${T('lockTag', c.req)}</div>`);
+      (unlocked ? '' : (heroVisible(id)
+        ? `<div class="lockTag buyLock">${T('heroPrice', price)}</div>`
+        : `<div class="lockTag">${T('lockTag', c.req)}</div>`));
     // portré: a hős saját, felismerhető sziluettje a kártya tetején
     const pc = card.querySelector('.cPortrait').getContext('2d');
     const pcx=79, pcy=48, pR=21;
     drawHeroFigure(pc, { x:pcx, y:pcy, r:pR, cls:id, skin:(id===chosenClass?chosenSkin:0), head:chosenHead, facing:-Math.PI/2, invuln:0 }, { preview:true });
+    if(!unlocked && heroVisible(id)) card.addEventListener('click', ()=>{
+      const cost = heroPrice(id);
+      if((profile.coins||0) < cost){ alert(T('notEnoughCoins', cost, profile.coins||0)); return; }
+      if(!confirm(T('heroBuyConfirm', clsTxt(id,'label'), cost))) return;
+      if(buyHero(id)){ chosenClass=id; equipDefaults(); renderClassCards(); buildLoadoutUI(); refreshMenu(); }
+    });
     if(unlocked) card.addEventListener('click', ()=>{
       card.classList.remove('flashing'); void card.offsetWidth; card.classList.add('flashing');
       setClass(id);
@@ -5313,6 +5602,15 @@ const slotRow = document.getElementById('slotRow');
 function ensureKey(id){ if(!abilityKeys[id] || usedKeys(id).has(abilityKeys[id])) abilityKeys[id]=freeDefaultKey(); }
 function equipDefaults(){
   equipped = CLASSES[chosenClass].def.filter(id=>isAbilityUnlocked(id)).slice(0,MAX_SLOTS);
+  /* A kaszt alapértelmezett listája régebbi, mint a készlet-rendszer, ezért
+     előfordulhat, hogy nincs benne elég használható képesség. Ilyenkor a
+     saját alap-készletéből töltjük fel — sose induljon üres sávval. */
+  if(equipped.length < Math.min(3, MAX_SLOTS)){
+    for(const id of classBaseAbilities(chosenClass)){
+      if(equipped.length >= MAX_SLOTS) break;
+      if(!equipped.includes(id) && isAbilityUnlocked(id)) equipped.push(id);
+    }
+  }
   equipped.forEach(ensureKey);
 }
 function toggleEquip(id){
@@ -5325,8 +5623,11 @@ function buildLoadoutUI(){
   abilityGrid.innerHTML='';
   const clsData = CLASSES[chosenClass];
   Object.entries(ABILITIES).forEach(([id,ab])=>{
-    if(ab.cls && ab.cls!==chosenClass && !(clsData && clsData.allAbilities)) return; // más hős kizárólagos pecsétje — ne is látszódjon
+    // csak a kaszt saját készlete látszik — az idegen képességek nem is jelennek meg
+    if(!isAbilityInPool(id)) return;
     const unlocked = isAbilityUnlocked(id);
+    const isElite = !!(ab.epic || ab.legendary);
+    const buyable = isElite && !unlocked && !classKnowsAll(chosenClass);
     const idx = equipped.indexOf(id);
     const abal = abilityBalanceMult(id);
     const upgTier = abilityUpgradeTier(id);
@@ -5342,10 +5643,17 @@ function buildLoadoutUI(){
       (abal>1.005?`<div class="buffDot" title="${T('buffDotTitle', Math.round(abal*100))}">▲</div>`:'') +
       (unlocked?`<div class="upgBadge ${upgTier>0?'hasLvl':''}" title="${T('upgBadgeTitle')}">⬆${upgTier}/3</div>`:'') +
       `<div class="ic">${ab.icon}</div><div class="nm">${abTxt(id,'label')}</div>`+
-      (idx>=0?`<div class="slotNum">${idx+1}</div>`:'') + (unlocked?'':`<div class="lk">🔒${ab.req}</div>`);
+      (idx>=0?`<div class="slotNum">${idx+1}</div>`:'') +
+      (unlocked?'' : (buyable ? `<div class="lk buyTag">🔷${eliteCost(id)}</div>` : `<div class="lk">🔒</div>`));
     if(unlocked) cell.addEventListener('click', ()=>{
       cell.classList.remove('flashing'); void cell.offsetWidth; cell.classList.add('flashing');
       toggleEquip(id);
+    });
+    else if(buyable) cell.addEventListener('click', ()=>{
+      const cost = eliteCost(id);
+      if((profile.shards||0) < cost){ alert(T('notEnoughShards', cost, profile.shards||0)); return; }
+      if(!confirm(T('eliteBuyConfirm', abTxt(id,'label'), cost))) return;
+      if(buyElite(chosenClass, id)){ buildLoadoutUI(); refreshMenu(); }
     });
     if(unlocked){
       const upgEl = cell.querySelector('.upgBadge');
@@ -6032,7 +6340,7 @@ function resetGame(){
     bullets:[], enemyBullets:[], enemies:[], particles:[], floaters:[], orbs:[], fireballs:[], turrets:[], meteors:[], obstacles:[],
     clouds:[], drones:[], beams:[], traps:[], slowT:0,
     barrels:[], hazards:[], crates:[],
-    pendingSpawns:[], swings:[], pickups:[], killsThisRun:0,
+    pendingSpawns:[], swings:[], pickups:[], runeWalls:[], killsThisRun:0,
     // futam-statisztika a végi összefoglalóhoz (csak játék közben nő, szünetben áll)
     runFrames:0, ultsUsed:0, abilitiesUsed:0, damageTaken:0, bestWave:1,
     wave:1, waveTimer:70, spawning:true,
@@ -6981,6 +7289,14 @@ function update(){
         if(b.falloff && b._pierced) bd = Math.round(bd * Math.pow(b.falloff, b._pierced));
         en.hp -= bd; en.hitFlash=6; addParticles(b.x,b.y,en.color,4); addUltCharge(bd*0.35); SFX.hit();
         if(b.slow) en.slowT = Math.max(en.slowT||0, b.slow);
+        /* JÉG halmozódása: három réteg dér után megfagy. A számláló magától
+           lejár, tehát folyamatosan kell rajta tartani a lövést. */
+        if(b.chill){
+          en.chill = (en.chill||0) + b.chill; en.chillT = 150;
+          if(en.chill >= 3){ en.chill = 0; en.frozen = Math.max(en.frozen||0, 75);
+            addRing(en.x,en.y,'#8fd8ff',en.r*2.2,16,3); addParticles(en.x,en.y,'#8fd8ff',10); }
+        }
+        if(b.poison) spawnPoisonCloud(b);
         if(b.explode) bulletExplode(b);
         en._knock = 6; en._kdir = Math.atan2(b.vy,b.vx);   // vizuális hőkölés a lövedék irányába
         if(b.crit){ addShake(3,5); addRing(b.x,b.y,'#ffd166',en.r*1.6+10,12,2); }
@@ -7168,6 +7484,10 @@ function update(){
   });
   game.enemyBullets = game.enemyBullets.filter(eb=>eb.life>0 && eb.x>-30&&eb.x<w+30&&eb.y>-30&&eb.y<h+30);
 
+  tickTankAura(p);   // Tank osztály-passzív: állandó sebző aura
+  tickRuneWalls();   // Mágus rúnafalai
+  // a dér magától lejár, ha nem tartod rajta a jeges lövést
+  for(const en of game.enemies){ if(en.chillT>0){ en.chillT--; if(en.chillT===0) en.chill=0; } }
   updatePickups();   // földön heverő mágikus tárgyak felszedése
 
   // szétlőtt rombolható fedezékek eltakarítása
@@ -8483,6 +8803,7 @@ function updateHud(){
   if(game.chapter){
     setWaveNum(bossTag || (game.chapterWave+'/'+game.chapter.waveCount));
     document.getElementById('modeTag').textContent = T('chapterTag', game.chapterIndex+1, game.chapter.title.toUpperCase());
+    updateElementHud();
     const et0 = document.getElementById('eliteTag');
     if(et0){ et0.textContent=''; et0.title=''; }   // a sztoriban/hódításban nincs elit módosító
   } else {
@@ -8495,6 +8816,7 @@ function updateHud(){
       et.textContent = act.map(m=>m.icon).join(' ');
       et.title = act.map(m=>T('elite_'+m.id+'_name')+' — '+T('elite_'+m.id+'_desc')).join('\n');
     }
+    updateElementHud();
   }
   const alive = game.enemies.length + game.pendingSpawns.length;
   document.getElementById('enemyCount').textContent = game.boss
@@ -8773,6 +9095,8 @@ function draw(){
   // innentől képernyő-koordináták: a kezelőfelületet nem rázzuk
   if(shaking) ctx.restore();
 
+  drawTankAura(ctx, p);   // a Tank sebző körzete
+  drawRuneWalls(ctx);     // a Mágus rúnafalai
   drawPickups(ctx);  // földön heverő mágikus tárgyak
   drawSwings(ctx);   // közelharci ívek (Tank, Berserker)
 
@@ -9528,6 +9852,302 @@ function tickSwings(){
 
 
 
+
+/* =========================================================
+   TANK — ÁLLANDÓ SEBZŐ AURA
+   ---------------------------------------------------------
+   A Tank szándékosan gyengén lő, cserébe folyamatosan sebzi, ami a
+   közelébe ér. Nem képesség, hanem OSZTÁLY-PASSZÍV: mindig megy, nem kell
+   hozzá gomb. Fél másodpercenként üt, hogy a sebzés kiszámítható legyen és
+   ne a képkockasebességtől függjön.
+   ========================================================= */
+const TANK_AURA = { dmg: 5, radius: 96, tickFrames: 30 };
+
+function tickTankAura(p){
+  if(!p || p.cls !== 'tank' || p.hp <= 0) return;
+  p._auraT = (p._auraT || 0) + 1;
+  // A Bástya képesség ideiglenesen megnöveli: nagyobb kör, nagyobb ütés.
+  const boost = (p.buffs.bulwark > 0);
+  const R = TANK_AURA.radius * (boost ? 1.7 : 1);
+  const D = TANK_AURA.dmg * (boost ? 2.4 : 1) * (1 + heroTier('tank')*0.05);
+  if(p._auraT < TANK_AURA.tickFrames) return;
+  p._auraT = 0;
+  let hit = 0;
+  for(const en of game.enemies){
+    if(dist(en.x, en.y, p.x, p.y) < R + en.r){
+      en.hp -= D; en.hitFlash = 4; hit++;
+      addUltCharge(D*0.2);
+      addFloater(en.x, en.y-en.r-4, Math.round(D), '#c9a06a');
+    }
+  }
+  if(game.boss && dist(game.boss.x, game.boss.y, p.x, p.y) < R + game.boss.r){
+    game.boss.hp -= D*0.6; game.boss.hitFlash = 4; hit++;
+  }
+  if(hit) addUltCharge(2);
+}
+/* Az aura kirajzolása: halvány, lüktető gyűrű, hogy lásd a hatósugarát. */
+function drawTankAura(g, p){
+  if(!p || p.cls !== 'tank' || p.hp <= 0) return;
+  const boost = (p.buffs.bulwark > 0);
+  const R = TANK_AURA.radius * (boost ? 1.7 : 1);
+  const t = Date.now()/420;
+  const pulse = 0.5 + 0.5*Math.sin(t);
+  g.save();
+  const gr = g.createRadialGradient(p.x, p.y, R*0.45, p.x, p.y, R);
+  gr.addColorStop(0, 'rgba(201,160,106,0)');
+  gr.addColorStop(1, `rgba(201,160,106,${(boost?0.20:0.10) + pulse*0.06})`);
+  g.fillStyle = gr; g.beginPath(); g.arc(p.x, p.y, R, 0, PI2); g.fill();
+  g.strokeStyle = `rgba(201,160,106,${(boost?0.55:0.32) + pulse*0.15})`;
+  g.lineWidth = boost ? 3 : 2;
+  g.setLineDash([9, 7]); g.lineDashOffset = -t*8;
+  g.beginPath(); g.arc(p.x, p.y, R, 0, PI2); g.stroke();
+  g.setLineDash([]);
+  g.restore();
+}
+
+/* =========================================================
+   MÁGUS — ELEMVÁLTÁS (1 / 2 / 3)
+   ---------------------------------------------------------
+   A mágus lövése nem egyféle: menet közben vált elemet, és ezzel a
+   TÁMADÁS TERMÉSZETE változik, nem csak a színe.
+     1 TŰZ    — becsapódáskor robban, területre sebez
+     2 JÉG    — kevesebbet sebez, de lassít és halmozódva fagyaszt
+     3 MÉREG  — becsapódáskor szétterjedő méregfelhőt hagy, ami folyamatosan mar
+   ========================================================= */
+const MAGE_ELEMENTS = {
+  fire:   { id:'fire',   key:'1', icon:'🔥', col:'#ff8c3c' },
+  frost:  { id:'frost',  key:'2', icon:'❄️', col:'#8fd8ff' },
+  poison: { id:'poison', key:'3', icon:'☠️', col:'#7bd88f' },
+};
+const MAGE_ELEMENT_ORDER = ['fire','frost','poison'];
+
+function mageElement(p){
+  if(!p) return MAGE_ELEMENTS.fire;
+  return MAGE_ELEMENTS[p.element || 'fire'] || MAGE_ELEMENTS.fire;
+}
+function setMageElement(p, id){
+  if(!p || !MAGE_ELEMENTS[id]) return;
+  if(p.element === id) return;
+  p.element = id;
+  const e = MAGE_ELEMENTS[id];
+  addFloater(p.x, p.y - p.r - 20, e.icon + ' ' + T('elem_'+id), e.col, true);
+  addRing(p.x, p.y, e.col, p.r*2.4, 14, 3);
+  updateElementHud();
+}
+/* Csak a mágus-jellegű kasztok váltanak elemet. */
+function usesElements(cls){ return cls==='mage' || cls==='sealbearer' || cls==='grandmaster' || cls==='godlike'; }
+
+
+
+/* A méreg-lövedék becsapódása: terjedő felhőt hagy. A meglévő felhő-
+   rendszert használja, hogy a sebzés-ütemezés közös maradjon. */
+function spawnPoisonCloud(b){
+  if(b._poisoned) return; b._poisoned = true;
+  const pz = b.poison;
+  game.clouds.push({ x:b.x, y:b.y, r:pz.r, life:pz.life, dmg:pz.dmg, color:'#7bd88f' });
+  addRing(b.x, b.y, '#7bd88f', pz.r, 16, 3);
+  addParticles(b.x, b.y, '#7bd88f', 10);
+}
+
+/* =========================================================
+   MÁGUS — RÚNAFAL
+   ---------------------------------------------------------
+   Öt másodpercre kör alakú rúnafalat húz maga köré. Aki AKTIVÁLÁSKOR
+   bent van, azt kilöki és megsebzi; aki utána próbál belépni, azt a fal
+   visszatolja. Nem sebzés-képesség: teret ad, hogy lélegzethez juss.
+   ========================================================= */
+function spawnRuneWall(p, r){
+  const R = 118 + r*14, life = 300;   // ~5 másodperc
+  game.runeWalls = game.runeWalls || [];
+  game.runeWalls.push({ x:p.x, y:p.y, r:R, life, maxLife:life, dmg: 8 + r*4, owner:p });
+  // aktiváláskor bent lévők kilökése + sebzés
+  const push = (en, mul)=>{
+    const d = dist(en.x, en.y, p.x, p.y) || 1;
+    if(d >= R) return;
+    const a = Math.atan2(en.y-p.y, en.x-p.x);
+    en.x = p.x + Math.cos(a)*(R + 14);
+    en.y = p.y + Math.sin(a)*(R + 14);
+    en.hp -= (8 + r*4) * mul; en.hitFlash = 8;
+    en._knock = 8; en._kdir = a;
+    addParticles(en.x, en.y, '#c9a6ff', 8);
+  };
+  for(const en of game.enemies) push(en, 1);
+  if(game.boss) push(game.boss, 0.5);
+  addRing(p.x, p.y, '#c9a6ff', R, 24, 5);
+  addFlash('#c9a6ff', 0.10, 10); addShake(4, 8);
+}
+/* A fal élete: visszatolja, aki be akar lépni. */
+function tickRuneWalls(){
+  if(!game || !game.runeWalls || !game.runeWalls.length) return;
+  for(const w of game.runeWalls){
+    w.life--;
+    const block = (en)=>{
+      const d = dist(en.x, en.y, w.x, w.y);
+      if(d > w.r || d < w.r - 46) return;    // csak a fal vonalánál hat
+      const a = Math.atan2(en.y-w.y, en.x-w.x);
+      en.x = w.x + Math.cos(a)*w.r; en.y = w.y + Math.sin(a)*w.r;
+      if(!en._wallCd || en._wallCd <= 0){
+        en.hp -= w.dmg*0.35; en.hitFlash = 4; en._wallCd = 24;
+        addParticles(en.x, en.y, '#c9a6ff', 4);
+      }
+    };
+    for(const en of game.enemies){ if(en._wallCd>0) en._wallCd--; block(en); }
+  }
+  game.runeWalls = game.runeWalls.filter(w=>w.life > 0);
+}
+function drawRuneWalls(g){
+  if(!game || !game.runeWalls) return;
+  for(const w of game.runeWalls){
+    const k = w.life / w.maxLife;
+    const t = Date.now()/300;
+    g.save();
+    g.globalAlpha = 0.25 + k*0.35;
+    g.strokeStyle = '#c9a6ff'; g.lineWidth = 4;
+    g.setLineDash([14, 10]); g.lineDashOffset = -t*14;
+    g.beginPath(); g.arc(w.x, w.y, w.r, 0, PI2); g.stroke();
+    g.setLineDash([]);
+    // rúna-jelek a kör mentén
+    g.globalAlpha = 0.5 + k*0.4; g.fillStyle = '#e0ccff';
+    for(let i=0;i<10;i++){
+      const a = t*0.25 + i*(PI2/10);
+      g.beginPath(); g.arc(w.x+Math.cos(a)*w.r, w.y+Math.sin(a)*w.r, 3.2, 0, PI2); g.fill();
+    }
+    g.restore();
+  }
+  g.globalAlpha = 1;
+}
+
+
+
+/* Az elem-sáv: mindhárom elem látszik, az aktív kiemelve, mellette a
+   billentyűje — így nem kell megjegyezni, mi mire van kötve. */
+function updateElementHud(){
+  const el = document.getElementById('elementTag'); if(!el) return;
+  const p = game && game.player;
+  if(!p || !usesElements(p.cls) || !game || game.state!=='playing'){ el.innerHTML=''; el.title=''; return; }
+  const cur = mageElement(p).id;
+  el.innerHTML = MAGE_ELEMENT_ORDER.map(id=>{
+    const e = MAGE_ELEMENTS[id];
+    return `<span class="el${id===cur?' on':''}" style="color:${e.col}">${e.key}${e.icon}</span>`;
+  }).join('');
+  el.title = MAGE_ELEMENT_ORDER.map(id=>MAGE_ELEMENTS[id].key+' — '+T('elem_'+id)).join('\n');
+}
+
+
+
+
+/* =========================================================
+   HŐSÖK MEGVÁSÁRLÁSA
+   ---------------------------------------------------------
+   A szint-alapú feloldás túl olcsó volt: elég volt játszani, és maguktól
+   megjöttek. Mostantól meg kell VENNI őket, és minél erősebb a hős, annál
+   drágább. A profil-szint már csak azt szabja meg, mikor JELENIK MEG a
+   boltban — a megszerzés pénzbe kerül.
+
+   Visszafelé kompatibilis: akinek a régi szabály szerint már járt egy hős,
+   az megtartja. Senkitől nem veszünk el semmit egy frissítéssel.
+   ========================================================= */
+function heroPrice(cls){ const v = HERO_PRICES[cls]; return (v===undefined) ? 1000 : v; }
+
+/* Egyszeri átvétel: amit a régi, szint-alapú szabály szerint már
+   megnyitottál, azt jóváírjuk megvásároltként. */
+function grandfatherHeroes(){
+  if(profile.heroesMigrated) return;
+  profile.ownedHeroes = profile.ownedHeroes || [];
+  const lvl = profileLevel();
+  for(const id in CLASSES){
+    if(heroPrice(id) === 0 || lvl >= (CLASSES[id].req||1)){
+      if(!profile.ownedHeroes.includes(id)) profile.ownedHeroes.push(id);
+    }
+  }
+  profile.heroesMigrated = true;
+  saveProfile();
+}
+function heroOwned(cls){
+  profile.ownedHeroes = profile.ownedHeroes || [];
+  return heroPrice(cls) === 0 || profile.ownedHeroes.includes(cls);
+}
+/* Látszik-e a boltban? A szint most már csak kirakat-feltétel. */
+function heroVisible(cls){ return profileLevel() >= (CLASSES[cls].req||1) || heroOwned(cls); }
+function buyHero(cls){
+  if(heroOwned(cls)) return false;
+  const cost = heroPrice(cls);
+  if((profile.coins||0) < cost) return false;
+  profile.coins -= cost;
+  profile.ownedHeroes = profile.ownedHeroes || [];
+  profile.ownedHeroes.push(cls);
+  saveProfile();
+  return true;
+}
+
+
+/* =========================================================
+   KASZTONKÉNTI KÉPESSÉG-KÉSZLETEK
+   ---------------------------------------------------------
+   Eddig 35 képesség KÖZÖS volt: bármelyik hős felvehette ugyanazt, a
+   legerősebbeket is. Így nem lehet egyensúlyozni — ha egy magas szintű
+   képesség túl erős, minden kaszton az.
+
+   Mostantól mindenkinek saját készlete van:
+     ALAP  — a kaszt feloldásakor AZONNAL jár, nem kell külön megszerezni
+     ELIT  — kasztonként öt, kizárólagos, kristályért vehető meg
+
+   Az ELIT lista nincs kézzel felsorolva: abból áll, ami az ABILITIES
+   táblában ehhez a kaszthoz van kötve és epic/legendary. Így egy új elit
+   képesség hozzáadása egyetlen bejegyzés, a készlet magától követi.
+   ========================================================= */
+/* A pecsételt hősök mindent ismernek — ez a jutalmuk, és a powerDamp
+   már eleve visszafogja őket. */
+function classKnowsAll(cls){ const c=CLASSES[cls]; return !!(c && c.allAbilities); }
+
+function classEliteAbilities(cls){
+  const out = [];
+  for(const id in ABILITIES){
+    const a = ABILITIES[id];
+    if(a.cls === cls && (a.epic || a.legendary)) out.push(id);
+  }
+  return out;
+}
+function classBaseAbilities(cls){
+  const base = (CLASS_BASE_ABILITIES[cls] || []).slice();
+  // a kaszthoz kötött, de nem elit képességek is alapból járnak
+  for(const id in ABILITIES){
+    const a = ABILITIES[id];
+    if(a.cls === cls && !a.epic && !a.legendary && !base.includes(id)) base.push(id);
+  }
+  return base.filter(id=>ABILITIES[id]);
+}
+function classAbilityPool(cls){
+  if(classKnowsAll(cls)) return Object.keys(ABILITIES);
+  return classBaseAbilities(cls).concat(classEliteAbilities(cls));
+}
+
+/* Megvan-e az adott elit képesség ehhez a kaszthoz? */
+function eliteOwned(cls, id){
+  profile.eliteUnlocks = profile.eliteUnlocks || {};
+  const list = profile.eliteUnlocks[cls];
+  return !!(list && list.includes(id));
+}
+/* Az elit képességek ára kristályban. Minél erősebb, annál drágább. */
+function eliteCost(id){
+  const a = ABILITIES[id]; if(!a) return 0;
+  return a.legendary ? 60 : 35;
+}
+function buyElite(cls, id){
+  const a = ABILITIES[id];
+  if(!a || !(a.epic||a.legendary) || a.cls !== cls) return false;
+  if(eliteOwned(cls, id)) return false;
+  const cost = eliteCost(id);
+  if((profile.shards||0) < cost) return false;
+  profile.shards -= cost;
+  profile.eliteUnlocks = profile.eliteUnlocks || {};
+  profile.eliteUnlocks[cls] = profile.eliteUnlocks[cls] || [];
+  profile.eliteUnlocks[cls].push(id);
+  saveProfile();
+  return true;
+}
+
+
 /* =========================================================
    MÁGIKUS TÁRGYAK — a varázsló hagyatéka, kasztra szabva
    ---------------------------------------------------------
@@ -9725,13 +10345,30 @@ const CLASS_WEAPONS = {
 
   /* MÁGUS — Lina/Brand: a lövedék becsapódáskor ROBBAN. Egyedül gyengébb,
      csoport ellen sokkal jobb. */
-  mage: { style:'shot', label:'blast',
+  mage: { style:'shot', label:'element',
     fire(p, base, crit){
       const d = base*(crit?2:1);
-      game.bullets.push({ x:p.x, y:p.y,
+      const el = mageElement(p).id;
+      const b = { x:p.x, y:p.y,
         vx:Math.cos(p.facing)*p.bulletSpeed, vy:Math.sin(p.facing)*p.bulletSpeed,
-        r:crit?7:6, life:70, dmg:Math.round(d*0.6), crit,
-        explode:{ r:62, dmg:Math.round(d*0.75), col:'#9d5cff' }, trail:'#9d5cff' });
+        r:crit?7:6, life:70, crit, trail: MAGE_ELEMENTS[el].col };
+      if(el === 'fire'){
+        // TŰZ: a becsapódás robban — a legnagyobb nyers sebzés, tömeg ellen
+        b.dmg = Math.round(d*0.6);
+        b.explode = { r:62, dmg:Math.round(d*0.75), col:'#ff8c3c' };
+      } else if(el === 'frost'){
+        /* JÉG: kevesebbet sebez, de lassít — és a lassítás HALMOZÓDIK:
+           a harmadik találat már megfagyasztja. Uralkodás, nem sebzés. */
+        b.dmg = Math.round(d*0.55);
+        b.slow = 90;
+        b.chill = 1;
+      } else {
+        /* MÉREG: a becsapódás kicsi, de szétterjedő felhőt hagy, ami
+           folyamatosan mar. Egyedül lassú, sok ellenfél ellen a legjobb. */
+        b.dmg = Math.round(d*0.35);
+        b.poison = { r:56, dmg: Math.max(2, Math.round(d*0.16)), life:170 };
+      }
+      game.bullets.push(b);
       SFX.shoot(p.cls);
     } },
 
@@ -10154,6 +10791,15 @@ document.getElementById('startBtn').addEventListener('click', ()=>{
   }
   if(!profile.seenGuide){ profile.seenGuide = true; saveProfile(); }
   startPlay();
+});
+/* ELEMVÁLTÁS: 1 / 2 / 3 a mágus-jellegű kasztoknál. Csak harc közben hat,
+   hogy a menükben a számbillentyűk szabadok maradjanak. */
+window.addEventListener('keydown', (e)=>{
+  if(!game || game.state !== 'playing') return;
+  const p = game.player; if(!p || !usesElements(p.cls)) return;
+  const idx = ['1','2','3'].indexOf(e.key);
+  if(idx < 0) return;
+  setMageElement(p, MAGE_ELEMENT_ORDER[idx]);
 });
 document.getElementById('resumeRunBtn').addEventListener('click', resumeRun);
 /* SZTORI MÓD: ha van már haladásod, a "folytatás" oda dob vissza, ahol tartottál
