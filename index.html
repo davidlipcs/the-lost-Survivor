@@ -6491,7 +6491,7 @@ function resetGame(){
 
 /* Fejezet pálya-elrendezésének betöltése (akadály/fedezék/hordó/veszély/láda) */
 function loadChapterLayout(ch){
-  const w=canvas.width, h=canvas.height;
+  const w=WORLD.w, h=WORLD.h;
   game.obstacles = [];
   let chBush = 0;
   const kindPool = ch.obstacleKinds || null;   // ha meg van adva, csak ebből a listából sorsol (pl. csak 'pine')
@@ -6529,10 +6529,11 @@ function loadChapterLayout(ch){
 // ablakméret-/orientációváltáskor a normalizált propok újrapozicionálása (állapot megőrzésével)
 function relayoutChapter(){
   if(!game || !game.chapter) return;
-  const w=canvas.width, h=canvas.height;
+  worldFit();
+  const w=WORLD.w, h=WORLD.h;
   const re=o=>{ if(o.nx!==undefined){ o.x=o.nx*w; o.y=o.ny*h; } };
   game.obstacles.forEach(re); game.barrels.forEach(re); game.hazards.forEach(re); game.crates.forEach(re);
-  const p=game.player; if(p){ p.x=clamp(p.x,p.r,w-p.r); p.y=clamp(p.y,safeTop+p.r*0.5,h-safeBottom-p.r*0.5); }
+  const p=game.player; if(p){ p.x=clamp(p.x,p.r,WORLD.w-p.r); p.y=clamp(p.y,p.r,WORLD.h-p.r); }
 }
 
 /* Robbanó hordó felrobbanása — ellenfelet+bosst sebez, játékost is (ha közel és sebezhető), láncol */
@@ -6563,8 +6564,8 @@ function dropLoot(cr){
 }
 
 function generateObstacles(){
-  const w=canvas.width, h=canvas.height;
-  const cx=canvas.width/2, cy=canvas.height/2;
+  const w=WORLD.w, h=WORLD.h;
+  const cx=w/2, cy=h/2;
   const n = 8 + Math.floor(Math.random()*5);
   game.obstacles = [];
   let tries=0, bushCount=0;
@@ -6709,7 +6710,7 @@ function difficultyWave(){
 function spawnEnemyType(type, forcedX, forcedY, hpMult=1, rMult=1){
   const def = ENEMY_DEFS[type];
   const dif = game.diff;
-  const w=canvas.width, h=canvas.height;
+  const w=WORLD.w, h=WORLD.h;
   let x=forcedX, y=forcedY;
   if(x===undefined){
     if(type==='turret'){
@@ -6724,11 +6725,19 @@ function spawnEnemyType(type, forcedX, forcedY, hpMult=1, rMult=1){
       } while(tries < 40 && p2 && dist(x, y, p2.x, p2.y) < 220);
       addParticles(x, y, def.color, 20); addRing(x,y,def.color,70,24,3);
     } else {
-      const edge = Math.floor(Math.random()*4);
-      if(edge===0){ x=-30; y=Math.random()*h; }
-      else if(edge===1){ x=w+30; y=Math.random()*h; }
-      else if(edge===2){ x=Math.random()*w; y=-30; }
-      else { x=Math.random()*w; y=h+30; }
+      /* A KAMERA látóhatárán kívülről érkeznek, nem a világ pereméről.
+         A nagyobb pályán a világ széle több képernyőnyire lehet: onnan
+         indítva az ellenfelek fél percig gyalogolnának, és a hős körül
+         üres maradna a tér. Így viszont mindig a látómező szélén tűnnek
+         fel, akármekkora is a pálya. */
+      const p2 = game.player;
+      const cx = p2 ? p2.x : w/2, cy = p2 ? p2.y : h/2;
+      // a látómező fél-átlója világ-egységben (a rombusz miatt bőven mérve)
+      const viewR = (canvas.width/ARENA_ISO.k) * 0.62;
+      const a = Math.random()*PI2;
+      const rr = viewR + 40 + Math.random()*90;
+      x = clamp(cx + Math.cos(a)*rr, -30, w+30);
+      y = clamp(cy + Math.sin(a)*rr, -30, h+30);
     }
   }
   const dw = difficultyWave();
@@ -6945,6 +6954,7 @@ function levelUp(){
    FRISSÍTÉS
    ========================================================= */
 function update(){
+  worldFit();
   if(!game || game.state !== 'playing') return;
   // futam-óra: csak játék közben ketyeg, szünetben/párbeszédben nem
   game.runFrames = (game.runFrames||0) + 1;
@@ -7020,8 +7030,8 @@ function update(){
   let sp = p.speed * (p.surgeActive>0 ? 1.5 : 1);
   if(p.dashing > 0){ sp = p.speed * 3.0; p.dashing--; }
   if(p.hazSlow>0){ if(p.dashing<=0) sp *= 0.5; p.hazSlow--; }   // fagyzóna lassítás
-  p.x = clamp(p.x + mvx*sp, p.r, w-p.r);
-  p.y = clamp(p.y + mvy*sp, safeTop+p.r*0.5, h-safeBottom-p.r*0.5);
+  p.x = clamp(p.x + mvx*sp, p.r, WORLD.w-p.r);
+  p.y = clamp(p.y + mvy*sp, p.r, WORLD.h-p.r);
   resolveObstacles(p);
   const moving = (mag>0.05);
 
@@ -7260,6 +7270,15 @@ function update(){
        sokszorozzuk, ott a szélesítés lenne az értelmes bónusz. */
     const wep = classWeapon(p.cls);
     if(wep){
+      /* A lövedék a FEGYVER CSÖVÉBŐL induljon, ne a talpad közepéből.
+         A p.x/p.y-t csak a lövés idejére toljuk előre, mert MINDEN
+         fegyver abból számol — így egyetlen ponton intézzük mind a
+         kilencet, a többlövés szórását is beleértve. */
+      const mzx = Math.cos(p.facing) * p.r * 1.25;
+      const mzy = Math.sin(p.facing) * p.r * 1.25;
+      const _mx = p.x, _my = p.y;
+      p.x += mzx; p.y += mzy;
+      try{
       const n = (wep.style==='melee') ? 1
               : (p.buffs.multishot>0 ? Math.max(3, p.bulletCount||1) : (p.bulletCount||1));
       if(n > 1){
@@ -7278,6 +7297,7 @@ function update(){
           const f0=p.facing; p.facing += Math.PI; wep.fire(p, base*0.6, false); p.facing=f0;
         }
       }
+      } finally { p.x = _mx; p.y = _my; }   // a hős a helyén marad
     } else {
       // biztonsági ág: ismeretlen kaszt -> a régi, általános lövedék
       game.bullets.push({ x:p.x, y:p.y, vx:Math.cos(p.facing)*p.bulletSpeed, vy:Math.sin(p.facing)*p.bulletSpeed,
@@ -7406,7 +7426,7 @@ function update(){
         addParticles(en.x,en.y,'#a86ede',16); addRing(en.x,en.y,'#a86ede',40,14,3);
         const a = Math.atan2(en.y-p.y, en.x-p.x) + (Math.random()-0.5)*1.2;
         en.x = clamp(en.x + Math.cos(a)*230, 30, w-30);
-        en.y = clamp(en.y + Math.sin(a)*230, safeTop+30, h-safeBottom-30);
+        en.y = clamp(en.y + Math.sin(a)*230, 30, WORLD.h-30);
         addParticles(en.x,en.y,'#a86ede',16);
       }
 
@@ -9049,14 +9069,21 @@ function updateHud(){
 let _arenaFloor = null, _arenaFloorKey = '';
 function arenaFloorLayer(w, h, th){
   const A = ARENA_ISO;
-  const key = [canvas.width, canvas.height, w, h, (th && th.bg) || '-',
+  const key = [A.k.toFixed(4), w, h, (th && th.bg) || '-',
                (th && th.gridColor) || '-',
                groundTexture ? groundTexture.width+'x'+groundTexture.height : '-'].join('|');
   if(_arenaFloor && _arenaFloorKey === key) return _arenaFloor;
+  /* A padlót a világ TELJES rombuszára sütjük ki, saját origóval. A
+     kamera nem sül bele — a lerakásnál toljuk el, így mozgás közben nem
+     kell újrasütni. */
+  const pad = 8;
+  const ox = h*A.k + pad, oy = pad;
   const c = document.createElement('canvas');
-  c.width = canvas.width; c.height = canvas.height;
+  c.width  = Math.ceil((w+h)*A.k) + pad*2;
+  c.height = Math.ceil((w+h)*A.k*0.5) + pad*2;
+  c._ox = ox; c._oy = oy;
   const g = c.getContext('2d');
-  g.setTransform(A.k, A.k*0.5, -A.k, A.k*0.5, A.ox, A.oy);
+  g.setTransform(A.k, A.k*0.5, -A.k, A.k*0.5, ox, oy);
   if(th && th.bg){
     g.fillStyle = th.bg; g.fillRect(0,0,w,h);
     g.strokeStyle = th.gridColor || 'rgba(110,231,255,0.05)';
@@ -9064,12 +9091,18 @@ function arenaFloorLayer(w, h, th){
     for(let x=0;x<=w;x+=96){ g.moveTo(x,0); g.lineTo(x,h); }
     for(let y=0;y<=h;y+=96){ g.moveTo(0,y); g.lineTo(w,y); }
     g.stroke();
-  } else if(groundTexture && groundTexture.width===w && groundTexture.height===h){
-    g.drawImage(groundTexture, 0, 0);
+  } else if(groundTexture && groundTexture.width > 0){
+    /* A talajtextúra a VÁSZON méretére készül, a világ viszont nagyobb
+       lehet nála — ezért csempézzük. Enélkül a pálya nagy része üres
+       fekete maradt, mert a régi "pont akkora?" vizsgálat elbukott. */
+    g.fillStyle = '#0c0f14'; g.fillRect(0,0,w,h);
+    for(let ty=0; ty<h; ty+=groundTexture.height)
+      for(let tx=0; tx<w; tx+=groundTexture.width)
+        g.drawImage(groundTexture, tx, ty);
   } else {
     g.fillStyle = '#0c0f14'; g.fillRect(0,0,w,h);
   }
-  g.strokeStyle = 'rgba(150,190,230,0.22)'; g.lineWidth = 3/A.k;
+  g.strokeStyle = 'rgba(150,190,230,0.30)'; g.lineWidth = 4/A.k;
   g.strokeRect(0, 0, w, h);
   _arenaFloor = c; _arenaFloorKey = key;
   return c;
@@ -9217,14 +9250,43 @@ function arenaIsoZ(e){
    ========================================================= */
 const ARENA_ISO = { k:1, ox:0, oy:0, sx:0, sy:0 };
 
+/* A VILÁG mérete. Eddig mindig a vászon volt: a pálya pont akkora, mint
+   a képernyő, kamera nélkül. A sima csatában ez szűk — ezért a világ
+   most nagyobb lehet a képernyőnél, és a kamera követ. A fejezetek a
+   normalizált (nx, ny) koordinátáikkal automatikusan szétterülnek rajta. */
+const WORLD = { w: 1280, h: 800, scale: 1 };
+const ARENA_CAM = { x: 0, y: 0, ready: false };
+
+/* Mekkora legyen a pálya? A hódító és sztori fejezetek maradnak
+   képernyőméretűek (ott a tervezett elrendezés erre van szabva), a sima
+   csata (végtelen / kampány fejezet nélkül) kap nagyobb terepet. */
+function worldScaleFor(){ return (game && game.chapter) ? 1 : 1.9; }
+function worldFit(){
+  WORLD.scale = worldScaleFor();
+  WORLD.w = Math.round(canvas.width  * WORLD.scale);
+  WORLD.h = Math.round(canvas.height * WORLD.scale);
+  return WORLD;
+}
+
 function arenaIsoFit(w, h){
   const A = ARENA_ISO;
-  // az egész arénának látszania kell: a rombusz befoglalója (w+h) széles
-  // és (w+h)/2 magas, ezt illesztjük a vászonba
-  A.k  = Math.min(canvas.width/(w+h), 2*canvas.height/(w+h));
-  A.ox = h*A.k;
-  A.oy = (canvas.height - (w+h)*A.k*0.5)*0.5;
+  /* A LÉPTÉK a vászonból jön, nem a világ méretéből. Ha a világ méretéből
+     jönne, a nagyobb pálya egyszerűen összement volna a képernyőn —
+     ugyanannyit látnál, csak apróbban. Így a figurák mérete állandó, és a
+     nagyobb pályát a kamera járja be. */
+  A.k = Math.min(canvas.width, 2*canvas.height) / (canvas.width + canvas.height);
+  // kamera: a követett pont a képernyő közepére kerül
+  const cx = ARENA_CAM.x, cy = ARENA_CAM.y;
+  A.ox = canvas.width*0.5  - (cx - cy)*A.k;
+  A.oy = canvas.height*0.5 - (cx + cy)*A.k*0.5;
   return A;
+}
+/* A kamera lágyan követi a hőst. Kemény követéssel minden apró lépés
+   megrántaná a képet. */
+function arenaCamFollow(tx, ty, snap){
+  if(snap || !ARENA_CAM.ready){ ARENA_CAM.x = tx; ARENA_CAM.y = ty; ARENA_CAM.ready = true; return; }
+  ARENA_CAM.x += (tx - ARENA_CAM.x) * 0.12;
+  ARENA_CAM.y += (ty - ARENA_CAM.y) * 0.12;
 }
 function arenaToScreen(x, y){
   const A = ARENA_ISO;
@@ -9289,7 +9351,9 @@ function draw(){
   // vászon-mátrixba tesszük, hanem eltárolt eltolásként, mert a világ
   // rajza ide-oda vált a talajsík és a képernyő-tér között.
   const shaking = shakeT>0 && shakeMag>0;
-  const A = arenaIsoFit(w, h);
+  worldFit();
+  if(game && game.player) arenaCamFollow(game.player.x, game.player.y, !ARENA_CAM.ready);
+  const A = arenaIsoFit(WORLD.w, WORLD.h);
   if(shaking){
     const amp = shakeMag * (shakeT/12);
     A.sx = (Math.random()*2-1)*amp; A.sy = (Math.random()*2-1)*amp;
@@ -9303,8 +9367,18 @@ function draw(){
   const p = game.player;
   const lightFx = fxLight();
 
-  // a kisütött padló, 1:1-ben; a rázás itt jön rá
-  ctx.drawImage(arenaFloorLayer(w, h, th), A.sx, A.sy);
+  /* A kisütött padló. A kamera miatt nem a (0,0)-ra kerül, hanem oda,
+     ahova a világ origója épp vetül. CSAK A LÁTHATÓ KIVÁGATOT tesszük le:
+     a nagyobb pályán a teljes padlókép több képernyőnyi, és egészben
+     lerakva minden képkockán feleslegesen mintázna. */
+  const floor = arenaFloorLayer(WORLD.w, WORLD.h, th);
+  {
+    const fx = A.ox - floor._ox + A.sx, fy = A.oy - floor._oy + A.sy;
+    const sx0 = Math.max(0, Math.floor(-fx)), sy0 = Math.max(0, Math.floor(-fy));
+    const sw = Math.min(floor.width  - sx0, Math.ceil(w) + 2);
+    const sh = Math.min(floor.height - sy0, Math.ceil(h) + 2);
+    if(sw > 0 && sh > 0) ctx.drawImage(floor, sx0, sy0, sw, sh, fx + sx0, fy + sy0, sw, sh);
+  }
 
   /* ====== TALAJSÍK: innentől minden izometrikus ====== */
   arenaGroundBegin(ctx);
@@ -9536,28 +9610,42 @@ function draw(){
     ctx.restore();
   }
 
-  // lövedékek: additív fény, nyomvonallal
-  ctx.save(); ctx.globalCompositeOperation='lighter';
+  /* Lövedékek. NEM a talajsíkon: a fegyver a mellkas magasságában van,
+     tehát a lövés is ott repül. Ezért képernyő-térben rajzoljuk, a
+     vetített pont FÖLÉ emelve — a talajsíkon maradva úgy néztek ki,
+     mintha a földön csúsznának a hős lába előtt. */
+  const BULLET_LIFT = 26 * ARENA_ISO.k * 1.6;
+  ctx.save(); ctx.setTransform(1,0,0,1,0,0); ctx.translate(A.sx, A.sy);
+  ctx.globalCompositeOperation='lighter';
+  const bp = (x,y)=>{ const A2=ARENA_ISO;
+    return { x:(x-y)*A2.k + A2.ox, y:(x+y)*A2.k*0.5 + A2.oy - BULLET_LIFT }; };
   game.enemyBullets.forEach(eb=>{
     const ec=eb.col||'#ff5c7c';
-    ctx.strokeStyle=rgbaAny(ec,0.45); ctx.lineWidth=eb.r*1.2; ctx.lineCap='round';
-    ctx.beginPath(); ctx.moveTo(eb.x-eb.vx*2.2,eb.y-eb.vy*2.2); ctx.lineTo(eb.x,eb.y); ctx.stroke();
-    ctx.beginPath(); ctx.arc(eb.x,eb.y,eb.r*1.7,0,PI2); ctx.fillStyle=rgbaAny(ec,0.28); ctx.fill();
-    ctx.beginPath(); ctx.arc(eb.x,eb.y,eb.r,0,PI2); ctx.fillStyle=ec; ctx.fill();
-    ctx.beginPath(); ctx.arc(eb.x,eb.y,eb.r*0.45,0,PI2); ctx.fillStyle='#fff'; ctx.fill();
+    const c = bp(eb.x, eb.y), t = bp(eb.x-eb.vx*2.2, eb.y-eb.vy*2.2);
+    const R = Math.max(1.6, eb.r*ARENA_ISO.k*1.5);
+    ctx.strokeStyle=rgbaAny(ec,0.45); ctx.lineWidth=R*1.2; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(t.x,t.y); ctx.lineTo(c.x,c.y); ctx.stroke();
+    ctx.beginPath(); ctx.arc(c.x,c.y,R*1.7,0,PI2); ctx.fillStyle=rgbaAny(ec,0.28); ctx.fill();
+    ctx.beginPath(); ctx.arc(c.x,c.y,R,0,PI2); ctx.fillStyle=ec; ctx.fill();
+    ctx.beginPath(); ctx.arc(c.x,c.y,R*0.45,0,PI2); ctx.fillStyle='#fff'; ctx.fill();
   });
   const pcol = p.color;
   game.bullets.forEach(b=>{
     const col = b.friendly ? '#dff6ff' : pcol;
-    ctx.strokeStyle=rgbaAny(col,0.5); ctx.lineWidth=b.r*1.3; ctx.lineCap='round';
-    ctx.beginPath(); ctx.moveTo(b.x-b.vx*1.8,b.y-b.vy*1.8); ctx.lineTo(b.x,b.y); ctx.stroke();
-    ctx.beginPath(); ctx.arc(b.x,b.y,b.r*1.6,0,PI2); ctx.fillStyle=rgbaAny(col,0.3); ctx.fill();
-    ctx.beginPath(); ctx.arc(b.x,b.y,b.r*0.7,0,PI2); ctx.fillStyle='#fff'; ctx.fill();
-    if(b.crit){ ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; const s=b.r*2.2, a=nowT/60;
-      ctx.beginPath(); ctx.moveTo(b.x+Math.cos(a)*s,b.y+Math.sin(a)*s); ctx.lineTo(b.x-Math.cos(a)*s,b.y-Math.sin(a)*s);
-      ctx.moveTo(b.x+Math.cos(a+1.57)*s,b.y+Math.sin(a+1.57)*s); ctx.lineTo(b.x-Math.cos(a+1.57)*s,b.y-Math.sin(a+1.57)*s); ctx.stroke(); }
+    const c = bp(b.x, b.y), t = bp(b.x-b.vx*1.8, b.y-b.vy*1.8);
+    const R = Math.max(1.6, b.r*ARENA_ISO.k*1.5);
+    ctx.strokeStyle=rgbaAny(col,0.5); ctx.lineWidth=R*1.3; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(t.x,t.y); ctx.lineTo(c.x,c.y); ctx.stroke();
+    ctx.beginPath(); ctx.arc(c.x,c.y,R*1.6,0,PI2); ctx.fillStyle=rgbaAny(col,0.3); ctx.fill();
+    ctx.beginPath(); ctx.arc(c.x,c.y,R*0.7,0,PI2); ctx.fillStyle='#fff'; ctx.fill();
+    if(b.crit){ ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; const s2=R*2.2, a2=nowT/60;
+      ctx.beginPath(); ctx.moveTo(c.x+Math.cos(a2)*s2,c.y+Math.sin(a2)*s2); ctx.lineTo(c.x-Math.cos(a2)*s2,c.y-Math.sin(a2)*s2);
+      ctx.moveTo(c.x+Math.cos(a2+1.57)*s2,c.y+Math.sin(a2+1.57)*s2); ctx.lineTo(c.x-Math.cos(a2+1.57)*s2,c.y-Math.sin(a2+1.57)*s2); ctx.stroke(); }
   });
-  // részecskék / villámlánc vizuál (ugyanabban az additív menetben)
+  ctx.restore();
+
+  // részecskék / villámlánc vizuál a TALAJSÍKON (por, szikra, becsapódás)
+  ctx.save(); ctx.globalCompositeOperation='lighter';
   game.particles.forEach(pt=>{
     if(pt.bolt){
       ctx.globalAlpha=0.9; drawBolt(ctx, pt.x,pt.y, pt.bolt.tx,pt.bolt.ty, 'rgba(160,220,255,0.7)', 5);
