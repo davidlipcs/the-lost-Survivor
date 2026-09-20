@@ -2771,22 +2771,22 @@ const CLASSES = {
     strong:'Óriási sebzés és hatótáv', weak:'Lassú tűz, közelben sebezhető',
     hp:100, speed:2.2, fireRate:42, bulletDmg:34, bulletSpeed:12, bulletCount:1,
     armor:0, regen:0, critChance:0.2, lowHpDmg:0, cdScale:1, ult:'precision',
-    def:['railgun','blink','dash','turret'] },
+    def:['railgun','blink','dash','turret','heal'] },
   berserker:{ label:'Berserker', role:'ROHAMOZÓ', req:1, col:'#ff8a5c', icon:'🪓',
     strong:'Alacsony HP-n brutális sebzés', weak:'Nincs távolsági fölénye',
     hp:130, speed:2.55, fireRate:16, bulletDmg:11, bulletSpeed:8, bulletCount:1,
     armor:-0.1, regen:0, critChance:0.1, lowHpDmg:0.8, cdScale:1, ult:'bloodrage',
-    def:['dash','berserk','shockwave','lifesteal'] },
+    def:['dash','berserk','shockwave','lifesteal','heal'] },
   mage:{ label:'Mágus', role:'VARÁZSLÓ', req:2, col:'#8b5cf6', icon:'🔮',
     strong:'Erős, gyorsan újratöltődő képességek', weak:'Törékeny',
     hp:90, speed:2.25, fireRate:22, bulletDmg:13, bulletSpeed:8, bulletCount:1,
     armor:0, regen:0, critChance:0, lowHpDmg:0, cdScale:0.8, ult:'elemental',
-    def:['fireball','meteor','ice','chain','poison'] },
+    def:['fireball','meteor','ice','chain','poison','heal'] },
   assassin:{ label:'Assassin', role:'ORGYILKOS', req:3, col:'#ff5c7c', icon:'🗡️',
     strong:'Villámgyors, kritikus burst', weak:'Nagyon törékeny',
     hp:85, speed:2.75, fireRate:15, bulletDmg:12, bulletSpeed:11, bulletCount:1,
     armor:-0.05, regen:0, critChance:0.28, lowHpDmg:0, cdScale:0.85, ult:'shadowstep',
-    def:['blink','dash','shotgun','lifesteal','cluster'] },
+    def:['blink','dash','shotgun','lifesteal','cluster','heal'] },
   support:{ label:'Support', role:'TÁMOGATÓ', req:2, col:'#6ee7ff', icon:'✚',
     strong:'Gyógyulás, tornyok, kitartás', weak:'Alacsony önsebzés',
     hp:120, speed:2.2, fireRate:24, bulletDmg:11, bulletSpeed:8, bulletCount:1,
@@ -2801,12 +2801,12 @@ const CLASSES = {
     strong:'Csapdák és társ irányítják a csatateret', weak:'Felkészülés nélkül gyenge burst',
     hp:112, speed:2.35, fireRate:20, bulletDmg:11, bulletSpeed:9, bulletCount:1,
     armor:0, regen:0, critChance:0.12, lowHpDmg:0, cdScale:0.95, ult:'huntingground',
-    def:['snaretrap','beast','piercingshot','dash'] },
+    def:['snaretrap','beast','piercingshot','dash','heal'] },
   engineer:{ label:'Gépész', role:'SZERKEZETÉPÍTŐ', req:3, col:'#ff9d4d', icon:'⚙️',
     strong:'Telepített szerkezetek tartják a terepet', weak:'Lassú, helyhez kötött erő',
     hp:140, speed:2.0, fireRate:28, bulletDmg:9, bulletSpeed:7, bulletCount:1,
     armor:0.15, regen:0.02, critChance:0, lowHpDmg:0, cdScale:0.9, ult:'mechbarrage',
-    def:['minefield','laserwall','repairdrone','shield'] },
+    def:['minefield','laserwall','repairdrone','shield','heal'] },
   sealbearer:{ label:'Mester', role:'MIND A KILENC PECSÉT URA', req:15, col:'#ffd166', icon:'🔯',
     strong:'Bármelyik hős bármelyik pecsétjét használhatja', weak:'Egyik ereje sem a legerősebb saját változatában',
     hp:150, speed:2.25, fireRate:20, bulletDmg:15, bulletSpeed:9, bulletCount:1,
@@ -4989,7 +4989,7 @@ function drawEnemyLive(g, en, p, lightFx, nowT){
      halványabb: a TALPÁNÁL marad meg fény-tócsaként. Így a típus színe
      továbbra is elárulja, mi jön, de nem festünk fölösleges képpontot. */
   const pulse = 0.55 + 0.25*Math.sin(nowT/260 + en.x*0.05);
-  const gs = glowSprite(en.color, R*1.05);
+  const gs = glowSprite(en.color, (en.r0 || R)*1.05);
   g.globalAlpha = pulse*(lightFx?0.22:0.38);
   g.drawImage(gs.c, en.x-gs.S+ox, en.y-gs.S+oy+R*0.35, gs.S*2, gs.S*2);
   g.globalAlpha = 1;
@@ -6428,7 +6428,8 @@ function makePlayer(name, color, head){
   const tier = heroTier(chosenClass);
   const tierMult = 1 + tier*0.05;   // karakterfejlesztés: +5% HP és sebzés fejlesztési szintenként (max 3 szint = +15%)
   return {
-    name, color, head, skin:chosenSkin||0, cls:chosenClass, tier, x:0, y:0, r:18,
+    name, color, head, skin:chosenSkin||0, cls:chosenClass, tier, x:0, y:0,
+    r:Math.round(18*HITBOX_MUL), r0:18, _isPlayer:true,
     speed:cls.speed, vx:0, vy:0, _px:0, _py:0,
     hp:Math.round(cls.hp*bal.hp*tierMult), maxHp:Math.round(cls.hp*bal.hp*tierMult), level:1, xp:0, xpNext:60,
     facing:0,
@@ -6750,17 +6751,27 @@ function spawnEnemyType(type, forcedX, forcedY, hpMult=1, rMult=1){
   /* Az életgörbe negyzetes tagja a késői hullámokon falat épített: a 40.
      hullámnál 4,9-szeres életet adott, amit a hős növekedése nem követ.
      Szelídebb meredekség, hogy a magas hullámok is elérhetők legyenek. */
-  const hpRamp = 1 + dw*0.044 + Math.pow(dw/56, 2)*2.5;
+  /* Erősebb ellenfelek. A Tankkal végig lehetett sétálni a pályán: a
+     páncélja mellett se az életük, se a sebzésük nem volt elég. Az alap
+     életszorzó és a sebzés-görbe is feljebb megy — a görbe alakja marad,
+     csak nem nulláról indul. */
+  const hpRamp = (1 + dw*0.058 + Math.pow(dw/52, 2)*2.9) * 1.35;
   const scale = hpRamp * (game.chapter ? (game.chapter.enemyScale||1) : 1);
   game.enemies.push({
-    type, x, y, r: def.r*rMult,
+    /* Két sugár: `r` a TALÁLATI doboz (megnövelve), `r0` a RAJZÉ. Ha a
+       rajz is a megnövelt sugárból jönne, a figurák és a fényudvaruk
+       négyzetesen nőnének — kilencven ellenfélnél ez harmadolta a
+       képkockasebességet. A találati doboz nagyobb, a kép marad. */
+    type, x, y, r: def.r*rMult*HITBOX_MUL, r0: def.r*rMult,
     hp: Math.round(def.hp*scale*hpMult*dif.hp), maxHp: Math.round(def.hp*scale*hpMult*dif.hp),
-    dmg: Math.round(def.dmg*(1+dw*0.023)*dif.dmg),
+    dmg: Math.round(def.dmg*(1+dw*0.030)*dif.dmg*1.25),
     /* Az ellenfél sosem lehet gyorsabb a hősnél: a kitérés minden fokozaton
        maradjon járható út. A típusok közti különbség megmarad (a Felderítő
        továbbra is a leggyorsabb), csak a plafon van behúzva a hős alá. */
     speed: Math.min(def.speed*dif.speed, slowestHeroSpeed()*0.94), kind: def.kind, color: def.color,
-    range: def.range||0, splits: !!def.splits, isChild: !!(hpMult<1),
+    // a hatótáv a pályamérettel nő: nagyobb terepen a lövő ellenfél is
+    // messzebbről kell hogy elérjen, különben csak megkerülöd
+    range: (def.range||0) * rangeMul(), splits: !!def.splits, isChild: !!(hpMult<1),
     hitFlash:0, atkTimer: Math.random()*60, chargeState:0, chargeAng:0, telegraph:0,
     strafe: Math.random()<0.5?1:-1, strafeTimer: 40+Math.random()*60,
     /* PAJZS (elit): érkezéskor rövid ideig sérthetetlen. Nem teszi erősebbé,
@@ -7276,7 +7287,7 @@ function update(){
          kilencet, a többlövés szórását is beleértve. */
       const mzx = Math.cos(p.facing) * p.r * 1.25;
       const mzy = Math.sin(p.facing) * p.r * 1.25;
-      const _mx = p.x, _my = p.y;
+      const _mx = p.x, _my = p.y, _nb = game.bullets.length;
       p.x += mzx; p.y += mzy;
       try{
       const n = (wep.style==='melee') ? 1
@@ -7297,7 +7308,14 @@ function update(){
           const f0=p.facing; p.facing += Math.PI; wep.fire(p, base*0.6, false); p.facing=f0;
         }
       }
-      } finally { p.x = _mx; p.y = _my; }   // a hős a helyén marad
+      } finally {
+        p.x = _mx; p.y = _my;                 // a hős a helyén marad
+        /* Hatótáv a pálya méretéhez igazítva: a most keletkezett
+           lövedékek élettartamát szorozzuk. Itt egy helyen elintézhető,
+           mert tudjuk, hány lövedék jött létre ebben a lövésben. */
+        const rm = rangeMul();
+        if(rm > 1) for(let bi=_nb; bi<game.bullets.length; bi++) game.bullets[bi].life *= rm;
+      }
     } else {
       // biztonsági ág: ismeretlen kaszt -> a régi, általános lövedék
       game.bullets.push({ x:p.x, y:p.y, vx:Math.cos(p.facing)*p.bulletSpeed, vy:Math.sin(p.facing)*p.bulletSpeed,
@@ -7329,7 +7347,10 @@ function update(){
     b.x+=b.vx; b.y+=b.vy; b.life--;
     if(bulletHitsObstacle(b)){ if(b.explode) bulletExplode(b); b.life=0; }
   });
-  game.bullets = game.bullets.filter(b=>b.life>0 && b.x>-20&&b.x<w+20&&b.y>-20&&b.y<h+20);
+  // a VILÁG határáig repüljenek, ne a vászonig — különben a nagyobb
+  // pályán a lövedék a képernyő szélén tűnne el
+  game.bullets = game.bullets.filter(b=>b.life>0 &&
+    b.x>-20 && b.x<WORLD.w+20 && b.y>-20 && b.y<WORLD.h+20);
 
   // --- Ellenfelek AI ---
   const ai = dif.ai;
@@ -7455,7 +7476,7 @@ function update(){
       /* Felső korlát: zsúfolt pályán az idéző kivár. Enélkül a hullám és
          az idézők együtt olyan tömeget hoznak, amit se a játékos, se a
          képkockasebesség nem bír el. */
-      const crowded = game.enemies.length > 88;
+      const crowded = game.enemies.length > 66;
       if(!crowded && en.spawnT <= 0 && (en.spawnLeft === undefined || en.spawnLeft > 0)){
         en.spawnLeft = (en.spawnLeft === undefined ? 14 : en.spawnLeft) - 1;
         en.spawnT = Math.max(70, (near ? 115 : 190) - game.wave*3);
@@ -7696,6 +7717,11 @@ function update(){
   }
 
   // --- Ellenség golyók ---
+  /* Az ellenfél-lövedékek élettartama is a pályamérethez igazodik.
+     Az egyes kilövéseknél kézzel beírt értékek vannak; itt egyszer,
+     létrejöttük után szorozzuk fel — a jelölés miatt csak egyszer. */
+  { const rm = rangeMul();
+    if(rm > 1) for(const eb of game.enemyBullets) if(!eb._rs){ eb._rs = 1; eb.life *= rm; } }
   game.enemyBullets.forEach(eb=>{
     const wasAlive = eb.life > 0;
     eb.x+=eb.vx; eb.y+=eb.vy; eb.life--;
@@ -7712,7 +7738,8 @@ function update(){
     // a tűzgolyó a lejárta végén is felrobban, nem csak találatra
     if(eb.fireball && eb.life === 0 && !eb._burst) enemyFireballBurst(eb, armorFactor);
   });
-  game.enemyBullets = game.enemyBullets.filter(eb=>eb.life>0 && eb.x>-30&&eb.x<w+30&&eb.y>-30&&eb.y<h+30);
+  game.enemyBullets = game.enemyBullets.filter(eb=>eb.life>0 &&
+    eb.x>-30 && eb.x<WORLD.w+30 && eb.y>-30 && eb.y<WORLD.h+30);
 
   tickTankAura(p);   // Tank osztály-passzív: állandó sebző aura
   tickRuneWalls();   // Mágus rúnafalai
@@ -9206,10 +9233,11 @@ function arenaIsoActor(e, foe){
 function arenaIsoOpt(e, foe){
   return foe
     ? { loadout: ISO_ENEMY_LOADOUT[e.type] || ISO_ENEMY_LOADOUT.grunt,
-        bodyStyle: ISO_BODY_FOE[e.type]    || ISO_BODY_FOE.grunt,
+        bodyStyle: arenaWideBody(ISO_BODY_FOE[e.type] || ISO_BODY_FOE.grunt),
         marker:false, hpBar:false, shadow:false }
     : { loadout: ISO_LOADOUT[e.cls] || ISO_LOADOUT.tank,
-        bodyStyle: ISO_BODY[e.cls]  || ISO_BODY.tank, marker:false, hpBar:false };
+        bodyStyle: arenaWideBody(ISO_BODY[e.cls] || ISO_BODY.tank),
+        marker:false, hpBar:false };
 }
 /* Mekkora legyen. Az isoDrawFigure S = 1,72*z*build; a z-t úgy állítjuk,
    hogy a figura a szereplő sugarához illjen. */
@@ -9218,13 +9246,27 @@ function arenaIsoOpt(e, foe){
    a tár folyamatosan újrasütne — ez vitte el a képkockákat. Négy lépcső
    bőven elég ahhoz, hogy egy kis futár és egy behemót más méretű legyen. */
 function arenaIsoZ(e){
+  // a RAJZ sugara, nem a találati dobozé
+  e = { r: (e.r0 !== undefined ? e.r0 : (e.r || 14) / (e._isPlayer ? HITBOX_MUL : 1)) };
   /* Lapos görbe: a sugár csak MÓDOSÍTJA a méretet, nem határozza meg.
      Az egyenes arány a nagy ellenfeleket óriássá tette, és sűrű hullámban
      testfallá álltak össze — kis futár és behemót közt legyen különbség,
      de ne háromszoros. A durva kerekítés a sprite-gyorsítótár miatt kell:
      minden lépték külön kisütés. */
-  const raw = clamp(0.42 + (e.r || 14) / 46, 0.5, 1.15);
+  /* A LÉPTÉKET nem emeljük: a sprite-ok léptékenként sülnek ki, tehát a
+     nagyobb figura négyzetesen több képpont és lassabb kép. A "legyen
+     vaskosabb" kérést a szélesség (FIG_WIDE) oldja meg, az ingyen van —
+     ugyanabba a vászonba fér bele. */
+  const raw = clamp(0.44 + (e.r || 14) / 46, 0.5, 1.15);
   return Math.round(raw / 0.25) * 0.25 || 0.5;
+}
+/* Az alakok SZÉLESEBBEK: a csípő-szorzót emeljük meg, nem a léptéket —
+   így vaskosabbak lesznek, de nem nyúlnak égig. */
+const FIG_WIDE = 1.30;
+function arenaWideBody(bs){
+  if(!bs) return bs;
+  if(!bs._wide) bs._wide = Object.assign({}, bs, { hip: (bs.hip||1) * FIG_WIDE });
+  return bs._wide;
 }
 
 /* =========================================================
@@ -9260,7 +9302,19 @@ const ARENA_CAM = { x: 0, y: 0, ready: false };
 /* Mekkora legyen a pálya? A hódító és sztori fejezetek maradnak
    képernyőméretűek (ott a tervezett elrendezés erre van szabva), a sima
    csata (végtelen / kampány fejezet nélkül) kap nagyobb terepet. */
-function worldScaleFor(){ return (game && game.chapter) ? 1 : 1.9; }
+/* Mekkora a pálya? A sima csata terepe a vászon ennyiszerese
+   tengelyenként. 2,6 -> 6,8-szoros terület az eredetihez képest. */
+const WORLD_SCALE_PLAIN = 2.6;
+/* A TALÁLATI DOBOZ szorzója. Az alakok szélesebbek lettek, és a régi
+   sugár már nem takarta a testüket: a lövés átment a válluk mellett,
+   pedig ránézésre találatnak látszott. Ez a hősre és az ellenfelekre
+   EGYFORMÁN vonatkozik, tehát nem tolja el a mérleget — csak egybevág a
+   rajz és a fizika. */
+const HITBOX_MUL = 1.28;
+function worldScaleFor(){ return (game && game.chapter) ? 1 : WORLD_SCALE_PLAIN; }
+/* Amennyivel nagyobb a pálya, annyival messzebbre is kell lőni — különben
+   a nagyobb terep csak több gyaloglás lenne, nem több tér. */
+function rangeMul(){ return WORLD.scale; }
 function worldFit(){
   WORLD.scale = worldScaleFor();
   WORLD.w = Math.round(canvas.width  * WORLD.scale);
@@ -9408,16 +9462,50 @@ function draw(){
   if(game.deaths) for(const d of game.deaths) arenaUpright(ctx, d.x, d.y, ()=>drawDeaths(ctx, p, d));
   drawDebris(ctx);
 
-  // xp orbok: lüktető fény-mag, körülötte forgó szikra
+  /* XP-kristályok. A TALAJON feküdtek lapos korongként, és beleolvadtak
+     a padlóba. Most a föld fölött lebegnek, saját ritmusban ringanak, és
+     testük van: a talajon árnyék, fölötte nyolclapú kristály, a felső
+     lapjai világosak, az alsók sötétek — ettől térbeli. A magasság miatt
+     képernyő-térben rajzoljuk, nem a talajsík mátrixával. */
   if(game.orbs.length){
-    const gs = glowSprite('#ffd166', 16);
+    const gs = glowSprite('#ffd166', 20);
+    ctx.save(); ctx.setTransform(1,0,0,1,0,0); ctx.translate(A.sx, A.sy);
+    const K = ARENA_ISO.k;
     game.orbs.forEach(o=>{
-      const pl = 0.8+0.2*Math.sin(nowT/160+o.x);
-      ctx.globalAlpha=0.7*pl; ctx.drawImage(gs.c,o.x-gs.S,o.y-gs.S,gs.S*2,gs.S*2); ctx.globalAlpha=1;
-      ctx.beginPath(); ctx.arc(o.x,o.y,o.r*pl,0,PI2); ctx.fillStyle='#ffd166'; ctx.fill();
-      ctx.beginPath(); ctx.arc(o.x-o.r*0.3,o.y-o.r*0.3,o.r*0.35,0,PI2); ctx.fillStyle='#fff8dc'; ctx.fill();
-      const a = nowT/300+o.x; ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.beginPath(); ctx.arc(o.x+Math.cos(a)*o.r*1.8,o.y+Math.sin(a)*o.r*1.8,1.4,0,PI2); ctx.fill();
+      const ph = (o.x + o.y) * 0.03;                  // helyfüggő fázis: ne egyszerre ringjanak
+      const bob = Math.sin(nowT/430 + ph) * 5 + 16;   // lebegési magasság
+      const spin = nowT/620 + ph;
+      const sp2 = arenaToScreen(o.x, o.y);
+      const cx = sp2.x, cy = sp2.y - bob*K*1.7;
+      const R = Math.max(3, o.r * K * 1.7);
+      // árnyék a talajon: minél magasabban lebeg, annál kisebb és halványabb
+      ctx.globalAlpha = 0.30 - (bob-11)*0.012;
+      ctx.fillStyle = '#000';
+      ctx.beginPath(); ctx.ellipse(sp2.x, sp2.y, R*0.85, R*0.42, 0, 0, PI2); ctx.fill();
+      ctx.globalAlpha = 1;
+      // fényudvar
+      const pl = 0.8 + 0.2*Math.sin(nowT/160 + ph);
+      ctx.globalAlpha = 0.6*pl;
+      ctx.drawImage(gs.c, cx-gs.S*K*1.4, cy-gs.S*K*1.4, gs.S*2*K*1.4, gs.S*2*K*1.4);
+      ctx.globalAlpha = 1;
+      // a kristály: felső és alsó gúla, forgó szélességgel
+      const wgt = Math.abs(Math.cos(spin))*0.55 + 0.45;   // a forgás látszata
+      const hw = R*wgt, ht = R*1.5;
+      ctx.beginPath();                                    // felső lap (világos)
+      ctx.moveTo(cx, cy-ht); ctx.lineTo(cx+hw, cy); ctx.lineTo(cx, cy+R*0.25); ctx.lineTo(cx-hw, cy);
+      ctx.closePath(); ctx.fillStyle = '#ffe9a8'; ctx.fill();
+      ctx.beginPath();                                    // alsó gúla (sötét)
+      ctx.moveTo(cx-hw, cy); ctx.lineTo(cx, cy+R*0.25); ctx.lineTo(cx+hw, cy); ctx.lineTo(cx, cy+ht*0.85);
+      ctx.closePath(); ctx.fillStyle = '#c9902a'; ctx.fill();
+      ctx.beginPath();                                    // bal felső lap: csillanás
+      ctx.moveTo(cx, cy-ht); ctx.lineTo(cx-hw, cy); ctx.lineTo(cx, cy);
+      ctx.closePath(); ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.fill();
+      ctx.strokeStyle = 'rgba(90,60,10,0.5)'; ctx.lineWidth = Math.max(0.6, R*0.12);
+      ctx.beginPath();
+      ctx.moveTo(cx, cy-ht); ctx.lineTo(cx+hw, cy); ctx.lineTo(cx, cy+ht*0.85); ctx.lineTo(cx-hw, cy);
+      ctx.closePath(); ctx.stroke();
     });
+    ctx.restore();
   }
 
   // méregfelhők / mezők (c.color szerint, hogy a lézerfal is elüsse a méregtől)
@@ -9524,9 +9612,14 @@ function draw(){
   }));
 
   // ellenfelek (sprite-alapú, típusfüggő mozgás-karakterrel)
+  /* Csak azt rajzoljuk, ami LÁTSZIK. A régi vizsgálat a VILÁG-koordinátát
+     hasonlította a vászon méretéhez — kamera nélkül ez ugyanaz volt, most
+     viszont értelmetlen: a nagy pályán a képernyőn kívüli ellenfelek is
+     kirajzolódtak, és a figura-blitt a képkocka felét vitte. */
   game.enemies.forEach(en=>{
-    const margin = en.r*3 + 20;
-    if(en.x < -margin || en.x > w+margin || en.y < -margin || en.y > h+margin) return;
+    const sp2 = arenaToScreen(en.x, en.y);
+    const m2 = 90 + en.r;
+    if(sp2.x < -m2 || sp2.x > w+m2 || sp2.y < -m2 || sp2.y > h+m2) return;
     stand(en.x, en.y, ()=> drawEnemyLive(ctx, en, p, lightFx, nowT));
   });
 
