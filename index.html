@@ -2865,7 +2865,9 @@ const ABILITIES = {
   grenade:{ label:'Gránát', icon:'💣', req:1, cdMax:300, maxRank:3, desc:'Robbanás a célzott pontra.',
     run(p,r){ game.meteors.push({x:input.aimX,y:input.aimY,t:0,delay:26,r:75+r*8,dmg:26+r*8,exploded:false,color:'#ffd24a'}); } },
   blink:{ label:'Villanás', icon:'↗️', req:1, cdMax:240, maxRank:3, desc:'Teleport a célzás irányába.',
-    run(p,r){ const d=150+r*25; p.x=clamp(p.x+Math.cos(p.facing)*d,p.r,canvas.width-p.r); p.y=clamp(p.y+Math.sin(p.facing)*d,safeTop+p.r*0.5,canvas.height-safeBottom-p.r*0.5); p.invuln=10; resolveObstacles(p); addParticles(p.x,p.y,p.color,14); } },
+    /* A VILÁG széléig vághatsz ki, nem a vászonéig: a nagy pályán a régi
+       korlát visszarántott volna a bal felső sarok felé. */
+    run(p,r){ const d=150+r*25; p.x=clamp(p.x+Math.cos(p.facing)*d,p.r,WORLD.w-p.r); p.y=clamp(p.y+Math.sin(p.facing)*d,p.r,WORLD.h-p.r); p.invuln=10; resolveObstacles(p); addParticles(p.x,p.y,p.color,14); } },
   shockwave:{ label:'Lökéshullám', icon:'🌊', req:2, cdMax:350, maxRank:3, desc:'Ellök és sebez körben.',
     run(p,r){ aoeDamage(p.x,p.y,140+r*15,14+r*6,'#9fe'); knockback(p.x,p.y,170+r*15,36+r*8); addParticles(p.x,p.y,'#9fe',20); } },
   lifesteal:{ label:'Vérszívás', icon:'🩸', req:2, cdMax:510, maxRank:3, desc:'Egy időre a sebzésed gyógyít.',
@@ -3040,9 +3042,9 @@ const ABILITIES = {
       addRing(p.x,p.y,'#ff8c3c',R,20,5); addRing(p.x,p.y,'#8fd8ff',R*0.7,18,4); } },
   apocalypse:{ label:'Apokalipszis', icon:'💥', req:1, cdMax:1400, maxRank:2, cls:'mage', legendary:true,
     desc:'A pálya nagy részét elnyeli a tűz.',
-    run(p,r){ for(let i=0;i<8;i++) game.meteors.push({ x:60+Math.random()*(canvas.width-120),
-      y:60+Math.random()*(canvas.height-120), t:0, delay:16+i*7, r:110, dmg:46+r*18,
-      exploded:false, color:'#ff8c3c' }); addShake(8,16); } },
+    run(p,r){ for(let i=0;i<8;i++){ const q=meteorSpot(p); game.meteors.push({ x:q.x, y:q.y,
+      t:0, delay:16+i*7, r:110, dmg:46+r*18,
+      exploded:false, color:'#ff8c3c' }); } addShake(8,16); } },
   timefreeze:{ label:'Időzár', icon:'⏳', req:1, cdMax:1300, maxRank:2, cls:'mage', legendary:true,
     desc:'Megáll az idő az ellenfeleknek.',
     run(p,r){ game.slowT=Math.max(game.slowT||0,200+r*70);
@@ -3236,7 +3238,7 @@ const ULTIMATES = {
   bloodrage:{ label:'Vérdüh', icon:'🔥', chargeMax:720, desc:'Óriási sebzés, sebesség és vérszívás.',
     run(p){ p.buffs.berserkUlt=280; p.buffs.lifesteal=Math.max(p.buffs.lifesteal,280); p.surgeActive=Math.max(p.surgeActive,280); addParticles(p.x,p.y,'#ff5c3c',40); } },
   elemental:{ label:'Elemi vihar', icon:'🌩️', chargeMax:800, desc:'Meteorzápor és villámok az egész pályán.',
-    run(p){ for(let i=0;i<8;i++){ game.meteors.push({x:60+Math.random()*(canvas.width-120),y:60+Math.random()*(canvas.height-120),t:0,delay:20+i*7,r:100,dmg:45,exploded:false,color:'#8b5cf6'}); }
+    run(p){ for(let i=0;i<8;i++){ const q=meteorSpot(p); game.meteors.push({x:q.x,y:q.y,t:0,delay:20+i*7,r:100,dmg:45,exploded:false,color:'#8b5cf6'}); }
       nearestEnemies(p.x,p.y,99999,6).forEach(en=>{ en.hp-=32; en.hitFlash=8; game.particles.push({x:p.x,y:p.y,vx:0,vy:0,life:1,color:'#c9a6ff',bolt:{tx:en.x,ty:en.y}}); }); } },
   shadowstep:{ label:'Árnyéklépés', icon:'🌑', chargeMax:680, desc:'Láthatatlanság — az ellenfelek elvesztik a nyomodat.',
     run(p){ p.buffs.invisible=220; game._invisPt={x:p.x,y:p.y}; p.buffs.precision=Math.max(p.buffs.precision,120); addParticles(p.x,p.y,'#ff5c7c',30); } },
@@ -6478,7 +6480,11 @@ function resetGame(){
     state:'playing',
   };
   const p = game.player;
-  p.x = canvas.width/2; p.y = canvas.height/2; p._px=p.x; p._py=p.y;
+  /* A VILÁG közepén kezdünk. A vászon közepe a megnőtt pályán már a bal
+     felső sarok környéke: onnan indulva a terep háromnegyede a hátad
+     mögé került, és sosem találkoztál vele. */
+  worldFit();
+  p.x = WORLD.w/2; p.y = WORLD.h/2; p._px=p.x; p._py=p.y;
   if(game.companion){ game.companion.x = p.x-46; game.companion.y = p.y+46; }
   resetSticks();
   resetVfx();
@@ -6614,12 +6620,17 @@ const SPAWNER_POOL = [
    addig termelnek, amíg le nem rombolod őket. A hős közeléből kimaradnak,
    hogy ne induláskor essen a nyakadba egy raj. */
 function placeSpawners(n){
-  const w = canvas.width, h = canvas.height, p = game.player;
+  /* A VILÁGBAN, a hős KÖRNYÉKÉN. Korábban a vászon méretén belül
+     keresett helyet, ami a nagyobb pályán a bal felső sarkot jelenti —
+     az idézők a pálya sarkába kerültek, ahol sosem találkoztál velük. */
+  const w = WORLD.w, h = WORLD.h, p = game.player;
+  const reach = (canvas.width/ARENA_ISO.k) * 0.95;
   for(let i=0;i<n;i++){
     let x=0, y=0, ok=false;
     for(let tries=0; tries<40 && !ok; tries++){
-      x = 90 + Math.random()*(w-180);
-      y = safeTop + 70 + Math.random()*(h-safeTop-safeBottom-140);
+      const a = Math.random()*PI2, d = 280 + Math.random()*reach;
+      x = clamp(p.x + Math.cos(a)*d, 90, w-90);
+      y = clamp(p.y + Math.sin(a)*d, 90, h-90);
       ok = dist(x,y,p.x,p.y) > 260
         && !game.obstacles.some(o=>dist(x,y,o.x,o.y) < o.r+46)
         && !game.enemies.some(e=>e.type==='spawner' && dist(x,y,e.x,e.y) < 220);
@@ -6674,14 +6685,19 @@ function spawnWave(){
   let ringCount = 0;
   if(eliteOn('siege')){
     ringCount = Math.round(count * 0.5);
-    const w = canvas.width, h = canvas.height;
-    const cx = w/2, cy = h/2, rx = w*0.62, ry = h*0.62;
+    /* A gyűrű a HŐS köré záródik, a látómezőn kívülről — a régi, vászonra
+       kötött gyűrű a nagy pályán a sarokba került, nem köréd. */
+    const pl = game.player;
+    const cx = pl ? pl.x : WORLD.w/2, cy = pl ? pl.y : WORLD.h/2;
+    const rr = (canvas.width/ARENA_ISO.k) * 0.66;
+    const rx = rr, ry = rr;
     for(let k=0;k<ringCount;k++){
       const a = (k/ringCount) * PI2 + Math.random()*0.12;
       game.pendingSpawns.push({
         type: pool[Math.floor(Math.random()*pool.length)],
         timer: 30 + Math.floor(k/6)*6,
-        x: cx + Math.cos(a)*rx, y: cy + Math.sin(a)*ry,
+        x: clamp(cx + Math.cos(a)*rx, 40, WORLD.w-40),
+        y: clamp(cy + Math.sin(a)*ry, 40, WORLD.h-40),
       });
     }
   }
@@ -6735,10 +6751,22 @@ function spawnEnemyType(type, forcedX, forcedY, hpMult=1, rMult=1){
       const cx = p2 ? p2.x : w/2, cy = p2 ? p2.y : h/2;
       // a látómező fél-átlója világ-egységben (a rombusz miatt bőven mérve)
       const viewR = (canvas.width/ARENA_ISO.k) * 0.62;
-      const a = Math.random()*PI2;
       const rr = viewR + 40 + Math.random()*90;
-      x = clamp(cx + Math.cos(a)*rr, -30, w+30);
-      y = clamp(cy + Math.sin(a)*rr, -30, h+30);
+      const mg = def.r + 6;
+      /* A pályán BELÜL kell megjelenniük, különben azonnal a szélre
+         vágná őket a fenti korlát, és a hős orra előtt bukkannának fel.
+         Végigpróbálunk néhány irányt, és az elsőt vesszük, ami befér. */
+      const a0 = Math.random()*PI2; let ok = false;
+      for(let k=0; k<16 && !ok; k++){
+        const a = a0 + k*(PI2/16);
+        const tx = cx + Math.cos(a)*rr, ty = cy + Math.sin(a)*rr;
+        if(tx>mg && tx<w-mg && ty>mg && ty<h-mg){ x=tx; y=ty; ok=true; }
+      }
+      if(!ok){
+        // a pálya sarkában állsz: a legtávolabbi beférő pontot választjuk
+        x = clamp(cx + Math.cos(a0)*rr, mg, w-mg);
+        y = clamp(cy + Math.sin(a0)*rr, mg, h-mg);
+      }
     }
   }
   const dw = difficultyWave();
@@ -6874,7 +6902,9 @@ function spawnBoss(isMini){
     name: bd ? chBossTxt(game.chapter, 'Name', bd.name) : (isMini ? T('shadowBossName') : T(va.key)),
     patterns: bd ? (bd.patterns||['spread','aimed']) : (isMini ? ['spread','aimed'] : va.patterns),
     fireRate: bd ? (bd.fireRate||1) : (isMini ? 1 : va.fireRate),
-    x: canvas.width/2, y: 140, r: bd ? (bd.r||46) : (isMini? 34 : va.r),
+    /* A boss a hős ELÉ érkezik, a képernyő tetejére — a régi fix pont a
+       megnőtt pályán a sarokban volt, és sosem ért oda hozzád. */
+    x: bossEntryX(), y: bossEntryY(), r: bd ? (bd.r||46) : (isMini? 34 : va.r),
     /* A boss élete eddig +16-tal nőtt szintenként — 40. szinten ez +640, miközben
        a hős sebzése addigra sokszorosára nő. A mérés szerint minden fejezet-boss
        úgy fogyott 0-ra, hogy a hős 96-100% életen maradt. Most szorzóval nő. */
@@ -6971,7 +7001,8 @@ function update(){
   game.runFrames = (game.runFrames||0) + 1;
   game.bestWave = Math.max(game.bestWave||1, game.chapter ? (game.chapterWave||1) : (game.wave||1));
   const p = game.player;
-  const w = canvas.width, h = canvas.height;
+  /* Nincs itt vászon-méret: a játékmenet a VILÁG határaihoz igazodik
+     (WORLD.w/h), a vászon csak ablak rá. */
   const dif = game.diff;
   p._px = p.x; p._py = p.y;
   const hp0 = p.hp;   // sérülés-hang detektáláshoz (frame végén hasonlítjuk)
@@ -7105,7 +7136,7 @@ function update(){
     const distToPlayer = dist(comp.x,comp.y,p.x,p.y);
     if(distToPlayer>150){ const a=Math.atan2(p.y-comp.y,p.x-comp.x); comp.x+=Math.cos(a)*2.3; comp.y+=Math.sin(a)*2.3; }
     else if(nearest && best>90 && best<280){ const a=Math.atan2(nearest.y-comp.y,nearest.x-comp.x); comp.x+=Math.cos(a)*1.1; comp.y+=Math.sin(a)*1.1; }
-    comp.x = clamp(comp.x, 30, canvas.width-30); comp.y = clamp(comp.y, safeTop+30, canvas.height-safeBottom-30);
+    comp.x = clamp(comp.x, 30, WORLD.w-30); comp.y = clamp(comp.y, 30, WORLD.h-30);
     if(comp.fireCooldown>0) comp.fireCooldown--;
 
     /* --- Képesség-használat ---
@@ -7446,7 +7477,7 @@ function update(){
         en.blinkCd = 260;
         addParticles(en.x,en.y,'#a86ede',16); addRing(en.x,en.y,'#a86ede',40,14,3);
         const a = Math.atan2(en.y-p.y, en.x-p.x) + (Math.random()-0.5)*1.2;
-        en.x = clamp(en.x + Math.cos(a)*230, 30, w-30);
+        en.x = clamp(en.x + Math.cos(a)*230, 30, WORLD.w-30);
         en.y = clamp(en.y + Math.sin(a)*230, 30, WORLD.h-30);
         addParticles(en.x,en.y,'#a86ede',16);
       }
@@ -7645,6 +7676,27 @@ function update(){
       addParticles(en.x,en.y,'#9d5cff',10);
     }
   });
+  /* AZ ELLENFELEK NEM HAGYHATJÁK EL A PÁLYÁT.
+     Eddig semmi nem tartotta bent őket: a lökés, a roham, a kikerülő
+     oldalazás vagy a robbanás lökéshulláma kivihette őket a világ
+     szélén túlra, ahol elérhetetlenül köröztek — és a hullám sosem
+     fogyott el. Itt, MINDEN mozgás után vágjuk vissza őket, egy
+     helyen, hogy egyetlen mozgás-ág se tudja megkerülni. */
+  for(const en of game.enemies){
+    const m = en.r;
+    if(en.x < m) en.x = m; else if(en.x > WORLD.w - m) en.x = WORLD.w - m;
+    if(en.y < m) en.y = m; else if(en.y > WORLD.h - m) en.y = WORLD.h - m;
+  }
+  if(game.boss){
+    const bm = game.boss.r;
+    game.boss.x = clamp(game.boss.x, bm, WORLD.w - bm);
+    game.boss.y = clamp(game.boss.y, bm, WORLD.h - bm);
+  }
+  if(game.companion && game.companion.alive){
+    const cm = game.companion.r;
+    game.companion.x = clamp(game.companion.x, cm, WORLD.w - cm);
+    game.companion.y = clamp(game.companion.y, cm, WORLD.h - cm);
+  }
   game.enemies = game.enemies.filter(en=>en.hp>0);
 
   // --- XP orbok ---
@@ -9303,8 +9355,8 @@ const ARENA_CAM = { x: 0, y: 0, ready: false };
    képernyőméretűek (ott a tervezett elrendezés erre van szabva), a sima
    csata (végtelen / kampány fejezet nélkül) kap nagyobb terepet. */
 /* Mekkora a pálya? A sima csata terepe a vászon ennyiszerese
-   tengelyenként. 2,6 -> 6,8-szoros terület az eredetihez képest. */
-const WORLD_SCALE_PLAIN = 2.6;
+   tengelyenként. 3,4 -> 11,6-szoros terület az eredetihez képest. */
+const WORLD_SCALE_PLAIN = 3.4;
 /* A TALÁLATI DOBOZ szorzója. Az alakok szélesebbek lettek, és a régi
    sugár már nem takarta a testüket: a lövés átment a válluk mellett,
    pedig ránézésre találatnak látszott. Ez a hősre és az ellenfelekre
@@ -9321,6 +9373,25 @@ function worldFit(){
   WORLD.h = Math.round(canvas.height * WORLD.scale);
   return WORLD;
 }
+
+/* Mekkora darabot lát be a hős a világból? A vászon szélessége
+   világ-egységre váltva; a rombusz-vetítés miatt bőven mérve. */
+function viewReach(){ return (canvas.width / ARENA_ISO.k) * 0.62; }
+
+/* Meteor-becsapódás helye: a hős KÖRÜL, a látómezőn belül, a pályán
+   belül. A régi változat a vászon dobozában sorsolt, ami a megnőtt
+   pályán a bal felső sarkot jelenti — a "pálya nagy részét elnyeli a
+   tűz" ultimate a semmibe hullott. */
+function meteorSpot(p){
+  const R = viewReach() * 0.8;
+  const a = Math.random()*PI2, d = Math.sqrt(Math.random())*R;
+  return { x: clamp(p.x + Math.cos(a)*d, 60, WORLD.w-60),
+           y: clamp(p.y + Math.sin(a)*d, 60, WORLD.h-60) };
+}
+
+/* A boss belépője: a hős fölött, épp a képernyő peremén. */
+function bossEntryX(){ const p = game && game.player; return clamp(p?p.x:WORLD.w/2, 80, WORLD.w-80); }
+function bossEntryY(){ const p = game && game.player; return clamp((p?p.y:WORLD.h/2) - viewReach()*0.55, 80, WORLD.h-80); }
 
 function arenaIsoFit(w, h){
   const A = ARENA_ISO;

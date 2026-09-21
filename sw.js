@@ -1,7 +1,7 @@
 // THE LOST SURVIVOR — service worker
 // Célja: telepíthetőség (PWA) + alap offline működés. Nem szerver, csak a böngésző
 // saját cache-ét használja ezen az eszközön belül.
-const CACHE_NAME = 'lostsurvivor-cache-v35';
+const CACHE_NAME = 'lostsurvivor-cache-v36';
 const PRECACHE = [
   './',
   './index.html',
