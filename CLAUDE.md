@@ -37,8 +37,12 @@ a baj, mit csináltál, hogyan tesztelted. Magyarul.
   maradnak: `kilencpecset_profile_v4`, `lostsurvivor_run_v1`,
   `HERO_STATS_KEY`. Meglévő mentés nem veszhet el.
 - `TEST_MODE_UNLOCK_ALL` **marad `false`**.
-- A Pantry felhőmentést **ne** kapcsold be — a `PANTRY_CONFIG.id` csak
-  helykitöltő. Csak kifejezett kérésre.
+- **Felhőmentés = Google-bejelentkezés + Pantry** (David kérte). Csak
+  akkor él, ha a `GOOGLE_CONFIG.clientId` ÉS a `PANTRY_CONFIG.id` is ki
+  van töltve; addig a fiók-sor rejtve, és semmi nem megy a hálózatra.
+  A kosár neve `g_<Google sub>`, az e-mail sosem kerül a felhőbe.
+  A régi, begépelt névhez kötött felhőmentés megszűnt — ne hozd vissza.
+  Külső szkriptet (Google GSI) ne tölts be: átirányításos bejelentkezés.
 - Admin felhasználó: `davidlipcs1234`.
 - **Mobilon is működjön minden.**
 

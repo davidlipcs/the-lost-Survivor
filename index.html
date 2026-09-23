@@ -203,6 +203,18 @@
   .diffBtn small{ display:block; font-weight:normal; font-size:10px; color:var(--dim); margin-top:2px; letter-spacing:0; }
   .diffBtn.selected{ border-color:var(--diffcol,#fff); box-shadow:0 0 12px var(--diffcol,#fff); color:#fff; }
 
+  #accountRow{ display:flex; justify-content:center; margin-top:10px; max-width:100%; }
+  #accountRow.hidden, #accountInfo.hidden, #googleSignInBtn.hidden{ display:none; }
+  #googleSignInBtn{ display:inline-flex; align-items:center; gap:8px; padding:7px 14px; font-size:12px; margin:0; }
+  #accountInfo{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center;
+    font-size:12px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10);
+    border-radius:10px; padding:5px 8px 5px 5px; max-width:100%; }
+  #accountBadge{ width:24px; height:24px; border-radius:50%; background:#4285f4; color:#fff;
+    display:inline-flex; align-items:center; justify-content:center; font-weight:bold; font-size:12px; flex:none; }
+  #accountName{ font-weight:bold; max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #cloudStatus{ color:var(--dim); font-size:11px; }
+  #cloudStatus.err{ color:#ff8a8a; }
+  #googleSignOutBtn{ padding:4px 10px; font-size:10px; margin:0; }
   #levelUpBanner{ position:absolute; top:36%; left:50%; transform:translate(-50%,-50%); text-align:center; z-index:15; pointer-events:none; }
   #levelUpBanner .lu1{ font-size:13px; color:var(--gold); letter-spacing:4px; }
   #levelUpBanner .lu2{ font-size:30px; font-weight:bold; color:#fff; text-shadow:0 0 20px var(--gold); }
@@ -570,6 +582,18 @@
       <span><b id="profShards">0</b> 🔷</span>
       <span><span data-i18n="bestWaveLabel">🏆 Legjobb hullám:</span> <b id="bestWaveTxt">0</b></span>
     </div>
+    <div id="accountRow" class="hidden">
+      <button class="bigBtn ghost" id="googleSignInBtn" type="button">
+        <svg viewBox="0 0 48 48" width="16" height="16" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
+        <span data-i18n="googleSignIn">Bejelentkezés Google-lel</span>
+      </button>
+      <div id="accountInfo" class="hidden">
+        <span id="accountBadge"></span>
+        <span id="accountName"></span>
+        <span id="cloudStatus"></span>
+        <button class="bigBtn ghost" id="googleSignOutBtn" type="button" data-i18n="googleSignOut">Kijelentkezés</button>
+      </div>
+    </div>
     <div style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center; margin-top:10px;">
       <button class="bigBtn gold hidden" id="resumeRunBtn" data-i18n="resumeRunBtn">▶️ FUTAM FOLYTATÁSA</button>
       <button class="bigBtn" id="startBtn" data-i18n="playBtn">JÁTÉK</button>
@@ -599,10 +623,6 @@
       <canvas id="previewCanvas" width="110" height="110"></canvas>
       <div>
         <input id="nameInput" type="text" placeholder="Karakter neve" data-i18n-ph="nameInputPh" maxlength="14" value="Hős">
-        <div style="display:flex; gap:6px; justify-content:center; align-items:center; margin-top:6px; flex-wrap:wrap;">
-          <button class="bigBtn ghost" id="pantryLoadBtn" style="padding:6px 12px; font-size:11px; margin:0;" data-i18n="useNameBtn">✅ Ez a név használata</button>
-          <span id="pantryStatus" style="font-size:10px; color:var(--dim);"></span>
-        </div>
         <div class="colorRow" id="colorRow" style="margin-top:14px;"></div>
         <div class="headRow" id="headRow" style="margin-top:12px;"></div>
       </div>
@@ -1117,62 +1137,225 @@ resize();
    ========================================================= */
 const PANTRY_CONFIG = { id: "IDE_ÍRD_BE" };
 const PANTRY_READY = PANTRY_CONFIG.id !== "IDE_ÍRD_BE" && PANTRY_CONFIG.id.trim()!=="";
-function pantryBasketName(u){ const c=(u||'').trim().toLowerCase().replace(/[^a-z0-9_-]/g,''); return c?('save_'+c):null; }
-async function pantryLoad(username){
-  if(!PANTRY_READY) return null;
-  const basket = pantryBasketName(username); if(!basket) return null;
-  try{
-    const res = await fetch('https://getpantry.cloud/apiv1/pantry/'+PANTRY_CONFIG.id+'/basket/'+basket);
-    if(res.status===400 || res.status===404) return null;   // még nincs ilyen nevű mentés
-    if(!res.ok) throw new Error('Pantry hiba: '+res.status);
-    return await res.json();
-  }catch(e){ console.warn('Felhő betöltés sikertelen:', e); return null; }
+/* =========================================================
+   GOOGLE-BEJELENTKEZÉS + FELHŐMENTÉS
+   ---------------------------------------------------------
+   Nincs külső szkript: a gomb átvisz a Google saját bejelentkező
+   oldalára, az pedig visszaküld ide egy aláírt azonosítóval
+   (OpenID Connect, "id_token" a címsor # utáni részében). Ebből
+   kiolvassuk, ki vagy — a Google állandó azonosítóját (sub), a
+   neved és az e-mailed —, és a mentésed a Pantryben a sub-hoz
+   kötött kosárba kerül.
+
+   Az e-mail cím SOHA nem kerül a felhőbe: a kosár neve a Google
+   számazonosítója, és a feltöltött adat csak a profil + statisztika.
+
+   A Client ID nem titok, nyugodtan állhat a kódban. A Google
+   Cloud Console-ban "Web application" típusúként kell létrehozni,
+   és az "Authorized redirect URIs" közé fel kell venni PONTOSAN azt
+   a címet, ahol a játék fut (a végén perjellel).
+   ========================================================= */
+const GOOGLE_CONFIG = { clientId: "IDE_ÍRD_BE" };
+const GOOGLE_READY = GOOGLE_CONFIG.clientId !== "IDE_ÍRD_BE" && GOOGLE_CONFIG.clientId.trim()!=="";
+const CLOUD_READY = GOOGLE_READY && PANTRY_READY;
+const GOOGLE_ACCOUNT_KEY = 'lostsurvivor_google_v1';   // új kulcs — a régi mentéseket nem érinti
+const GOOGLE_PENDING_KEY = 'lostsurvivor_google_pending_v1';
+const CLOUD_BACKUP_KEY   = 'kilencpecset_profile_backup_v1';
+const CLOUD_NOTICE_KEY   = 'lostsurvivor_cloud_notice_v1';
+
+let googleAccount = null;
+try{
+  const a = JSON.parse(localStorage.getItem(GOOGLE_ACCOUNT_KEY)||'null');
+  if(a && typeof a.sub === 'string' && /^[0-9A-Za-z_-]{1,64}$/.test(a.sub)) googleAccount = a;
+}catch(e){}
+
+/* A felhő-állapot: amíg az induláskori egyeztetés nem ért véget, NEM
+   töltünk fel semmit — különben egy régóta nem használt eszköz a régi
+   helyi mentésével felülírhatná a felhőben lévő frissebbet. */
+let cloudState = 'off';          // off | syncing | ok | error | offline
+let cloudSynced = false;
+
+function googleRedirectUri(){
+  return location.origin + location.pathname.replace(/index\.html$/,'');
 }
-let pantrySavePending = false, pantrySaveQueued = false;
-async function pantrySave(username){
-  if(!PANTRY_READY) return false;
-  const basket = pantryBasketName(username); if(!basket) return false;
+function randomToken(){
+  const a = new Uint8Array(16);
+  (window.crypto||window.msCrypto).getRandomValues(a);
+  return [...a].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function googleSignIn(){
+  if(!GOOGLE_READY) return;
+  const nonce = randomToken(), state = randomToken();
+  try{ localStorage.setItem(GOOGLE_PENDING_KEY, JSON.stringify({ nonce, state, at: Date.now() })); }catch(e){}
+  const q = new URLSearchParams({
+    client_id: GOOGLE_CONFIG.clientId, redirect_uri: googleRedirectUri(),
+    response_type: 'id_token', scope: 'openid email profile',
+    nonce, state, prompt: 'select_account',
+  });
+  location.assign('https://accounts.google.com/o/oauth2/v2/auth?' + q.toString());
+}
+function googleSignOut(){
+  googleAccount = null; cloudSynced = false; cloudState = 'off';
+  clearTimeout(pantrySaveTimer);
+  try{ localStorage.removeItem(GOOGLE_ACCOUNT_KEY); }catch(e){}
+  renderAccountUi();
+}
+/* base64url -> szöveg, ékezetekkel együtt (a név lehet "Lipcsei Dávid") */
+function b64urlText(part){
+  let b = part.replace(/-/g,'+').replace(/_/g,'/');
+  while(b.length % 4) b += '=';
+  const bin = atob(b);
+  return new TextDecoder().decode(Uint8Array.from(bin, c=>c.charCodeAt(0)));
+}
+/* A visszatérés a Google-től. Ha a címsorban id_token van, ellenőrizzük:
+   a mi kérésünkre jött-e (state + nonce), nekünk szól-e (aud), a
+   Google adta-e (iss), és nem járt-e le (exp). Csak ha minden stimmel,
+   akkor vagy bejelentkezve. A címsort utána azonnal kitakarítjuk. */
+function googleHandleRedirect(){
+  const h = location.hash || '';
+  if(!/(^#|&)(id_token|error)=/.test(h)) return null;
+  const params = new URLSearchParams(h.slice(1));
+  try{ history.replaceState(null, '', location.pathname + location.search); }catch(e){}
+  let pending = null;
+  try{ pending = JSON.parse(localStorage.getItem(GOOGLE_PENDING_KEY)||'null'); localStorage.removeItem(GOOGLE_PENDING_KEY); }catch(e){}
+  if(params.get('error')) return params.get('error')==='access_denied' ? 'cancelled' : 'failed';
+  const tok = params.get('id_token');
+  if(!tok || !pending || params.get('state') !== pending.state) return 'failed';
+  try{
+    const c = JSON.parse(b64urlText(tok.split('.')[1]||''));
+    const issOk = c.iss === 'https://accounts.google.com' || c.iss === 'accounts.google.com';
+    const audOk = c.aud === GOOGLE_CONFIG.clientId;
+    const expOk = typeof c.exp === 'number' && c.exp*1000 > Date.now() - 60000;
+    if(!issOk || !audOk || !expOk || c.nonce !== pending.nonce) return 'failed';
+    if(typeof c.sub !== 'string' || !/^[0-9A-Za-z_-]{1,64}$/.test(c.sub)) return 'failed';
+    googleAccount = { sub: c.sub, name: c.name || c.given_name || '', given: c.given_name || '',
+                      email: c.email || '', verified: !!c.email_verified, at: Date.now() };
+    localStorage.setItem(GOOGLE_ACCOUNT_KEY, JSON.stringify(googleAccount));
+    return 'ok';
+  }catch(e){ return 'failed'; }
+}
+
+/* ---------- Pantry ---------- */
+function pantryBasket(){ return googleAccount ? 'g_' + googleAccount.sub : null; }
+function pantryUrl(basket){ return 'https://getpantry.cloud/apiv1/pantry/'+PANTRY_CONFIG.id+'/basket/'+basket; }
+/* Három kimenet, szándékosan szétválasztva: VAN mentés, NINCS mentés,
+   vagy NEM TUDJUK (hálózati hiba). A harmadikat sosem szabad a
+   másodiknak venni — akkor a helyi mentés felülírná a felhőben lévőt. */
+async function pantryGet(basket){
+  try{
+    const res = await fetch(pantryUrl(basket), { cache:'no-store' });
+    if(res.status===400 || res.status===404) return { ok:true, data:null };
+    if(!res.ok) return { ok:false };
+    return { ok:true, data: await res.json() };
+  }catch(e){ return { ok:false }; }
+}
+let pantrySavePending = false, pantrySaveQueued = false, pantrySaveTimer = null;
+function cloudPayload(){ return JSON.stringify({ profile, heroStats, updatedAt: Date.now(), v: 1 }); }
+async function pantrySave(opts){
+  const basket = pantryBasket();
+  if(!CLOUD_READY || !basket || !cloudSynced) return false;
   if(pantrySavePending){ pantrySaveQueued = true; return false; }
   pantrySavePending = true;
+  let ok = false;
   try{
-    await fetch('https://getpantry.cloud/apiv1/pantry/'+PANTRY_CONFIG.id+'/basket/'+basket, {
-      method:'PUT', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ profile, heroStats, updatedAt: Date.now() })
+    // POST = teljes csere a Pantryben (a PUT összefésülne, és a törölt
+    // mezők a felhőben ragadnának)
+    const res = await fetch(pantryUrl(basket), {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: cloudPayload(), keepalive: !!(opts && opts.keepalive),
     });
-  }catch(e){ console.warn('Felhő mentés sikertelen:', e); }
+    ok = res.ok;
+  }catch(e){ ok = false; }
   pantrySavePending = false;
-  if(pantrySaveQueued){ pantrySaveQueued=false; pantrySave(username); }
-  return true;
+  setCloudState(ok ? 'ok' : (navigator.onLine===false ? 'offline' : 'error'));
+  if(pantrySaveQueued){ pantrySaveQueued = false; pantrySave(); }
+  return ok;
 }
-let pantrySaveTimer = null;
 function pantryQueueSave(){
-  if(!PANTRY_READY) return;
-  const el = document.getElementById('nameInput'); const username = el ? el.value : '';
-  if(!pantryBasketName(username)) return;
+  if(!CLOUD_READY || !googleAccount || !cloudSynced) return;
   clearTimeout(pantrySaveTimer);
-  pantrySaveTimer = setTimeout(()=> pantrySave(username), 2500);
+  pantrySaveTimer = setTimeout(()=>{ pantrySaveTimer = null; pantrySave(); }, 2500);
 }
-async function pantryLoadIntoGame(username){
-  const found = await pantryLoad(username);
-  if(!found) return false;
-  if(found.profile){
-    profile = found.profile;
-    profile.storyProgress = profile.storyProgress || 0;
-    profile.storyDone = profile.storyDone || [];
-    profile.coins = profile.coins || 0;
-    profile.unlockedSkins = profile.unlockedSkins || {};
-    profile.shards = profile.shards || 0;
-    profile.heroTiers = profile.heroTiers || {};
-    profile.abilityUpgrades = profile.abilityUpgrades || {};
-    profile.bestWaveCampaign = profile.bestWaveCampaign || 0;
-    saveProfile();
+/* Ha bezárod az appot, a még várakozó mentést azonnal elküldjük. */
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'hidden' && pantrySaveTimer){
+    clearTimeout(pantrySaveTimer); pantrySaveTimer = null;
+    pantrySave({ keepalive:true });
   }
-  if(found.heroStats){ heroStats = Object.assign({plays:{},mult:{},abilityUses:{},abilityMult:{},lastCheck:''}, found.heroStats); saveHeroStats(); }
-  if(typeof renderClassCards==='function') renderClassCards();
-  if(typeof renderMapCards==='function') renderMapCards();
-  if(typeof buildLoadoutUI==='function') buildLoadoutUI();
-  if(typeof renderProfile==='function') renderProfile();
-  return true;
+});
+
+function progressOf(prof){ return (prof && prof.xp) || 0; }
+function writeBackup(source, prof, stats){
+  try{ localStorage.setItem(CLOUD_BACKUP_KEY, JSON.stringify({ at: Date.now(), source, profile: prof, heroStats: stats })); }catch(e){}
+}
+/* EGYEZTETÉS: induláskor és bejelentkezéskor. A nagyobb haladás (profil-
+   XP — ez sosem csökken) nyer. Amelyik veszít, az sem vész el: a másik
+   példányt eltesszük tartaléknak ezen az eszközön. */
+async function cloudSync(){
+  if(!CLOUD_READY || !googleAccount) return;
+  cloudSynced = false; setCloudState('syncing');
+  const r = await pantryGet(pantryBasket());
+  if(!r.ok){ setCloudState(navigator.onLine===false ? 'offline' : 'error'); return; }
+  const cloud = r.data && r.data.profile ? r.data : null;
+  if(cloud && progressOf(cloud.profile) > progressOf(profile)){
+    if(progressOf(profile) > 0) writeBackup('local', profile, heroStats);
+    try{
+      localStorage.setItem(PROFILE_KEY, JSON.stringify(cloud.profile));
+      if(cloud.heroStats) localStorage.setItem(HERO_STATS_KEY, JSON.stringify(cloud.heroStats));
+      localStorage.setItem(CLOUD_NOTICE_KEY, JSON.stringify({ kind:'loaded', lvl: profileLevelOf(cloud.profile) }));
+    }catch(e){ setCloudState('error'); return; }
+    /* Újratöltjük az oldalt: így a felhőből jött mentés pontosan ugyanazon
+       az ellenőrzésen és átállításon megy át, mint bármelyik helyi mentés. */
+    location.reload();
+    return;
+  }
+  if(cloud && progressOf(cloud.profile) < progressOf(profile)) writeBackup('cloud', cloud.profile, cloud.heroStats);
+  cloudSynced = true;
+  await pantrySave();
+}
+function profileLevelOf(prof){
+  const keep = profile; try{ profile = prof; return profileLevel(); } finally { profile = keep; }
+}
+
+function setCloudState(st){ cloudState = st; renderAccountUi(); }
+function renderAccountUi(){
+  const row = document.getElementById('accountRow'); if(!row) return;
+  if(!CLOUD_READY){ row.classList.add('hidden'); return; }
+  row.classList.remove('hidden');
+  const inBtn = document.getElementById('googleSignInBtn');
+  const info = document.getElementById('accountInfo');
+  inBtn.classList.toggle('hidden', !!googleAccount);
+  info.classList.toggle('hidden', !googleAccount);
+  if(!googleAccount) return;
+  const nm = googleAccount.name || googleAccount.email || '?';
+  document.getElementById('accountBadge').textContent = nm.trim().charAt(0).toUpperCase();
+  document.getElementById('accountName').textContent = googleAccount.given || nm;
+  document.getElementById('accountName').title = googleAccount.email || '';
+  const st = document.getElementById('cloudStatus');
+  st.textContent = T('cloud_'+cloudState);
+  st.classList.toggle('err', cloudState==='error' || cloudState==='offline');
+}
+function initAccountUi(){
+  const inBtn = document.getElementById('googleSignInBtn');
+  const outBtn = document.getElementById('googleSignOutBtn');
+  if(inBtn) inBtn.addEventListener('click', googleSignIn);
+  if(outBtn) outBtn.addEventListener('click', ()=>{
+    if(confirm(T('googleSignOutConfirm'))) googleSignOut();
+  });
+  if(!CLOUD_READY){ renderAccountUi(); return; }
+  const back = googleHandleRedirect();
+  let notice = null;
+  try{ notice = JSON.parse(localStorage.getItem(CLOUD_NOTICE_KEY)||'null'); localStorage.removeItem(CLOUD_NOTICE_KEY); }catch(e){}
+  renderAccountUi();
+  if(back==='cancelled') setTimeout(()=>alert(T('googleCancelled')), 300);
+  else if(back==='failed') setTimeout(()=>alert(T('googleFailed')), 300);
+  if(notice && notice.kind==='loaded'){
+    setTimeout(()=>alert(T('cloudLoadedMsg', notice.lvl)), 400);
+    // ez már a felhőből betöltött mentés — nincs mit újra egyeztetni
+    cloudSynced = true; setCloudState('ok');
+    return;
+  }
+  if(googleAccount) cloudSync();
 }
 
 /* =========================================================
@@ -1234,6 +1417,13 @@ const TRANSLATIONS = {
     dmgPerSec: (dmg, dps)=> `${dmg} (${dps}/s)`,
     tierTestTitle: (t)=> `Test: tier ${t}`, tierOwnedTitle: (t)=> `Tier ${t} (owned)`,
     tierBuyTitle: (t, cost)=> `Tier ${t} — ${cost} 🔷`,
+    googleSignIn: 'Sign in with Google', googleSignOut: 'Sign out',
+    googleSignOutConfirm: 'Sign out? Your progress stays on this device, but it will not be saved to the cloud until you sign in again.',
+    googleCancelled: 'Google sign-in was cancelled.',
+    googleFailed: 'Google sign-in failed. Please try again.',
+    cloudLoadedMsg: (lvl)=> `☁️ Your cloud save has been loaded (profile level ${lvl}).`,
+    cloud_off: '', cloud_syncing: '☁️ Syncing…', cloud_ok: '☁️ Saved to the cloud',
+    cloud_error: '⚠️ Cloud save failed — your progress is safe on this device', cloud_offline: '📴 Offline — saved on this device',
     sealedRetiredMsg: (coins, shards)=> `The Master, the Master of Masters and the God have left the game — they were too strong. You got back everything you spent on them: ${coins} coins${shards? ' and '+shards+' crystals':''}.`,
     notEnoughShards: (cost, have)=> `Not enough crystals — you need ${cost} 🔷 and you have ${have}. Crystals come from the daily quests.`,
     confirmHeroTier: (name, t, cost)=> `Upgrade “${name}” to tier ${t} for ${cost} 🔷?`,
@@ -1604,6 +1794,13 @@ const TRANSLATIONS = {
     dmgPerSec: (dmg, dps)=> `${dmg} (${dps}/mp)`,
     tierTestTitle: (t)=> `Teszt: ${t}. szint`, tierOwnedTitle: (t)=> `${t}. szint (megvéve)`,
     tierBuyTitle: (t, cost)=> `${t}. szint — ${cost} 🔷`,
+    googleSignIn: 'Bejelentkezés Google-lel', googleSignOut: 'Kijelentkezés',
+    googleSignOutConfirm: 'Kijelentkezel? A haladásod ezen az eszközön megmarad, de amíg újra be nem jelentkezel, nem mentődik a felhőbe.',
+    googleCancelled: 'A Google-bejelentkezést megszakítottad.',
+    googleFailed: 'Nem sikerült a Google-bejelentkezés. Próbáld újra.',
+    cloudLoadedMsg: (lvl)=> `☁️ Betöltöttük a felhőben lévő mentésed (${lvl}. profilszint).`,
+    cloud_off: '', cloud_syncing: '☁️ Egyeztetés…', cloud_ok: '☁️ Mentve a felhőbe',
+    cloud_error: '⚠️ Nem sikerült felhőbe menteni — a haladásod ezen az eszközön biztonságban van', cloud_offline: '📴 Nincs net — ezen az eszközön mentve',
     sealedRetiredMsg: (coins, shards)=> `A Mester, a Mesterek Mestere és az Isten kikerült a játékból — túl erősek voltak. Mindent visszakaptál, amit rájuk költöttél: ${coins} pénzt${shards? ' és '+shards+' kristályt':''}.`,
     notEnoughShards: (cost, have)=> `Nincs elég kristályod — ${cost} 🔷 kell, neked ${have} van. Kristályt a napi küldetésekből kapsz.`,
     confirmHeroTier: (name, t, cost)=> `Fejleszted „${name}”-t a(z) ${t}. szintre ${cost} 🔷-ért?`,
@@ -2166,6 +2363,7 @@ function applyLanguage(){
   if(typeof renderSettings==='function') renderSettings();
   if(typeof refreshResumeBtn==='function') refreshResumeBtn();
   if(typeof refreshStoryButtons==='function') refreshStoryButtons();
+  if(typeof renderAccountUi==='function') renderAccountUi();
   if(typeof renderConquest==='function'){
     const cq = document.getElementById('conquestScreen');
     if(cq && !cq.classList.contains('hidden')) renderConquest();
@@ -2462,18 +2660,6 @@ document.getElementById('nameInput').addEventListener('input', ()=>{
   if(typeof renderMapCards==='function') renderMapCards();
   if(typeof buildLoadoutUI==='function') buildLoadoutUI();
 });
-(function initPantryUi(){
-  const btn = document.getElementById('pantryLoadBtn');
-  const status = document.getElementById('pantryStatus');
-  if(!PANTRY_READY){ btn.classList.add('hidden'); return; }
-  btn.addEventListener('click', async ()=>{
-    const username = document.getElementById('nameInput').value;
-    if(!pantryBasketName(username)){ status.textContent = T('nameNeeded'); return; }
-    status.textContent = T('nameSearching');
-    const ok = await pantryLoadIntoGame(username);
-    status.textContent = ok ? T('nameFound') : T('nameNew');
-  });
-})();
 
 function recordHeroPlay(clsId){
   heroStats.plays[clsId] = (heroStats.plays[clsId]||0) + 1;
@@ -13828,6 +14014,7 @@ applyUiBoost();
 })();
 refreshResumeBtn();
 refreshStoryButtons();
+initAccountUi();   // Google-visszatérés feldolgozása + felhő-egyeztetés
 /* Egyszer szólunk annak, aki visszatérítést kapott a kivett hősökért. */
 if(profile.sealedRefund && !profile.sealedRefundShown){
   profile.sealedRefundShown = true; saveProfile();
