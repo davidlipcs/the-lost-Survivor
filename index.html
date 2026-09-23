@@ -1234,6 +1234,7 @@ const TRANSLATIONS = {
     dmgPerSec: (dmg, dps)=> `${dmg} (${dps}/s)`,
     tierTestTitle: (t)=> `Test: tier ${t}`, tierOwnedTitle: (t)=> `Tier ${t} (owned)`,
     tierBuyTitle: (t, cost)=> `Tier ${t} — ${cost} 🔷`,
+    sealedRetiredMsg: (coins, shards)=> `The Master, the Master of Masters and the God have left the game — they were too strong. You got back everything you spent on them: ${coins} coins${shards? ' and '+shards+' crystals':''}.`,
     notEnoughShards: (cost, have)=> `Not enough crystals — you need ${cost} 🔷 and you have ${have}. Crystals come from the daily quests.`,
     confirmHeroTier: (name, t, cost)=> `Upgrade “${name}” to tier ${t} for ${cost} 🔷?`,
     epicTag: 'EPIC · max rank 10', legendaryTag: 'LEGENDARY · max rank 10',
@@ -1603,6 +1604,7 @@ const TRANSLATIONS = {
     dmgPerSec: (dmg, dps)=> `${dmg} (${dps}/mp)`,
     tierTestTitle: (t)=> `Teszt: ${t}. szint`, tierOwnedTitle: (t)=> `${t}. szint (megvéve)`,
     tierBuyTitle: (t, cost)=> `${t}. szint — ${cost} 🔷`,
+    sealedRetiredMsg: (coins, shards)=> `A Mester, a Mesterek Mestere és az Isten kikerült a játékból — túl erősek voltak. Mindent visszakaptál, amit rájuk költöttél: ${coins} pénzt${shards? ' és '+shards+' kristályt':''}.`,
     notEnoughShards: (cost, have)=> `Nincs elég kristályod — ${cost} 🔷 kell, neked ${have} van. Kristályt a napi küldetésekből kapsz.`,
     confirmHeroTier: (name, t, cost)=> `Fejleszted „${name}”-t a(z) ${t}. szintre ${cost} 🔷-ért?`,
     epicTag: 'EPIKUS · max 10. rang', legendaryTag: 'LEGENDÁS · max 10. rang',
@@ -1938,9 +1940,6 @@ const GAME_TEXT_EN = {
     necromancer:{ label:'Necromancer', role:'SUMMONER', strong:'Skeleton minions fight for you', weak:'Weak alone, needs setup' },
     hunter:{ label:'Hunter', role:'TRAPPER', strong:'Traps and a companion control the battlefield', weak:'Weak burst without setup' },
     engineer:{ label:'Engineer', role:'BUILDER', strong:'Deployed structures hold the ground', weak:'Slow, stationary power' },
-    sealbearer:{ label:'Master', role:'LORD OF ALL NINE SEALS', strong:'Can use any seal of any hero', weak:'None of its powers is the strongest version of itself' },
-    grandmaster:{ label:'Master of Masters', role:'ABOVE EVERY MASTER', strong:'The ultimate cuts incoming damage by 70% and almost executes the strongest enemy', weak:'Without the ultimate he is "only" extremely strong, not invincible' },
-    godlike:{ label:'God', role:'ABOVE THE NINE SEALS', strong:'The ultimate wipes out a whole wave in one blow, the boss included', weak:'Until the ultimate charges he is just an extremely strong fighter' },
   },
   abilities: {
     dash:{ label:'Dash', desc:'Quick evade with a brief moment of invulnerability.' },
@@ -1998,9 +1997,6 @@ const GAME_TEXT_EN = {
     undeadlegion:{ label:'Legion of the Dead', desc:'Summons a skeleton army around you that chases and damages enemies.' },
     huntingground:{ label:'Hunting Ground', desc:'A large area that heavily damages every enemy inside it.' },
     mechbarrage:{ label:'Mech Barrage', desc:'Deploys a heavy machine-gun war machine that fires fast and hard.' },
-    ninefold:{ label:'Power of the Nine Seals', desc:'A little from the power of all nine seals — healing, shield, damage and speed at once, at reduced strength.' },
-    divinejudgment:{ label:'Divine Judgment', desc:"A massive explosion around you — 300 radius, 430 damage (the same as Death's Crown at its highest rank, with a slightly wider reach). For 10 seconds it cuts incoming damage by 30%, and whatever that protection absorbs comes straight back to you as HP." },
-    masterstrike:{ label:'Judgment of the Masters', desc:'A massive explosion around you — 260 radius (like Judgment at its highest rank), 250 damage — that alone kills a tank-type enemy, and the boss takes the same damage (not an instant execution). Instantly heals +50% max HP, and briefly cuts incoming damage by 70%.' },
   },
   difficulties: {
     easy:{ label:'Easy', desc:'a gentler start' },
@@ -2106,12 +2102,6 @@ const GAME_TEXT_EN = {
     moonlight:'Moonlight Archer', trapper:'Trapper', starlightarcher:'Starlight Archer',
     steam:'Steamfitter', electro:'Electrician', warmachine:'War Machine', nanotech:'Nanotech',
     mechanic:'Mechanic', quantumengineer:'Quantum Engineer',
-    goldenseal:'Golden Seal', ninesparks:'Nine Sparks', eternalguard:'Eternal Guardian',
-    sealbreaker:'Sealbreaker', fadedseal:'Faded Seal', ultimateseal:'Final Seal',
-    silvergrandmaster:'Silver Grandmaster', purpleruler:'Crimson Ruler', steeldoom:'Steel Doom',
-    goldencrown:'Golden Crown', wornblade:'Worn Blade', eternalgrandmaster:'Eternal Grandmaster',
-    sungod:'Sun God', stargod:'Star God', firegod:'Fire God', icegod:'Ice God',
-    mortalguise:'Mortal Guise', infinitegod:'Infinite God',
   },
 };
 
@@ -2807,21 +2797,6 @@ const CLASSES = {
     hp:140, speed:2.0, fireRate:28, bulletDmg:9, bulletSpeed:7, bulletCount:1,
     armor:0.15, regen:0.02, critChance:0, lowHpDmg:0, cdScale:0.9, ult:'mechbarrage',
     def:['minefield','laserwall','repairdrone','shield','heal'] },
-  sealbearer:{ label:'Mester', role:'MIND A KILENC PECSÉT URA', req:15, col:'#ffd166', icon:'🔯',
-    strong:'Bármelyik hős bármelyik pecsétjét használhatja', weak:'Egyik ereje sem a legerősebb saját változatában',
-    hp:150, speed:2.25, fireRate:20, bulletDmg:15, bulletSpeed:9, bulletCount:1,
-    armor:0.1, regen:0.02, critChance:0.1, lowHpDmg:0, cdScale:0.92, ult:'ninefold',
-    def:['fireball','shield','heal','dash','chain'], allAbilities:true, sealed:true },
-  grandmaster:{ label:'A Mesterek Mestere', role:'MINDEN MESTER FELETT', req:20, col:'#c9a6ff', icon:'⚔️',
-    strong:'Az ultimate 70%-kal csökkenti a bejövő sebzést, és majdnem kivégzi a legerősebb ellenfelet', weak:'Az ultimate nélkül "csak" rendkívül erős, nem legyőzhetetlen',
-    hp:165, speed:2.3, fireRate:19, bulletDmg:16, bulletSpeed:9.5, bulletCount:1,
-    armor:0.12, regen:0.025, critChance:0.12, lowHpDmg:0, cdScale:0.9, ult:'masterstrike',
-    def:['fireball','shield','heal','dash','chain'], allAbilities:true, sealed:true },
-  godlike:{ label:'Isten', role:'A KILENC PECSÉT FELETT', req:35, col:'#fff3c9', icon:'☀️',
-    strong:'Az ultimate egy csapásra eltöröl egy egész hullámot, a bosst is beleértve', weak:'Az ultimate feltöltéséig ő is csak egy rendkívül erős harcos',
-    hp:180, speed:2.35, fireRate:18, bulletDmg:17, bulletSpeed:10, bulletCount:1,
-    armor:0.14, regen:0.03, critChance:0.14, lowHpDmg:0, cdScale:0.88, ult:'divinejudgment',
-    def:['fireball','shield','heal','dash','chain'], allAbilities:true, sealed:true },
 };
 // TESZT MÓD: ha true, minden hős és pecsét azonnal elérhető, szintkövetelmény nélkül —
 // ha később vissza akarod kapcsolni a normál, fokozatos feloldást, írd false-ra.
@@ -3221,9 +3196,9 @@ const HERO_PRICES = {
   tank: 0, sniper: 0, berserker: 0,          // a kezdő három ingyen
   mage: 900, support: 900, necromancer: 1200,
   assassin: 1500, hunter: 1500, engineer: 1800,
-  sealbearer: 6000, grandmaster: 12000, godlike: 25000,
 };
 grandfatherHeroes();   // a régi, szint-alapú feloldások jóváírása
+retireSealedHeroes();  // a kivett pecsételt hősök visszatérítése
 runDailyHeroBalanceCheck();
 
 /* =========================================================
@@ -3253,28 +3228,6 @@ const ULTIMATES = {
     run(p){ game.clouds.push({x:p.x,y:p.y,r:260,life:320,dmg:3.2,color:'#c9a24a'}); addParticles(p.x,p.y,'#c9a24a',30); } },
   mechbarrage:{ label:'Gépi Roham', icon:'⚙️', chargeMax:760, desc:'Nehézgéppuskás harci szerkezetet telepítesz, ami gyorsan és erősen tüzel.',
     run(p){ game.turrets.push({x:p.x,y:p.y-30,life:420,fireCd:0,dmg:16,heavy:true}); addParticles(p.x,p.y,'#ff9d4d',30); } },
-  ninefold:{ label:'Kilenc Pecsét Ereje', icon:'🔯', chargeMax:820, desc:'Mind a kilenc pecsét erejéből egy kevés — gyógyulás, pajzs, sebzés és gyorsulás egyszerre, csökkentett mértékben.',
-    run(p){
-      p.hp=Math.min(p.maxHp,p.hp+p.maxHp*0.22); p.shieldActive=Math.max(p.shieldActive,110);
-      p.surgeActive=Math.max(p.surgeActive,150); p.buffs.lifesteal=Math.max(p.buffs.lifesteal,120);
-      aoeDamage(p.x,p.y,150,20,'#ffd166'); knockback(p.x,p.y,170,34);
-      addParticles(p.x,p.y,'#ffd166',44);
-    } },
-  divinejudgment:{ label:'Isteni Ítélet', icon:'☀️', chargeMax:900,
-    desc:'Hatalmas robbanás magad körül — 300-as sugár, 430 sebzés (ugyanakkora, mint a Halál Koronája legmagasabb rangon, kicsit nagyobb hatókörrel). 10 másodpercre 30%-kal csökkenti a bejövő sebzést, és amit ez a védelem elnyel, azt azonnal HP-ként visszakapod.',
-    run(p){
-      aoeDamage(p.x,p.y,300,430,'#fff3c9');
-      p.buffs.godShield = Math.max(p.buffs.godShield, 600);
-      addParticles(p.x,p.y,'#fff3c9',60); SFX.win();
-    } },
-  masterstrike:{ label:'A Mesterek Ítélete', icon:'⚔️', chargeMax:860,
-    desc:'Hatalmas robbanás magad körül — 260-as sugár (mint a Végítélet legmagasabb rangon), 250 sebzés — ez egyedül is megöl egy tank típusú ellenfelet, a bosst ugyanekkora sebzés éri (nem azonnali kivégzés). +50% maxHP azonnali gyógyulás, és rövid időre 70%-kal csökkented a bejövő sebzést.',
-    run(p){
-      aoeDamage(p.x,p.y,260,250,'#ffd166');
-      p.hp = Math.min(p.maxHp, p.hp + p.maxHp*0.5);
-      p.buffs.masterShield = Math.max(p.buffs.masterShield, 220);
-      addParticles(p.x,p.y,'#ffd166',40); SFX.hit();
-    } },
 };
 
 /* ---------- Loadout (menü) állapot ---------- */
@@ -3291,8 +3244,6 @@ const COMPANION_PAIRS = {
 };
 const NORMAL_HERO_IDS = ['tank','sniper','berserker','mage','assassin','support','necromancer','hunter','engineer'];
 function companionOptions(playerCls){
-  // a három "nagy" hősnél bármelyik normál hőst választhatod a barátnak
-  if(CLASSES[playerCls] && CLASSES[playerCls].sealed) return NORMAL_HERO_IDS.slice();
   return COMPANION_PAIRS[playerCls] || NORMAL_HERO_IDS.slice();
 }
 
@@ -4284,30 +4235,6 @@ const HERO_SKINS = {
     {id:'mechanic', label:'Szerelő', col:'#5a5850', accent:'#8a8878', glow:'#a8a690', price:90},
     {id:'quantumengineer', label:'Kvantum Szerkesztő', col:'#0a2a3a', accent:'#8fe8ff', glow:'#c9a6ff', price:600},
   ]},
-  sealbearer:{ label:'Mester', accentShape:'sealring', skins:[
-    {id:'goldenseal', label:'Aranypecsét', col:'#ffd166', accent:'#fff3c9', glow:'#ffe9a8', price:0},
-    {id:'ninesparks', label:'Kilenc Szikra', col:'#e8d6a0', accent:'#c9a6ff', glow:'#ff8a5c', price:0},
-    {id:'eternalguard', label:'Örök Őrző', col:'#2a2050', accent:'#ffd166', glow:'#8b5cf6', price:0},
-    {id:'sealbreaker', label:'Pecséttörő', col:'#1a1a22', accent:'#ffd166', glow:'#ff5c3c', price:0},
-    {id:'fadedseal', label:'Fakó Pecsét', col:'#8a7548', accent:'#b89860', glow:'#c9a870', price:120},
-    {id:'ultimateseal', label:'Végső Pecsét', col:'#fffdf5', accent:'#ffd166', glow:'#ffffff', price:800},
-  ]},
-  grandmaster:{ label:'A Mesterek Mestere', accentShape:'mastercrown', skins:[
-    {id:'silvergrandmaster', label:'Ezüst Nagymester', col:'#c9d3dc', accent:'#e8ecf3', glow:'#8fe8ff', price:0},
-    {id:'purpleruler', label:'Bíbor Uralkodó', col:'#5a2a7a', accent:'#c9a6ff', glow:'#ff5cc9', price:0},
-    {id:'steeldoom', label:'Acél Végzet', col:'#3a4a5a', accent:'#8fe8ff', glow:'#c9d3dc', price:0},
-    {id:'goldencrown', label:'Aranykorona', col:'#7a5a1a', accent:'#ffd166', glow:'#fff3c9', price:0},
-    {id:'wornblade', label:'Kopott Penge', col:'#5a5850', accent:'#8a8878', glow:'#a8a690', price:90},
-    {id:'eternalgrandmaster', label:'Örökkévaló Nagymester', col:'#1a0a2a', accent:'#c9a6ff', glow:'#ff5cc9', price:700},
-  ]},
-  godlike:{ label:'Isten', accentShape:'divinehalo', skins:[
-    {id:'sungod', label:'Napisten', col:'#fff3c9', accent:'#ffd166', glow:'#ffffff', price:0},
-    {id:'stargod', label:'Csillagisten', col:'#e0e6ff', accent:'#8fe8ff', glow:'#c9a6ff', price:0},
-    {id:'firegod', label:'Tűzisten', col:'#ff8a3c', accent:'#ffd166', glow:'#ff5c3c', price:0},
-    {id:'icegod', label:'Jégisten', col:'#c9f4ff', accent:'#8fe8ff', glow:'#ffffff', price:0},
-    {id:'mortalguise', label:'Halandó Álca', col:'#8a8578', accent:'#a8a290', glow:'#c9c4b0', price:120},
-    {id:'infinitegod', label:'Végtelen Isten', col:'#ffffff', accent:'#ffd166', glow:'#ffffff', price:900},
-  ]},
 };
 function heroSkinData(cls, skinIdx){
   const cd = HERO_SKINS[cls] || HERO_SKINS.tank;
@@ -4360,16 +4287,6 @@ function drawHeroBodyPath(g, cls, R){
     g.lineTo(-R*0.3,-R*0.95); g.lineTo(R*0.2,-R*0.6); g.closePath();
   } else if(cls==='engineer'){ // lekerekített, ipari kapszula
     rr(g, -R*1.0, -R*0.82, R*2.0, R*1.64, R*0.5);
-  } else if(cls==='sealbearer'){ // kör, kilenc sugárzó ponttal a peremén
-    for(let i=0;i<18;i++){ const a=i/18*PI2; const rad=(i%2===0)?R*1.32:R*1.02; const px=Math.cos(a)*rad, py=Math.sin(a)*rad; i?g.lineTo(px,py):g.moveTo(px,py); }
-    g.closePath();
-  } else if(cls==='grandmaster'){ // hatszög-törzs, két korona-csúccsal a hátsó élen
-    const pts=[[1.0,0],[0.5,0.7],[-0.5,0.7],[-1.0,0],[-0.5,-0.7],[-0.28,-0.7],[-0.14,-1.2],[0,-0.7],[0.14,-1.2],[0.28,-0.7],[0.5,-0.7]];
-    pts.forEach(([x,y],i)=>{ i? g.lineTo(x*R,y*R) : g.moveTo(x*R,y*R); }); g.closePath();
-  } else if(cls==='godlike'){ // ragyogó napkorong — tizenkét éles sugárral
-    const rays=12;
-    for(let i=0;i<rays*2;i++){ const a=i/(rays*2)*PI2; const rad=(i%2===0)?R*1.5:R*0.85; const px=Math.cos(a)*rad, py=Math.sin(a)*rad; i?g.lineTo(px,py):g.moveTo(px,py); }
-    g.closePath();
   } else {
     g.arc(0,0,R,0,PI2);
   }
@@ -4423,29 +4340,6 @@ function drawHeroAccent(g, cls, skinIdx, R, t){
     g.closePath(); g.fill();
     g.fillStyle='#20242e'; g.beginPath(); g.arc(0,0,gr*0.35,0,PI2); g.fill();
     g.restore();
-  } else if(shape==='sealring'){  // Mester: forgó fény-gyűrű, minden pecsét jelképe
-    g.save(); g.rotate(t/700);
-    g.strokeStyle=glow; g.lineWidth=R*0.07; g.shadowColor=glow; g.shadowBlur=R*0.6;
-    g.beginPath(); g.arc(0,0,R*1.5,0,PI2*0.82); g.stroke();
-    g.restore();
-    g.fillStyle=accent; g.shadowColor=accent; g.shadowBlur=R*0.4;
-    const s2=R*0.22; g.beginPath();
-    for(let i=0;i<8;i++){ const a=i/8*PI2 - Math.PI/2; const rad=(i%2===0)?s2:s2*0.4; const px=Math.cos(a)*rad,py=Math.sin(a)*rad; i?g.lineTo(px,py):g.moveTo(px,py); }
-    g.closePath(); g.fill();
-  } else if(shape==='mastercrown'){  // Mesterek Mestere: keresztbe font pengék + korona-fény
-    g.strokeStyle=accent; g.lineWidth=R*0.11; g.lineCap='round';
-    g.beginPath(); g.moveTo(-R*0.9,-R*0.5); g.lineTo(R*0.15,R*0.5); g.moveTo(-R*0.9,R*0.5); g.lineTo(R*0.15,-R*0.5); g.stroke();
-    g.fillStyle=glow; g.shadowColor=glow; g.shadowBlur=R*0.55;
-    g.beginPath(); g.arc(0,-R*1.05,R*0.16,0,PI2); g.fill();
-  } else if(shape==='divinehalo'){  // Isten: két ellentétesen forgó, ragyogó fénygyűrű
-    g.save(); g.rotate(t/600);
-    g.strokeStyle=glow; g.lineWidth=R*0.065; g.shadowColor=glow; g.shadowBlur=R*0.75; g.globalAlpha=0.92;
-    g.beginPath(); g.arc(0,0,R*1.75,0,PI2); g.stroke();
-    g.restore();
-    g.save(); g.rotate(-t/430);
-    g.strokeStyle=accent; g.lineWidth=R*0.05; g.globalAlpha=0.75; g.shadowColor=accent; g.shadowBlur=R*0.4;
-    g.beginPath(); g.arc(0,0,R*1.42,0,PI2*0.72); g.stroke();
-    g.restore();
   }
   // a 6 kinézet közti VALÓDI vizuális eltérés — mindegyik skinIdx (0-5) más kezelést kap,
   // úgy, hogy a forma és a fő elem (a hős "lényege") közben nem változik
@@ -4483,13 +4377,13 @@ function drawHeroAccent(g, cls, skinIdx, R, t){
    A CLASS_VIS CSAK a rajz méretét szorozza — a hitbox (p.r) és a
    mozgás érintetlen, a játékmenet nem változik.
    ========================================================= */
-const CLASS_VIS = { tank:1.2, berserker:1.12, grandmaster:1.06, godlike:1.06, engineer:1.05, sealbearer:1.0,
+const CLASS_VIS = { tank:1.2, berserker:1.12, engineer:1.05,
   support:0.98, mage:0.97, necromancer:0.98, hunter:0.95, sniper:0.92, assassin:0.86 };
 // a sziluett fél-szélessége (R-ben) — a lábak és a vállak ehhez igazodnak
 const CLASS_HW = { tank:1.05, sniper:0.42, berserker:1.0, mage:0.9, assassin:0.3, support:1.0, necromancer:1.0,
-  hunter:0.95, engineer:0.82, sealbearer:1.1, grandmaster:0.7, godlike:0.95 };
+  hunter:0.95, engineer:0.82 };
 const HERO_WEAPON = { tank:'shield', sniper:'sniper', berserker:'axe', mage:'staff', assassin:'daggers', support:'staff',
-  necromancer:'staff', hunter:'bow', engineer:'blaster', sealbearer:'staff', grandmaster:'sword', godlike:'orbs' };
+  necromancer:'staff', hunter:'bow', engineer:'blaster' };
 // hol fogja a hátsó (grip) és az elülső (fore) kéz az adott fegyvert (R-egységben, +x = előre)
 const WEAPON_HANDS = {
   rifle:   { grip:[0.45,0.18], fore:[1.0,-0.02] },
@@ -7806,13 +7700,6 @@ function update(){
     game.obstacles = game.obstacles.filter(o=>!o._dead);
   }
 
-  // Isten ultimate-je: a 30%-os védelem nem csak elnyeli a sebzést, hanem vissza is tölti HP-ként —
-  // ha a "godShield" aktív és sérülés érte a játékost ebben a képkockában, a levont HP ~3/7-ed részét
-  // (ami az elnyelt 30%-nak felel meg) visszakapja gyógyulásként.
-  if(p.buffs.godShield>0 && p.hp < hp0 - 0.8){
-    const lost = hp0 - p.hp;
-    p.hp = Math.min(p.maxHp, p.hp + lost*(3/7));
-  }
   /* TÖVISES MELLVÉRT: aki közelharcban megüt, visszakapja a sebzés egy
      részét. A teljes képkocka-veszteségből dolgozunk, de csak akkor, ha
      tényleg van a közelben ellenfél — így a lövedék nem tükröződik vissza. */
@@ -8883,7 +8770,7 @@ function conquestOwnedCount(p){
 }
 function heroWinCount(p){
   const w = (p && p.heroWins) || {};
-  return Object.keys(w).filter(id=>(w[id]||0) > 0).length;
+  return Object.keys(w).filter(id=>CLASSES[id] && (w[id]||0) > 0).length;
 }
 function trophyEarned(id){ return (profile.trophies||[]).includes(id); }
 function trophyTxt(id, field){
@@ -11090,7 +10977,7 @@ function setMageElement(p, id){
   updateElementHud();
 }
 /* Csak a mágus-jellegű kasztok váltanak elemet. */
-function usesElements(cls){ return cls==='mage' || cls==='sealbearer' || cls==='grandmaster' || cls==='godlike'; }
+function usesElements(cls){ return cls==='mage'; }
 
 
 
@@ -11216,6 +11103,65 @@ function grandfatherHeroes(){
     }
   }
   profile.heroesMigrated = true;
+  saveProfile();
+}
+/* A KIVETT PECSÉTELT HŐSÖK (Mester, A Mesterek Mestere, Isten).
+   Túl erősek voltak, ezért kikerültek a játékból. Aki megvette őket,
+   ne veszítsen semmit: egyszer, a mentés első betöltésekor visszakapja
+   - a hős árát pénzben,
+   - a rá vett fizetős kinézetek árát pénzben,
+   - a hős-fejlesztésekre költött kristályt.
+   A félbehagyott futam a mágussal folytatható (ők is a mágus fegyverét
+   használták). A régi kulcsok (hősönkénti legjobb hullám, győzelmek,
+   statisztika) érintetlenek maradnak — csak már semmi nem olvassa őket. */
+function retireSealedHeroes(){
+  if(profile.sealedRetired) return;
+  /* A táblát a függvényen BELÜL tartjuk: a hívás jóval a fájl ezen része
+     előtt fut, és egy külső const ott még nem olvasható. */
+  const RETIRED_HEROES = {
+    sealbearer:  { price: 6000,  skins: { 4:120, 5:800 } },
+    grandmaster: { price: 12000, skins: { 4:90,  5:700 } },
+    godlike:     { price: 25000, skins: { 4:120, 5:900 } },
+  };
+  let coins = 0, shards = 0;
+  profile.ownedHeroes = profile.ownedHeroes || [];
+  profile.unlockedSkins = profile.unlockedSkins || {};
+  profile.heroTiers = profile.heroTiers || {};
+  for(const id in RETIRED_HEROES){
+    const r = RETIRED_HEROES[id];
+    if(profile.ownedHeroes.includes(id)){
+      coins += r.price;
+      profile.ownedHeroes = profile.ownedHeroes.filter(h=>h!==id);
+    }
+    for(const idx in r.skins){
+      const k = id+'_'+idx;
+      if(profile.unlockedSkins[k]){ coins += r.skins[idx]; delete profile.unlockedSkins[k]; }
+    }
+    const tier = profile.heroTiers[id]||0;
+    for(let i=0;i<tier;i++) shards += HERO_TIER_COSTS[i]||0;
+    delete profile.heroTiers[id];
+  }
+  profile.coins  = (profile.coins||0)  + coins;
+  profile.shards = (profile.shards||0) + shards;
+  if(coins || shards) profile.sealedRefund = { coins, shards };
+  // a félbehagyott futam átállítása a mágusra
+  try{
+    const raw = localStorage.getItem('lostsurvivor_run_v1');
+    const d = raw && JSON.parse(raw);
+    if(d && d.hero && RETIRED_HEROES[d.hero.cls]){
+      d.hero.cls = 'mage'; d.hero.skin = 0;
+      const pool = classAbilityPool('mage');
+      const had = (d.abilities||[]).length;
+      d.abilities = (d.abilities||[]).filter(a=>pool.includes(a.id));
+      // az üresen maradt helyekre a mágus saját alap-pecsétjei kerülnek
+      for(const id of CLASSES.mage.def){
+        if(d.abilities.length >= Math.max(had, 1)) break;
+        if(!d.abilities.some(a=>a.id===id)) d.abilities.push({ id, rank:1 });
+      }
+      localStorage.setItem('lostsurvivor_run_v1', JSON.stringify(d));
+    }
+  }catch(e){}
+  profile.sealedRetired = true;
   saveProfile();
 }
 function heroOwned(cls){
@@ -11434,12 +11380,8 @@ const MAGIC_ITEMS = {
   overclock: { id:'overclock', cls:'engineer', icon:'⚙️', col:'#6ee7ff',
     apply(p){ p.items.add('overclock'); } },
 };
-/* A pecsételt hősök a mágus tárgyát kapják, ahogy a fegyverét is. */
 const MAGIC_ITEM_BY_CLASS = {};
 for(const k in MAGIC_ITEMS) MAGIC_ITEM_BY_CLASS[MAGIC_ITEMS[k].cls] = MAGIC_ITEMS[k];
-MAGIC_ITEM_BY_CLASS.sealbearer = MAGIC_ITEMS.chainseal;
-MAGIC_ITEM_BY_CLASS.grandmaster = MAGIC_ITEMS.chainseal;
-MAGIC_ITEM_BY_CLASS.godlike = MAGIC_ITEMS.chainseal;
 
 function hasItem(p, id){ return !!(p && p.items && p.items.has(id)); }
 
@@ -11663,11 +11605,6 @@ const CLASS_WEAPONS = {
       SFX.shoot(p.cls);
     } },
 };
-/* A pecsételt hősök (Pecséthordozó, Mesterek Mestere, Isten) a mágus
-   robbanó lövedékét kapják, csak erősebben — ők amúgy is mindent tudnak. */
-CLASS_WEAPONS.sealbearer  = CLASS_WEAPONS.mage;
-CLASS_WEAPONS.grandmaster = CLASS_WEAPONS.mage;
-CLASS_WEAPONS.godlike     = CLASS_WEAPONS.mage;
 
 function classWeapon(cls){ return CLASS_WEAPONS[cls] || null; }
 
@@ -11869,9 +11806,6 @@ const ISO_LOADOUT = {
   necromancer: { w:'staff',   build:0.98, col:'#9d5cff' },
   hunter:      { w:'bow',     build:1.00, col:'#7dffb0' },
   engineer:    { w:'wrench',  build:1.06, col:'#6ee7ff' },
-  sealbearer:  { w:'sword',   build:1.10, col:'#ffd166' },
-  grandmaster: { w:'sword',   build:1.14, col:'#ffe9a8' },
-  godlike:     { w:'orb',     build:1.16, col:'#fff5c2' },
 };
 /* Ellenfél-fegyverek. A koncepciólap szerint a Tanknak SINCS fegyvere —
    puszta ököl, közelharc. Ez az ő jellegzetessége. */
@@ -12208,9 +12142,6 @@ const ISO_BODY = {
   necromancer: { body:'robe',   head:'hood',    hip:0.96 },
   hunter:      { body:'coat',   head:'bare',    hip:0.96 },
   engineer:    { body:'pack',   head:'goggles', hip:1.02 },
-  sealbearer:  { body:'plate',  head:'helm',    hip:1.08 },
-  grandmaster: { body:'plate',  head:'helm',    hip:1.12 },
-  godlike:     { body:'robe',   head:'hood',    hip:1.10 },
 };
 const ISO_BODY_FOE = {
   grunt:     { body:'plate',  head:'helm',  hip:1.00 },
@@ -13897,6 +13828,12 @@ applyUiBoost();
 })();
 refreshResumeBtn();
 refreshStoryButtons();
+/* Egyszer szólunk annak, aki visszatérítést kapott a kivett hősökért. */
+if(profile.sealedRefund && !profile.sealedRefundShown){
+  profile.sealedRefundShown = true; saveProfile();
+  const r = profile.sealedRefund;
+  setTimeout(()=>{ try{ alert(T('sealedRetiredMsg', r.coins||0, r.shards||0)); }catch(e){} refreshMenu(); }, 600);
+}
 applyLanguage();   // legvégén hívjuk — így minden, amire a fordítás-frissítés támaszkodik (SND, IS_COARSE stb.) már biztosan létezik
 </script>
 </body>
