@@ -43,7 +43,9 @@ a baj, mit csináltál, hogyan tesztelted. Magyarul.
   A kosár neve `g_<Google sub>`, az e-mail sosem kerül a felhőbe.
   A régi, begépelt névhez kötött felhőmentés megszűnt — ne hozd vissza.
   Külső szkriptet (Google GSI) ne tölts be: átirányításos bejelentkezés.
-- Admin felhasználó: `davidlipcs1234`.
+- **Admin:** a Google-lel bejelentkezett, ellenőrzött **davidlipcs@gmail.com**
+  (`ADMIN_EMAILS`). A begépelt `davidlipcs1234` név CSAK addig admin, amíg
+  a Google-bejelentkezés nincs beállítva.
 - **Mobilon is működjön minden.**
 
 ## Tesztelés
