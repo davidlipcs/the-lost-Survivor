@@ -1,7 +1,7 @@
 // THE LOST SURVIVOR — service worker
 // Célja: telepíthetőség (PWA) + alap offline működés. Nem szerver, csak a böngésző
 // saját cache-ét használja ezen az eszközön belül.
-const CACHE_NAME = 'lostsurvivor-cache-v37';
+const CACHE_NAME = 'lostsurvivor-cache-v38';
 const PRECACHE = [
   './',
   './index.html',
@@ -34,6 +34,11 @@ self.addEventListener('activate', (event) => {
 // Csak akkor szolgálunk ki a mentett másolatból, ha tényleg nincs internet.
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+  // Csak a játék SAJÁT fájljait kezeljük. A felhőmentés (Pantry) és a
+  // Google kérései érintetlenül mennek a hálózatra: egy régi, eltárolt
+  // felhőmentés visszaadása rosszabb, mint egy őszinte hálózati hiba —
+  // és a mentés tartalma se ragadjon a gyorsítótárban.
+  if (new URL(event.request.url).origin !== self.location.origin) return;
   event.respondWith(
     fetch(event.request, { cache: 'no-store' })
       .then((resp) => {
