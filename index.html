@@ -99,6 +99,30 @@
   .invCard .iIco{ font-size:23px; width:32px; text-align:center; flex:0 0 auto; }
   .invCard .iName{ font-size:13px; font-weight:bold; }
   .invCard .iDesc{ font-size:11px; color:var(--dim); line-height:1.4; margin-top:1px; }
+  #itemPickScreen{ z-index:40; }
+  #itemPickCards{ width:100%; max-width:760px; margin:0 auto; display:grid; gap:10px;
+    grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); padding:0 4px; box-sizing:border-box; }
+  .itemCard{ position:relative; display:flex; flex-direction:column; align-items:center; gap:6px; text-align:center;
+    padding:16px 12px 14px; border-radius:14px; cursor:pointer; color:var(--text, #e8eef6); font:inherit;
+    background:linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));
+    border:2px solid rgba(255,255,255,0.22);
+    border:2px solid color-mix(in srgb, var(--ic) 55%, transparent);
+    box-shadow:0 0 18px color-mix(in srgb, var(--ic) 22%, transparent); transition:transform .12s, box-shadow .12s; }
+  .itemCard:hover, .itemCard:focus-visible, .itemCard.padFocus{ transform:translateY(-2px);
+    box-shadow:0 0 26px color-mix(in srgb, var(--ic) 45%, transparent); }
+  .itemCard:active{ transform:scale(0.98); }
+  .itemCard .ipIco{ font-size:34px; line-height:1.1; }
+  .itemCard .ipText{ display:flex; flex-direction:column; gap:5px; }
+  .itemCard .ipName{ font-size:15px; font-weight:bold; color:var(--ic); }
+  .itemCard .ipDesc{ font-size:12px; color:var(--dim); line-height:1.45; }
+  .itemCard .ipKey{ position:absolute; top:7px; left:9px; font-size:11px; color:var(--dim);
+    border:1px solid rgba(255,255,255,0.18); border-radius:5px; padding:0 5px; }
+  @media (pointer:coarse){ .itemCard .ipKey{ display:none; } }
+  @media (max-width:520px){ #itemPickCards{ grid-template-columns:1fr; gap:8px; }
+    .itemCard{ flex-direction:row; text-align:left; align-items:center; padding:11px 12px; gap:12px; }
+    .itemCard .ipIco{ font-size:28px; flex:none; }
+    .itemCard .ipText{ gap:3px; } }
+  .invCard.invEmptySlot{ opacity:0.55; border-style:dashed; }
   #invHint{ font-size:11px; color:var(--dim); margin:0 auto 12px; max-width:480px; line-height:1.5; }
   #invEmpty{ color:var(--dim); font-size:12px; padding:14px; text-align:center; }
 
@@ -789,6 +813,11 @@
     <button class="bigBtn red" id="bossStartBtn" data-i18n="bossFightBtn">HARC KEZDÉSE</button>
   </div>
 
+  <div id="itemPickScreen" class="overlay hidden">
+    <h1 class="title" style="font-size:24px; margin-bottom:2px;" data-i18n="itemPickTitle">VÁLASSZ FELSZERELÉST</h1>
+    <div class="subtitle" id="itemPickSub" style="margin-bottom:12px;"></div>
+    <div id="itemPickCards"></div>
+  </div>
   <div id="inventoryScreen" class="overlay hidden">
     <h1 class="title" style="font-size:26px; margin-bottom:2px;" data-i18n="invTitle">TARSOLY</h1>
     <div class="subtitle" id="invSub" style="margin-bottom:10px;"></div>
@@ -1514,13 +1543,13 @@ const TRANSLATIONS = {
     compAb_cTurret: 'Deploy Turret', compAb_cDrone: 'Repair Drone',
     isoLeaveConfirm: 'Leave the mission and return to the map?',
     invTitle: 'SATCHEL', invClose: 'CLOSE', invAria: 'Satchel',
-    invSub: (n)=> `${n} magic item${n===1?'':'s'} carried`,
+    invSub: (n,max)=> `${n}/${max} gear slots filled`,
     invEmpty: 'Empty. Wizards leave behind an item cut for your hero — beat one to fill this.',
-    invHint: 'Items work the moment you pick them up; there is nothing to equip. Opening the satchel pauses the fight.',
+    invHint: 'Gear works the moment you choose it and stays until the run ends. New pieces come from the XP you collect and from wizard seals — you have 5 slots. Opening the satchel pauses the fight.',
     invBindBtn: (k)=> `⌨️ Key: ${k} — tap to change`,
     invBindWaiting: 'Press any key...',
     invOpenHint: (k)=> `Satchel (${k})`,
-    item_cloak_desc: 'Brief invisibility, and the strike you come out of it with lands harder.',
+    item_cloak_desc: 'Every 12 seconds you vanish for 2 seconds, and hits you land from hiding deal 60% more.',
     item_tracer_desc: 'Your shot curves onto the target sooner and harder.',
     item_thorns_desc: 'Whoever hits you in melee takes 45% of it straight back.',
     item_bloodpact_desc: 'Every hit you land heals you a little.',
@@ -1534,6 +1563,30 @@ const TRANSLATIONS = {
     item_chainseal_name: 'Chain Seal', item_tether_name: 'Lifebond Talisman',
     item_bonehoard_name: 'Bone Hoard', item_hmark_name: "Hunter's Mark",
     item_overclock_name: 'Overclock Module',
+    itemPickTitle: 'CHOOSE YOUR GEAR',
+    itemPickSub: (n,max)=> `Gear: ${n}/${max} slots — pick one, the fight waits.`,
+    itemSigil: '🔮 Wizard seal — choose your gear!',
+    invSlotEmpty: 'Empty slot',
+    invSlotHow: 'Fills as you collect XP and from the seals wizards leave behind.',
+    invAllTaken: 'You have already taken every item your hero has in this run.',
+    item_bulwark_name: 'Bulwark Plate', item_bulwark_desc: 'Stand still for a second and you take 35% less damage.',
+    item_quake_name: 'Quake Boots', item_quake_desc: 'Every 4th swing also sends out a shockwave that damages and knocks back everything around you.',
+    item_coldblood_name: 'Cold Blood', item_coldblood_desc: 'Hold your fire for 1.5 seconds and your next shot deals double damage.',
+    item_steadyaim_name: 'Steady Hand', item_steadyaim_desc: 'You fire 25% faster while standing still.',
+    item_bloodscent_name: 'Bloodscent', item_bloodscent_desc: 'Each kill gives +6% move and attack speed for 3 seconds, stacking up to five times.',
+    item_deathdefy_name: 'Deathdefier', item_deathdefy_desc: 'Once per run, a killing blow leaves you at 1 HP and invulnerable for 2 seconds.',
+    item_manaspring_name: 'Mana Spring', item_manaspring_desc: 'Your abilities recharge 20% faster.',
+    item_frostaura_name: 'Frost Aura', item_frostaura_desc: 'Enemies that come close to you are slowed.',
+    item_venom_name: 'Venom Blade', item_venom_desc: 'Your daggers poison: over 3 seconds they deal another 60% of the hit.',
+    item_ghoststep_name: 'Ghoststep', item_ghoststep_desc: 'After every kill you turn invisible for 1 second.',
+    item_renewal_name: 'Renewal', item_renewal_desc: 'You regenerate 1% of your max HP every second.',
+    item_ward_name: 'Guardian Spirit', item_ward_desc: 'Every 10 seconds a guardian spirit fully absorbs the next hit.',
+    item_soulsiphon_name: 'Soul Siphon', item_soulsiphon_desc: 'Every kill restores 2% of your max HP.',
+    item_bonearmor_name: 'Bone Armor', item_bonearmor_desc: 'Each living skeleton servant cuts the damage you take by 5% (up to 30%).',
+    item_volley_name: 'Triple Nock', item_volley_desc: 'Every 3rd shot looses two extra arrows to the sides.',
+    item_hawkeye_name: 'Hawkeye', item_hawkeye_desc: 'Your arrows fly 30% faster and reach further.',
+    item_sparebot_name: 'Spare Turret', item_sparebot_desc: 'Every 18 seconds a small turret deploys next to you for 8 seconds.',
+    item_shieldgen_name: 'Shield Generator', item_shieldgen_desc: 'When your HP drops below 30%, a 2-second shield switches on (once every 25 seconds).',
     enemy_wizard: 'Wizard',
     heroPrice: (c)=> `💰 ${c} — tap to buy`,
     heroBuyConfirm: (n,c)=> `Buy ${n} for ${c} coins?`,
@@ -1891,13 +1944,13 @@ const TRANSLATIONS = {
     compAb_cTurret: 'Torony telepítése', compAb_cDrone: 'Javítódrón',
     isoLeaveConfirm: 'Kilépsz a misszióból és visszamész a térképre?',
     invTitle: 'TARSOLY', invClose: 'BEZÁRÁS', invAria: 'Tarsoly',
-    invSub: (n)=> `${n} mágikus tárgy nálad`,
+    invSub: (n,max)=> `${n}/${max} felszerelés nálad`,
     invEmpty: 'Üres. A varázslók a hősödre szabott tárgyat hagynak hátra — győzz le egyet, és itt megjelenik.',
-    invHint: 'A tárgyak azonnal hatnak, nincs mit felszerelni. A tarsoly megnyitása szünetelteti a harcot.',
+    invHint: 'A felszerelés azonnal hat, és a futam végéig marad. Új darabot az összegyűjtött XP és a varázslók pecsétje ad — 5 helyed van. A tarsoly megnyitása szünetelteti a harcot.',
     invBindBtn: (k)=> `⌨️ Billentyű: ${k} — koppints az átállításhoz`,
     invBindWaiting: 'Nyomj meg egy billentyűt...',
     invOpenHint: (k)=> `Tarsoly (${k})`,
-    item_cloak_desc: 'Rövid láthatatlanság, és az abból érkező csapásod nagyobbat üt.',
+    item_cloak_desc: '12 mp-enként 2 mp-re láthatatlanná válsz, és a rejtekből érkező találataid 60%-kal nagyobbat ütnek.',
     item_tracer_desc: 'A lövedéked hamarabb és erősebben kanyarodik rá a célra.',
     item_thorns_desc: 'Aki közelharcban megüt, visszakapja a sebzés 45%-át.',
     item_bloodpact_desc: 'Minden találatod gyógyít egy keveset.',
@@ -1911,6 +1964,30 @@ const TRANSLATIONS = {
     item_chainseal_name: 'Láncvillám-pecsét', item_tether_name: 'Életkötés-talizmán',
     item_bonehoard_name: 'Csontgyűjtő', item_hmark_name: 'Nyomkövető jel',
     item_overclock_name: 'Túltöltő modul',
+    itemPickTitle: 'VÁLASSZ FELSZERELÉST',
+    itemPickSub: (n,max)=> `Felszerelés: ${n}/${max} hely — válassz egyet, a harc addig áll.`,
+    itemSigil: '🔮 Varázsló-pecsét — válassz felszerelést!',
+    invSlotEmpty: 'Üres hely',
+    invSlotHow: 'XP-gyűjtéssel telik, és a varázslók hátrahagyott pecsétjéből.',
+    invAllTaken: 'Ebben a futamban már minden felszerelését megszerezted a hősödnek.',
+    item_bulwark_name: 'Bástya-vért', item_bulwark_desc: 'Ha legalább 1 mp-ig egy helyben állsz, 35%-kal kevesebb sebzést kapsz.',
+    item_quake_name: 'Földrengés-csizma', item_quake_desc: 'Minden 4. csapásod lökéshullámot is kelt: körben sebez és ellök.',
+    item_coldblood_name: 'Hideg vér', item_coldblood_desc: 'Ha 1,5 mp-ig nem lősz, a következő lövésed dupla sebzést okoz.',
+    item_steadyaim_name: 'Nyugodt kéz', item_steadyaim_desc: 'Egy helyben állva 25%-kal gyorsabban lősz.',
+    item_bloodscent_name: 'Vérszag', item_bloodscent_desc: 'Minden ölés 3 mp-re +6% mozgás- és támadássebességet ad, legfeljebb ötször halmozódik.',
+    item_deathdefy_name: 'Halálmegvető', item_deathdefy_desc: 'Futamonként egyszer a halálos csapás 1 életerőn hagy, és 2 mp-ig sebezhetetlen vagy.',
+    item_manaspring_name: 'Mana-forrás', item_manaspring_desc: 'A képességeid 20%-kal gyorsabban töltődnek.',
+    item_frostaura_name: 'Fagyos aura', item_frostaura_desc: 'A közeledbe érő ellenfelek lelassulnak.',
+    item_venom_name: 'Méregpenge', item_venom_desc: 'A tőreid megmérgeznek: 3 mp alatt a találat további 60%-át sebzik.',
+    item_ghoststep_name: 'Szellemléptek', item_ghoststep_desc: 'Minden ölés után 1 mp-re láthatatlan leszel.',
+    item_renewal_name: 'Megújulás', item_renewal_desc: 'Másodpercenként a max. életerőd 1%-át visszatöltöd.',
+    item_ward_name: 'Védőszellem', item_ward_desc: '10 mp-enként egy védőszellem teljesen elnyeli a következő találatot.',
+    item_soulsiphon_name: 'Lélekcsapolás', item_soulsiphon_desc: 'Minden ölés a max. életerőd 2%-át visszatölti.',
+    item_bonearmor_name: 'Csontvért', item_bonearmor_desc: 'Minden élő csontváz-szolgád 5%-kal csökkenti a kapott sebzést (legfeljebb 30%).',
+    item_volley_name: 'Hármas vessző', item_volley_desc: 'Minden 3. lövésed két további nyilat is kilő oldalra.',
+    item_hawkeye_name: 'Sólyomszem', item_hawkeye_desc: 'A nyilaid 30%-kal gyorsabban repülnek és messzebbre érnek.',
+    item_sparebot_name: 'Tartalék-torony', item_sparebot_desc: '18 mp-enként magától letesz melléd egy kis tornyot 8 mp-re.',
+    item_shieldgen_name: 'Pajzsgenerátor', item_shieldgen_desc: 'Ha az életerőd 30% alá esik, 2 mp-es pajzs kapcsol be (25 mp-enként egyszer).',
     enemy_wizard: 'Varázsló',
     heroPrice: (c)=> `💰 ${c} — koppints a vásárláshoz`,
     heroBuyConfirm: (n,c)=> `Megveszed: ${n} — ${c} arany?`,
@@ -3580,7 +3657,7 @@ function padFocusables(){
   const root = document.getElementById(scr);
   if(!root.querySelectorAll) return [];
   return Array.from(root.querySelectorAll(
-    '.swatch, .headOpt, .classCard:not(.locked), .abCell:not(.locked), .diffBtn, .keyBtn, button.bigBtn'))
+    '.swatch, .headOpt, .classCard:not(.locked), .abCell:not(.locked), .diffBtn, .keyBtn, button.bigBtn, .itemCard'))
     .filter(el=>!el.classList.contains('hidden'));
 }
 // fókusz léptetése a kért irányba (legközelebbi elem a fő irányban, oldalirányú büntetéssel)
@@ -3636,6 +3713,10 @@ window.addEventListener('keydown', e=>{
     return;
   }
   if(k===' ') e.preventDefault(); // ne görgessen a szóköz
+  // felszerelés-választás billentyűzetről: 1 / 2 / 3
+  if(game && game.state==='itempick' && game.itemOffer && /^[1-3]$/.test(k)){
+    const id = game.itemOffer[Number(k)-1]; if(id) chooseItem(id); return;
+  }
   keys[k] = true;
   if(k==='escape' && typeof settingsOpen==='function' && settingsOpen()){ closeSettings(); return; }
   if(k==='escape' && isoActive()){ isoHandleEscape(); return; }
@@ -5496,7 +5577,7 @@ function renderHeroDetail(){
 }
 
 // ---- Sztori mód: képernyő-router + fejezet-választó + intro ----
-const SCREENS = ['startScreen','heroSelectScreen','mapScreen','storyIntro','pauseScreen','bossIntro','winScreen','deathScreen','ladderScreen','settingsScreen','conquestScreen','tableauScreen','trophyScreen','inventoryScreen'];
+const SCREENS = ['startScreen','heroSelectScreen','mapScreen','storyIntro','pauseScreen','bossIntro','winScreen','deathScreen','ladderScreen','settingsScreen','conquestScreen','tableauScreen','trophyScreen','inventoryScreen','itemPickScreen'];
 function showScreen(id){
   SCREENS.forEach(s=>{ const el=document.getElementById(s); if(el) el.classList.toggle('hidden', s!==id); });
   // a térkép animációja csak akkor pörögjön, amíg tényleg látszik
@@ -6533,7 +6614,8 @@ function makePlayer(name, color, head){
     bulletDmg:Math.round(cls.bulletDmg*bal.dmg*tierMult), bulletSpeed:cls.bulletSpeed, bulletCount:cls.bulletCount||1,
     armor:cls.armor||0, regen:cls.regen||0, critChance:cls.critChance||0, lowHpDmg:cls.lowHpDmg||0, cdScale:cls.cdScale||1,
     powerDamp: cls.allAbilities ? 0.7 : 1,   // minden pecsétet ismer, de mindegyiket gyengébben használja
-    items: new Set(),   // megszerzett mágikus tárgyak (a varázsló hagyatéka)
+    items: new Set(),   // a futamban megszerzett felszerelés (legfeljebb ITEM_SLOTS)
+    xpTotal: 0, itemSteps: 0,   // összegyűjtött XP + hány XP-küszöb adott már választást
     dashing:0, shieldActive:0, surgeActive:0, invuln:0, hazSlow:0,
     buffs:{ lifesteal:0, berserk:0, multishot:0, precision:0, invisible:0, berserkUlt:0, boneward:0, godShield:0, masterShield:0 },
     abilities: equipped.slice(0,MAX_SLOTS).map(id=>({ id, key:(abilityKeys[id]||'').toLowerCase(), cd:0, rank:1 })),
@@ -7163,7 +7245,7 @@ function update(){
     const d = screenDirToArena(mvx, mvy);
     mvx = d.x*mag; mvy = d.y*mag;
   }
-  let sp = p.speed * (p.surgeActive>0 ? 1.5 : 1);
+  let sp = p.speed * (p.surgeActive>0 ? 1.5 : 1) * itemMoveMul(p);
   if(p.dashing > 0){ sp = p.speed * 3.0; p.dashing--; }
   if(p.hazSlow>0){ if(p.dashing<=0) sp *= 0.5; p.hazSlow--; }   // fagyzóna lassítás
   p.x = clamp(p.x + mvx*sp, p.r, WORLD.w-p.r);
@@ -7178,6 +7260,7 @@ function update(){
   for(const k in p.buffs){ if(p.buffs[k]>0) p.buffs[k]--; }
   if(game.slowT>0) game.slowT--;
   if(p.regen>0){ p.hp = Math.min(p.maxHp, p.hp + p.regen); tetherShare(p.regen); }
+  itemsTick(p, moving);   // felszerelés: időzítők, visszatöltés, köpeny, tartalék-torony
 
   // --- Környezeti veszélyzónák (láva / jég / elektromos) ---
   if(game.hazards.length){
@@ -7200,7 +7283,7 @@ function update(){
     if(ab.cd>0) ab.cd--;
     if(ab.key && keys[ab.key] && ab.cd<=0){
       ABILITIES[ab.id].run(p, ab.rank * (p.powerDamp||1) * abilityBalanceMult(ab.id) * abilityUpgradeMult(ab.id));
-      ab.cd = Math.round(ABILITIES[ab.id].cdMax * (p.cdScale||1));
+      ab.cd = Math.round(ABILITIES[ab.id].cdMax * (p.cdScale||1) * itemCdMul(p));
       ab.cdMax = ab.cd;
       recordAbilityUse(ab.id);
       vfxPunch(p.x, p.y, heroSkinData(p.cls,p.skin).skin.glow || p.color, 1);
@@ -7395,7 +7478,9 @@ function update(){
   // --- Alap lövés (class-statok + krit + buffok) ---
   if(p.fireCooldown>0) p.fireCooldown--;
   if(firing && p.fireCooldown<=0){
-    p.fireCooldown = p.fireRate;
+    p.fireCooldown = itemFireCd(p);
+    const shotGap = (game.runFrames||0) - (p._lastShotF!==undefined ? p._lastShotF : -999);
+    p._lastShotF = game.runFrames||0;
     p._recoil = 1; p._muzzle = 4;   // vizuális: hátrarúgás + torkolattűz
     let base = p.bulletDmg * (1 + (p.lowHpDmg||0)*(1 - p.hp/p.maxHp));
     if(p.buffs.berserk>0) base *= 1.25;
@@ -7440,6 +7525,7 @@ function update(){
            mert tudjuk, hány lövedék jött létre ebben a lövésben. */
         const rm = rangeMul();
         if(rm > 1) for(let bi=_nb; bi<game.bullets.length; bi++) game.bullets[bi].life *= rm;
+        itemsOnFire(p, _nb, wep, base, shotGap);
       }
     } else {
       // biztonsági ág: ismeretlen kaszt -> a régi, általános lövedék
@@ -7480,8 +7566,14 @@ function update(){
   // --- Ellenfelek AI ---
   const ai = dif.ai;
   game._egrid = buildEnemyGrid();
+  const frostAura = hasItem(p,'frostaura');
   game.enemies.forEach(en=>{
     if(en.hitFlash>0) en.hitFlash--;
+    // MÉREGPENGE: a méreg fél másodpercenként mar, 3 mp-ig
+    if(en.venomT > 0){
+      en.venomT--;
+      if(en.venomT % 30 === 0){ en.hp -= en.venomDmg; en.hitFlash = Math.max(en.hitFlash,3); addParticles(en.x,en.y,'#8dff6a',2); }
+    }
     if(en.strafeTimer>0){ en.strafeTimer--; } else { en.strafe*=-1; en.strafeTimer=40+Math.random()*60; }
     if(en.frozen>0){ en.frozen--; return; }
     // láthatatlanság VAGY bokorban rejtőzés: az ellenfelek a régi, elhagyott pontot keresik
@@ -7499,7 +7591,9 @@ function update(){
     const frenzyMul = (en.frenzyOn > 0) ? 1.85 : 1;
     // egyedi lassítás (Vadász nyila) a globális időlassítás mellett
     if(en.slowT > 0) en.slowT--;
-    const slowMul = (en.slowT > 0) ? 0.55 : 1;
+    // FAGYOS AURA: a hős közelében mindenki lelassul
+    const inAura = frostAura && Math.abs(en.x-p.x) < 160 && dist(en.x,en.y,p.x,p.y) < 130 + en.r;
+    const slowMul = (en.slowT > 0 || inAura) ? 0.55 : 1;
     const spd = en.speed * frenzyMul * slowMul * (game.slowT>0 ? 0.55 : 1);   // időlassítás
     const ang = Math.atan2(ty-en.y, tx-en.x);
     en._lastFace = ang;   // a hátbatámadás ehhez méri, elfordulva áll-e
@@ -7677,10 +7771,8 @@ function update(){
         en._knock = 6; en._kdir = Math.atan2(b.vy,b.vx);   // vizuális hőkölés a lövedék irányába
         if(b.crit){ addShake(3,5); addRing(b.x,b.y,'#ffd166',en.r*1.6+10,12,2); }
         addFloater(en.x, en.y-en.r-6, Math.round(bd), b.crit?'#ff5c7c':'#ffe9a8', !!b.crit);
-        // NYOMKÖVETŐ JEL: a lassított célpont többet is kap
-        if(hasItem(p,'hmark') && en.slowT>0) en.hp -= bd*0.25;
-        // VÉRSZOMJ-AMULETT: minden találat gyógyít
-        if(hasItem(p,'bloodpact')) p.hp = Math.min(p.maxHp, p.hp + bd*0.08);
+        // felszerelés találatkor (a tornyok lövedéke nem számít)
+        if(!b.friendly) itemOnHit(p, en, bd, false);
         if(!b.friendly && (p.buffs.lifesteal>0 || p.buffs.berserkUlt>0)) p.hp=Math.min(p.maxHp, p.hp + bd*0.12);
         if(b.pierce){ if(!b._hit) b._hit=new Set(); b._hit.add(en); b._pierced=(b._pierced||0)+1; }
         else { b.life=0; }
@@ -7690,6 +7782,7 @@ function update(){
       if(b.explode) bulletExplode(b);
       if(b.slow) game.boss.slowT = Math.max(game.boss.slowT||0, Math.round(b.slow*0.4));
       const bd = bd0;
+      if(!b.friendly) itemOnHit(p, game.boss, bd, true);
       game.boss.hp -= bd*0.85; game.boss.hitFlash=6; addParticles(b.x,b.y,'#ff5c7c',5); game.boss._knock=4; game.boss._kdir=Math.atan2(b.vy,b.vx); addUltCharge(bd*0.35); SFX.hit();
       addFloater(game.boss.x, game.boss.y-game.boss.r-8, Math.round(bd*0.85), '#ffd166');
       if(b.pierce){ if(!b._hit) b._hit=new Set(); b._hit.add(game.boss); b._pierced=(b._pierced||0)+1; }
@@ -7761,7 +7854,8 @@ function update(){
         p.hp -= 5 * af; p.invuln = Math.max(p.invuln, 8);
       }
     }
-    // a varázsló hagyatéka: a hősödre szabott mágikus tárgy
+    itemOnKill(p, en);
+    // a varázsló hagyatéka: egy pecsét, ami plusz felszerelés-választást ad
     if(en.type==='wizard') dropWizardItem(en.x, en.y);
     // Nekromanta passzíva: esély, hogy a legyőzött ellenfél csontváz-szolgaként feltámadjon
     // (a Csontgyűjtő tárgy megemeli az esélyt)
@@ -7798,7 +7892,7 @@ function update(){
     o.t++;
     const d = dist(o.x,o.y,p.x,p.y);
     if(d<95){ const a=Math.atan2(p.y-o.y,p.x-o.x); o.x+=Math.cos(a)*5; o.y+=Math.sin(a)*5; }
-    if(d<20){ p.xp += o.xp; o.dead=true; SFX.orb(); while(p.xp>=p.xpNext) levelUp(); }
+    if(d<20){ p.xp += o.xp; p.xpTotal = (p.xpTotal||0) + o.xp; o.dead=true; SFX.orb(); while(p.xp>=p.xpNext) levelUp(); }
   });
   game.orbs = game.orbs.filter(o=>!o.dead);
 
@@ -7900,6 +7994,7 @@ function update(){
     game.obstacles = game.obstacles.filter(o=>!o._dead);
   }
 
+  itemsOnDamage(p, hp0);   // Bástya, Csontvért, Védőszellem, Pajzsgenerátor, Halálmegvető
   /* TÖVISES MELLVÉRT: aki közelharcban megüt, visszakapja a sebzés egy
      részét. A teljes képkocka-veszteségből dolgozunk, de csak akkor, ha
      tényleg van a közelben ellenfél — így a lövedék nem tükröződik vissza. */
@@ -7917,6 +8012,7 @@ function update(){
   if(p.hp < hp0){ game.damageTaken = (game.damageTaken||0) + (hp0 - p.hp); }
   if(p.hp < hp0 - 0.8){ SFX.hurt(); padRumble(0.5, 0.25, 120); }   // csak érdemi sérülésre (láva-tick nem spammel)
   if(p.hp<=0){ p.hp=0; deathGame(); }
+  else tickItemOffers(p);   // XP-küszöb vagy varázsló-pecsét -> felszerelés-választás
 
   // sebesség kiszámítása AI-hoz (következő frame-hez)
   p.vx = p.x - p._px; p.vy = p.y - p._py;
@@ -8033,6 +8129,9 @@ function saveRun(){
       abilities: p.abilities.map(a=>({ id:a.id, key:a.key, rank:a.rank })),
       ultKey: p.ult.key, ultCharge: p.ult.charge,
       companion: chosenCompanionClass || 'none',
+      // felszerelés (ha hiányzik egy régi mentésből: üres, nulláról gyűlik)
+      items: [...(p.items||[])], xpTotal: p.xpTotal||0, itemSteps: p.itemSteps||0,
+      itemOffers: game.itemOffers||0, defied: !!p._defied,
     }));
   }catch(e){ warnStorageOnce(); }
 }
@@ -8076,6 +8175,11 @@ function resumeRun(){
   p.fireRate=d.hero.fireRate; p.bulletDmg=d.hero.bulletDmg;
   p.abilities.forEach(ab=>{ const src=d.abilities.find(a=>a.id===ab.id); if(src) ab.rank=src.rank; });
   p.ult.charge = Math.min(p.ult.chargeMax, d.ultCharge||0);
+  p.items = new Set((d.items||[]).filter(id=>MAGIC_ITEMS[id] && MAGIC_ITEMS[id].cls===p.cls).slice(0, ITEM_SLOTS));
+  p.xpTotal = d.xpTotal||0;
+  p.itemSteps = (typeof d.itemSteps==='number') ? d.itemSteps : ITEM_XP_STEPS.filter(x=>x<=p.xpTotal).length;
+  p._defied = !!d.defied;
+  game.itemOffers = d.itemOffers||0;
   game.wave = d.wave; game.chapterWave = d.chapterWave||1;
   game.endless = !!d.endless;
   game.killsThisRun = d.killsThisRun||0;
@@ -11497,22 +11601,23 @@ function toggleInventory(){ inventoryOpen() ? closeInventory() : openInventory()
 function renderInventory(){
   const grid = document.getElementById('invGrid'); if(!grid) return;
   const p = game && game.player;
-  const owned = (p && p.items) ? [...p.items] : [];
+  const owned = (p && p.items) ? [...p.items].filter(id=>MAGIC_ITEMS[id]) : [];
   const sub = document.getElementById('invSub');
-  if(sub) sub.textContent = T('invSub', owned.length);
-  if(!owned.length){
-    grid.innerHTML = `<div id="invEmpty">${T('invEmpty')}</div>`;
-  } else {
-    grid.innerHTML = owned.map(id=>{
-      const it = MAGIC_ITEMS[id]; if(!it) return '';
-      return `<div class="invCard" style="border-color:${it.col}55;">`+
-        `<div class="iIco">${it.icon}</div>`+
-        `<div><div class="iName" style="color:${it.col}">${T('item_'+id+'_name')}</div>`+
-        `<div class="iDesc">${T('item_'+id+'_desc')}</div></div></div>`;
-    }).join('');
+  if(sub) sub.textContent = T('invSub', owned.length, ITEM_SLOTS);
+  let html = owned.map(id=>{
+    const it = MAGIC_ITEMS[id];
+    return `<div class="invCard" style="border-color:${it.col}55;">`+
+      `<div class="iIco">${it.icon}</div>`+
+      `<div><div class="iName" style="color:${it.col}">${T('item_'+id+'_name')}</div>`+
+      `<div class="iDesc">${T('item_'+id+'_desc')}</div></div></div>`;
+  }).join('');
+  for(let i=owned.length; i<ITEM_SLOTS; i++){
+    html += `<div class="invCard invEmptySlot"><div class="iIco">◇</div>`+
+      `<div><div class="iName">${T('invSlotEmpty')}</div><div class="iDesc">${T('invSlotHow')}</div></div></div>`;
   }
+  grid.innerHTML = html;
   const hint = document.getElementById('invHint');
-  if(hint) hint.textContent = T('invHint');
+  if(hint) hint.textContent = (p && owned.length < ITEM_SLOTS && !itemsLeft(p).length) ? T('invAllTaken') : T('invHint');
   updateInvBindBtn();
 }
 
@@ -11535,66 +11640,247 @@ function updateInvBindBtn(){
    Adatvezérelt: `apply(p)` bekapcsolja, a hatást pedig a megfelelő rendszer
    olvassa ki a `p.items` halmazból. Új tárgy hozzáadása egy bejegyzés.
    ========================================================= */
+const ITEM_SLOTS = 5;                              // ennyi felszerelés lehet nálad egy futamban
+const ITEM_XP_STEPS = [150, 450, 1000, 1800, 3000];  // összegyűjtött XP -> új választás
+/* Minden tárgy SZIGORÚAN egy kaszthoz tartozik: csak az adott hős kaphatja.
+   A hatásokat a játék megfelelő pontjai olvassák ki a `p.items` halmazból
+   (hasItem). Új tárgy = egy bejegyzés itt + a hatás egy horogban + a
+   magyar/angol neve és leírása. */
 const MAGIC_ITEMS = {
-  /* ORGYILKOS — Láthatatlan köpeny. Dota Shadow Blade / Skyrim: pár
-     másodperc rejtettség, és a rejtekből érkező első csapás kritikus. */
-  cloak: { id:'cloak', cls:'assassin', icon:'🕶️', col:'#c9a6ff',
-    apply(p){ p.buffs.invisible = Math.max(p.buffs.invisible||0, 300); p.items.add('cloak'); } },
-
-  /* MESTERLÖVÉSZ — Követő lövedék. A golyó a röppálya VÉGÉN kanyarodik rá
-     a célra, tehát a célzás még számít, csak a végén korrigál. */
-  tracer: { id:'tracer', cls:'sniper', icon:'🎯', col:'#3ddc97',
-    apply(p){ p.items.add('tracer'); } },
-
-  /* TANK — Tövises mellvért. Diablo Thorns / Dota Blade Mail: aki
-     közelharcban megüt, visszakapja a sebzés egy részét. */
-  thorns: { id:'thorns', cls:'tank', icon:'🛡️', col:'#c9a06a',
-    apply(p){ p.items.add('thorns'); } },
-
-  /* BERSERKER — Vérszomj-amulett. Dota Satanic: minden találat gyógyít. */
-  bloodpact: { id:'bloodpact', cls:'berserker', icon:'🩸', col:'#ff5c7c',
-    apply(p){ p.items.add('bloodpact'); } },
-
-  /* MÁGUS — Láncvillám-pecsét. Diablo chain lightning: a robbanás
-     átugrik egy második ellenfélre. */
-  chainseal: { id:'chainseal', cls:'mage', icon:'⚡', col:'#9d5cff',
-    apply(p){ p.items.add('chainseal'); } },
-
-  /* TÁMOGATÓ — Életkötés-talizmán. Dota Io köteléke: amit magadon
-     gyógyítasz, a társad is megkapja. */
-  tether: { id:'tether', cls:'support', icon:'💞', col:'#8affc1',
-    apply(p){ p.items.add('tether'); } },
-
-  /* NEKROMANTA — Csontgyűjtő. Diablo Necro: nagyobb eséllyel kel fel
-     szolga a legyőzöttekből. */
-  bonehoard: { id:'bonehoard', cls:'necromancer', icon:'💀', col:'#c8b8e8',
-    apply(p){ p.items.add('bonehoard'); } },
-
-  /* VADÁSZ — Nyomkövető jel. WoW Hunter's Mark: a lassított célpont
-     egyben több sebzést is kap. */
-  hmark: { id:'hmark', cls:'hunter', icon:'🏹', col:'#7dffb0',
-    apply(p){ p.items.add('hmark'); } },
-
-  /* GÉPÉSZ — Túltöltő modul. TF2 Engineer: a tornyok tovább élnek és
-     sűrűbben tüzelnek. */
-  overclock: { id:'overclock', cls:'engineer', icon:'⚙️', col:'#6ee7ff',
-    apply(p){ p.items.add('overclock'); } },
+  // --- TANK ---
+  thorns:    { cls:'tank',        icon:'🛡️', col:'#c9a06a' },  // közelharci támadó visszakapja a sebzés 45%-át
+  bulwark:   { cls:'tank',        icon:'🏰', col:'#c9a06a' },  // egy helyben állva -35% sebzés
+  quake:     { cls:'tank',        icon:'🥾', col:'#c9a06a' },  // minden 4. csapás lökéshullám
+  // --- MESTERLÖVÉSZ ---
+  tracer:    { cls:'sniper',      icon:'🎯', col:'#3ddc97' },  // erősebb, korábbi rákanyarodás
+  coldblood: { cls:'sniper',      icon:'🧊', col:'#3ddc97' },  // 1,5 mp szünet után dupla lövés
+  steadyaim: { cls:'sniper',      icon:'🧘', col:'#3ddc97' },  // állva 25%-kal gyorsabb tűz
+  // --- BERSERKER ---
+  bloodpact: { cls:'berserker',   icon:'🩸', col:'#ff5c7c' },  // minden találat gyógyít
+  bloodscent:{ cls:'berserker',   icon:'🐺', col:'#ff5c7c' },  // ölésenként halmozódó gyorsulás
+  deathdefy: { cls:'berserker',   icon:'⚰️', col:'#ff5c7c' },  // futamonként egyszer túléled a halálos csapást
+  // --- MÁGUS ---
+  chainseal: { cls:'mage',        icon:'⚡', col:'#9d5cff' },  // a robbanás továbbugrik
+  manaspring:{ cls:'mage',        icon:'💧', col:'#9d5cff' },  // -20% képesség-újratöltés
+  frostaura: { cls:'mage',        icon:'❄️', col:'#9d5cff' },  // a közeledben lelassulnak
+  // --- ORGYILKOS ---
+  cloak:     { cls:'assassin',    icon:'🕶️', col:'#c9a6ff' },  // 12 mp-enként eltűnsz, a rejtekből +60%
+  venom:     { cls:'assassin',    icon:'🧪', col:'#c9a6ff' },  // mérgező tőrök
+  ghoststep: { cls:'assassin',    icon:'👣', col:'#c9a6ff' },  // ölés után 1 mp láthatatlanság
+  // --- TÁMOGATÓ ---
+  tether:    { cls:'support',     icon:'💞', col:'#8affc1' },  // a gyógyulásod a társ is kapja
+  renewal:   { cls:'support',     icon:'🌿', col:'#8affc1' },  // 1%/mp életerő-visszatöltés
+  ward:      { cls:'support',     icon:'👼', col:'#8affc1' },  // 10 mp-enként egy találat elnyelve
+  // --- NEKROMANTA ---
+  bonehoard: { cls:'necromancer', icon:'💀', col:'#c8b8e8' },  // gyakrabban kel fel szolga
+  soulsiphon:{ cls:'necromancer', icon:'👻', col:'#c8b8e8' },  // ölésenként 2% életerő
+  bonearmor: { cls:'necromancer', icon:'🦴', col:'#c8b8e8' },  // szolgánként -5% sebzés
+  // --- VADÁSZ ---
+  hmark:     { cls:'hunter',      icon:'🏹', col:'#7dffb0' },  // lassított cél +25% sebzés
+  volley:    { cls:'hunter',      icon:'🔱', col:'#7dffb0' },  // minden 3. lövés +2 nyíl
+  hawkeye:   { cls:'hunter',      icon:'🦅', col:'#7dffb0' },  // +30% nyílsebesség és hatótáv
+  // --- GÉPÉSZ ---
+  overclock: { cls:'engineer',    icon:'⚙️', col:'#6ee7ff' },  // a tornyok 40%-kal gyorsabban lőnek
+  sparebot:  { cls:'engineer',    icon:'🔧', col:'#6ee7ff' },  // 18 mp-enként kis torony
+  shieldgen: { cls:'engineer',    icon:'🔋', col:'#6ee7ff' },  // 30% HP alatt pajzs
 };
-const MAGIC_ITEM_BY_CLASS = {};
-for(const k in MAGIC_ITEMS) MAGIC_ITEM_BY_CLASS[MAGIC_ITEMS[k].cls] = MAGIC_ITEMS[k];
+for(const k in MAGIC_ITEMS) MAGIC_ITEMS[k].id = k;
+const ITEMS_BY_CLASS = {};
+for(const k in MAGIC_ITEMS){ const c = MAGIC_ITEMS[k].cls; (ITEMS_BY_CLASS[c] = ITEMS_BY_CLASS[c] || []).push(MAGIC_ITEMS[k]); }
 
 function hasItem(p, id){ return !!(p && p.items && p.items.has(id)); }
+function itemsLeft(p){ return (ITEMS_BY_CLASS[p.cls] || []).filter(it=>!p.items.has(it.id)); }
+function canOfferItem(p){ return !!p && p.items.size < ITEM_SLOTS && itemsLeft(p).length > 0; }
 
-/* A varázsló halálakor a hősödre szabott tárgy hullik ki. Felvéve azonnal
-   hat — a részletes tárgy-kezelő felület később jön. */
-function dropWizardItem(x, y){
-  const p = game && game.player; if(!p) return;
-  const it = MAGIC_ITEM_BY_CLASS[p.cls]; if(!it) return;
-  game.pickups = game.pickups || [];
-  game.pickups.push({ x, y, item:it.id, icon:it.icon, col:it.col, t:0, r:14 });
-  addRing(x, y, it.col, 60, 22, 4); addParticles(x, y, it.col, 20);
+function giveItem(p, id){
+  const it = MAGIC_ITEMS[id]; if(!it || p.items.has(id) || p.items.size >= ITEM_SLOTS) return false;
+  p.items.add(id);
+  if(id === 'cloak') p._cloakCd = 600;   // az első eltűnés 2 mp múlva jön, nem 12
+  addFloater(p.x, p.y - p.r - 18, it.icon+' '+T('item_'+id+'_name'), it.col, true);
+  addRing(p.x, p.y, it.col, 70, 20, 4); addFlash(it.col, 0.10, 10);
+  try { SFX.crate && SFX.crate(); } catch(e){}
+  return true;
 }
-/* A földön heverő tárgyak: felszedés érintéssel. */
+
+/* ---------- A VÁLASZTÁS ----------
+   Az összegyűjtött XP bizonyos küszöbeinél (és ha egy varázsló pecsétjét
+   felveszed) a harc megáll, és három tárgyat kapsz a hősöd készletéből.
+   Egyet választanod kell. Ha tele az 5 hely, vagy elfogyott a készlet,
+   nincs ajánlat. */
+function queueItemOffer(){
+  const p = game && game.player;
+  if(!canOfferItem(p)) return false;
+  game.itemOffers = (game.itemOffers||0) + 1;
+  return true;
+}
+function tickItemOffers(p){
+  while((p.itemSteps||0) < ITEM_XP_STEPS.length && (p.xpTotal||0) >= ITEM_XP_STEPS[p.itemSteps||0]){
+    p.itemSteps = (p.itemSteps||0) + 1;
+    queueItemOffer();
+  }
+  if(game.itemOffers > 0 && game.state === 'playing'){
+    if(canOfferItem(p)) openItemPick(); else game.itemOffers = 0;
+  }
+}
+function openItemPick(){
+  const p = game.player;
+  const pool = itemsLeft(p).slice();
+  for(let i=pool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; }
+  const pick = pool.slice(0, 3);
+  if(!pick.length){ game.itemOffers = 0; return; }
+  game.itemOffers = Math.max(0, (game.itemOffers||0) - 1);
+  game.itemOffer = pick.map(it=>it.id);
+  game.state = 'itempick';
+  resetSticks(); mouse.down = false;
+  renderItemPick();
+  document.getElementById('itemPickScreen').classList.remove('hidden');
+  SFX.levelup && SFX.levelup();
+  if(pad.connected){ const c = document.querySelector('#itemPickCards .itemCard'); if(c) setPadFocus(c); }
+}
+function renderItemPick(){
+  const p = game && game.player; if(!p || !game.itemOffer) return;
+  document.getElementById('itemPickSub').textContent = T('itemPickSub', p.items.size, ITEM_SLOTS);
+  document.getElementById('itemPickCards').innerHTML = game.itemOffer.map((id,i)=>{
+    const it = MAGIC_ITEMS[id];
+    return `<button type="button" class="itemCard" data-item="${id}" style="--ic:${it.col}">`+
+      `<span class="ipKey">${i+1}</span><span class="ipIco">${it.icon}</span>`+
+      `<span class="ipText"><span class="ipName">${T('item_'+id+'_name')}</span>`+
+      `<span class="ipDesc">${T('item_'+id+'_desc')}</span></span></button>`;
+  }).join('');
+}
+function chooseItem(id){
+  if(!game || game.state !== 'itempick' || !game.itemOffer || !game.itemOffer.includes(id)) return false;
+  const p = game.player;
+  game.itemOffer = null;
+  document.getElementById('itemPickScreen').classList.add('hidden');
+  game.state = 'playing';
+  resetSticks();
+  giveItem(p, id);
+  saveRun();
+  return true;
+}
+document.getElementById('itemPickCards').addEventListener('click', e=>{
+  const c = e.target.closest('.itemCard'); if(c) chooseItem(c.dataset.item);
+});
+
+/* ---------- HOROGPONTOK ----------
+   Ezeket a játék saját pontjai hívják: képkockánként, lövéskor,
+   találatkor, öléskor és sérüléskor. Minden tárgy hatása itt van
+   egy helyen, nem szétszórva. */
+function itemsTick(p, moving){
+  p._stillT = moving ? 0 : (p._stillT||0) + 1;
+  if(p._scentT > 0 && --p._scentT === 0) p._scentN = 0;
+  if(p._wardCd > 0){ if(--p._wardCd === 0 && hasItem(p,'ward')) addRing(p.x,p.y,'#8affc1',p.r*2.4,16,3); }
+  if(p._sgCd > 0) p._sgCd--;
+  if(hasItem(p,'renewal') && p.hp < p.maxHp){
+    const h = p.maxHp * 0.01 / 60; p.hp = Math.min(p.maxHp, p.hp + h); tetherShare(h);
+  }
+  if(hasItem(p,'cloak')){
+    p._cloakCd = (p._cloakCd||0) + 1;
+    if(p._cloakCd >= 720){
+      p._cloakCd = 0;
+      p.buffs.invisible = Math.max(p.buffs.invisible||0, 120); game._invisPt = { x:p.x, y:p.y };
+      addPuff(p.x, p.y, '#c9a6ff', 6, 14, 2); addParticles(p.x, p.y, '#c9a6ff', 12);
+    }
+  }
+  if(hasItem(p,'sparebot')){
+    p._botCd = (p._botCd||0) + 1;
+    if(p._botCd >= 1080){
+      p._botCd = 0;
+      const a = p.facing + Math.PI*0.6;
+      game.turrets.push({ x:clamp(p.x+Math.cos(a)*44, 20, WORLD.w-20), y:clamp(p.y+Math.sin(a)*44, 20, WORLD.h-20),
+                          life:480, fireCd:0, dmg:9 });
+      addRing(p.x+Math.cos(a)*44, p.y+Math.sin(a)*44, '#6ee7ff', 40, 16, 3);
+    }
+  }
+}
+function itemMoveMul(p){ return 1 + ((hasItem(p,'bloodscent') && p._scentN) ? 0.06*p._scentN : 0); }
+function itemFireCd(p){
+  let fr = p.fireRate;
+  if(hasItem(p,'steadyaim') && (p._stillT||0) >= 20) fr *= 0.75;
+  if(hasItem(p,'bloodscent') && p._scentN) fr /= (1 + 0.06*p._scentN);
+  return Math.max(4, Math.round(fr));
+}
+function itemCdMul(p){ return hasItem(p,'manaspring') ? 0.8 : 1; }
+/* Lövéskor: a most keletkezett lövedékeket (nb-től) módosítjuk. */
+function itemsOnFire(p, nb, wep, base, gap){
+  const fresh = game.bullets.slice(nb);
+  if(hasItem(p,'coldblood') && gap >= 90 && fresh.length){
+    for(const b of fresh){ b.dmg = Math.round((b.dmg||0)*2); b.crit = true; }
+    addRing(p.x, p.y, '#bfe8ff', p.r*1.8, 10, 2);
+  }
+  if(hasItem(p,'hawkeye')) for(const b of fresh){ b.vx *= 1.3; b.vy *= 1.3; }
+  if(hasItem(p,'volley') && fresh.length){
+    p._shotN = (p._shotN||0) + 1;
+    if(p._shotN % 3 === 0){
+      for(const b of fresh){
+        for(const da of [-0.22, 0.22]){
+          const c = Math.cos(da), s2 = Math.sin(da);
+          game.bullets.push(Object.assign({}, b, { vx: b.vx*c - b.vy*s2, vy: b.vx*s2 + b.vy*c,
+                                                   dmg: Math.round((b.dmg||0)*0.7), _hit: undefined }));
+        }
+      }
+    }
+  }
+  if(hasItem(p,'quake') && wep && wep.style === 'melee'){
+    p._swingN = (p._swingN||0) + 1;
+    if(p._swingN % 4 === 0){
+      aoeDamage(p.x, p.y, 95, base*0.6, '#c9a06a'); knockback(p.x, p.y, 120, 20);
+      addRing(p.x, p.y, '#c9a06a', 105, 18, 5); addPuff(p.x, p.y, '#8a7a66', 7, 20, 2.2);
+    }
+  }
+}
+/* Találatkor (lövedék VAGY közelharci csapás, a te támadásod). */
+function itemOnHit(p, en, dmg, isBoss){
+  if(hasItem(p,'cloak') && p.buffs.invisible > 0){
+    en.hp -= dmg*0.6 * (isBoss ? 0.85 : 1); addRing(en.x, en.y, '#c9a6ff', (en.r||20)*1.8, 12, 2);
+  }
+  if(hasItem(p,'hmark') && en.slowT > 0) en.hp -= dmg*0.25;
+  if(hasItem(p,'bloodpact')) p.hp = Math.min(p.maxHp, p.hp + dmg*0.08);
+  if(hasItem(p,'venom') && !isBoss){ en.venomT = 180; en.venomDmg = Math.max(1, dmg*0.6/6); }
+}
+/* Öléskor. */
+function itemOnKill(p, en){
+  if(hasItem(p,'bloodscent')){ p._scentN = Math.min(5, (p._scentN||0) + 1); p._scentT = 180; }
+  if(hasItem(p,'ghoststep')){ p.buffs.invisible = Math.max(p.buffs.invisible||0, 60); game._invisPt = { x:p.x, y:p.y }; }
+  if(hasItem(p,'soulsiphon') && p.hp < p.maxHp){
+    const h = p.maxHp*0.02; p.hp = Math.min(p.maxHp, p.hp + h); tetherShare(h);
+  }
+}
+/* A képkocka végén, a sérülés után: csökkentések, elnyelés, végső mentés. */
+function itemsOnDamage(p, hp0){
+  if(p.hp < hp0){
+    if(hasItem(p,'ward') && !(p._wardCd > 0)){
+      p.hp = hp0; p._wardCd = 600;
+      addRing(p.x, p.y, '#8affc1', p.r*2.6, 16, 4); addFloater(p.x, p.y-p.r-16, '👼', '#8affc1');
+    } else {
+      let red = 0;
+      if(hasItem(p,'bulwark') && (p._stillT||0) >= 60) red += 0.35;
+      if(hasItem(p,'bonearmor')) red += Math.min(0.30, 0.05 * game.turrets.filter(t=>t.skeleton).length);
+      if(red > 0) p.hp += (hp0 - p.hp) * Math.min(red, 0.6);
+    }
+  }
+  if(hasItem(p,'shieldgen') && p.hp > 0 && p.hp < p.maxHp*0.3 && !(p._sgCd > 0)){
+    p.shieldActive = Math.max(p.shieldActive||0, 120); p._sgCd = 1500;
+    addRing(p.x, p.y, '#6ee7ff', p.r*2.8, 20, 4);
+  }
+  if(p.hp <= 0 && hasItem(p,'deathdefy') && !p._defied){
+    p._defied = true; p.hp = 1; p.invuln = Math.max(p.invuln||0, 120);
+    addRing(p.x, p.y, '#ff5c7c', 140, 26, 6); addFlash('#ff5c7c', 0.2, 16);
+    addFloater(p.x, p.y-p.r-18, '⚰️ ' + T('item_deathdefy_name'), '#ff5c7c', true);
+  }
+}
+
+/* A legyőzött varázsló PECSÉTET hagy hátra: felvéve azonnal egy
+   plusz választást kapsz. Csak akkor esik, ha van még hová tenni. */
+function dropWizardItem(x, y){
+  const p = game && game.player; if(!canOfferItem(p)) return;
+  game.pickups = game.pickups || [];
+  if(game.pickups.some(pu=>pu.sigil)) return;
+  game.pickups.push({ x, y, sigil:true, icon:'🔮', col:'#c9a6ff', t:0, r:14 });
+  addRing(x, y, '#c9a6ff', 60, 22, 4); addParticles(x, y, '#c9a6ff', 20);
+}
+/* A földön heverő pecsétek: felszedés érintéssel. */
 function updatePickups(){
   if(!game || !game.pickups || !game.pickups.length) return;
   const p = game.player;
@@ -11602,12 +11888,9 @@ function updatePickups(){
     pu.t++;
     if(dist(pu.x, pu.y, p.x, p.y) < pu.r + p.r){
       pu.taken = true;
-      const it = MAGIC_ITEMS[pu.item];
-      if(it){
-        it.apply(p);
-        addFloater(p.x, p.y - p.r - 18, it.icon+' '+T('item_'+it.id+'_name'), it.col, true);
-        addRing(p.x, p.y, it.col, 70, 20, 4); addFlash(it.col, 0.10, 10);
-        try { SFX.crate && SFX.crate(); } catch(e){}
+      if(pu.sigil && queueItemOffer()){
+        addFloater(p.x, p.y - p.r - 18, T('itemSigil'), '#c9a6ff', true);
+        addRing(p.x, p.y, '#c9a6ff', 70, 20, 4);
       }
     }
   }
@@ -11667,6 +11950,7 @@ function meleeArc(p, reach, halfAngle, dmg, crit, opt){
     addFloater(en.x, en.y-(en.r||20)-6, Math.round(dd), crit?'#ff5c7c':'#ffe9a8', !!crit);
     if(opt.lifesteal) p.hp = Math.min(p.maxHp, p.hp + dd*opt.lifesteal);
     if(opt.slow) en.slowT = Math.max(en.slowT||0, opt.slow);
+    if(p === game.player) itemOnHit(p, en, dd, isBoss);   // a közelharci csapás is ugyanúgy számít
     hits++;
   }
   // látvány: az ív kirajzolása a képernyőre
