@@ -1199,6 +1199,11 @@ function googleSignOut(){
   clearTimeout(pantrySaveTimer);
   try{ localStorage.removeItem(GOOGLE_ACCOUNT_KEY); }catch(e){}
   renderAccountUi();
+  // az admin-állapot a fiókhoz kötött: a zárolás-jelzéseket újra kell rajzolni
+  if(typeof renderClassCards==='function') renderClassCards();
+  if(typeof renderMapCards==='function') renderMapCards();
+  if(typeof buildLoadoutUI==='function') buildLoadoutUI();
+  if(typeof refreshMenu==='function') refreshMenu();
 }
 /* base64url -> szöveg, ékezetekkel együtt (a név lehet "Lipcsei Dávid") */
 function b64urlText(part){
@@ -2645,8 +2650,17 @@ function saveHeroStats(){
    annak minden hős/pecsét/fejezet azonnal elérhető ezen az eszközön —
    így nem kell külön "teszt" verziót fenntartani.
    ========================================================= */
-const ADMIN_USERNAMES = ['davidlipcs1234'];
+/* ADMIN. Amint a Google-bejelentkezés be van állítva, CSAK a Google-lel
+   bejelentkezett, ellenőrzött e-mailű fiók az admin — a begépelt név
+   onnantól nem számít (azt bárki beírhatta). Amíg nincs beállítva, a
+   régi név-alapú szabály marad, különben senki nem lehetne admin. */
+const ADMIN_EMAILS = ['davidlipcs@gmail.com'];
+const ADMIN_USERNAMES = ['davidlipcs1234'];   // csak beállítatlan Google mellett
 function isAdminUser(){
+  if(CLOUD_READY){
+    const a = googleAccount;
+    return !!(a && a.verified && ADMIN_EMAILS.includes(String(a.email||'').trim().toLowerCase()));
+  }
   const el = document.getElementById('nameInput');
   const n = (el ? el.value : '').trim().toLowerCase();
   return ADMIN_USERNAMES.includes(n);
