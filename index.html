@@ -1587,6 +1587,18 @@ const TRANSLATIONS = {
     item_hawkeye_name: 'Hawkeye', item_hawkeye_desc: 'Your arrows fly 30% faster and reach further.',
     item_sparebot_name: 'Spare Turret', item_sparebot_desc: 'Every 18 seconds a small turret deploys next to you for 8 seconds.',
     item_shieldgen_name: 'Shield Generator', item_shieldgen_desc: 'When your HP drops below 30%, a 2-second shield switches on (once every 25 seconds).',
+    item_fullthorns_name: 'Total Thorns', item_fullthorns_desc: 'Every point of damage you take goes straight back to whoever dealt it — shots fly back at the shooter.',
+    item_bubble_name: 'Shield Bubble', item_bubble_desc: 'Stand still for a second and a bubble forms: enemy shots stop dead on it.',
+    item_ricochet_name: 'Ricochet', item_ricochet_desc: 'Your bullet bounces on to two more enemies.',
+    item_elemspec_name: 'Elemental Master', item_elemspec_desc: 'Choose fire, ice or earth right away — it reshapes your shots, and fire your ultimate, earth your first ability.',
+    item_burstknives_name: 'Burst Knives', item_burstknives_desc: 'Each dagger hit throws three small knives two tiles further, and they explode.',
+    item_soulharvest_name: 'Soul Harvest', item_soulharvest_desc: 'Every kill adds +0.5% damage until the run ends, up to +100%.',
+    item_frosttrap_name: 'Frost Trap', item_frosttrap_desc: 'Every 10 seconds you drop a trap at your feet: whoever steps on it freezes, along with everyone nearby.',
+    item_warstation_name: 'War Station', item_warstation_desc: 'Your turrets fire explosive rockets 70% faster, and heal you while you stand next to them.',
+    spec_fire_name: 'Fire', spec_fire_desc: 'A real flamethrower. Your ultimate fills after about ten bursts of fire and blasts an arcane ring of flame in every direction.',
+    spec_ice_name: 'Ice', spec_ice_desc: 'Every 5th shot is an ice spear: it locks the enemy in ice, hits hard, and the ice visibly melts. Whoever takes too much ice freezes solid and shatters.',
+    spec_earth_name: 'Earth', spec_earth_desc: 'A constant stream of stone shards, and every 5th shot a heavy boulder. Your first ability raises a stone wall two tiles ahead.',
+    specPickTitle: 'CHOOSE YOUR ELEMENT', specPickSub: 'It shapes your mage for the rest of the run.',
     enemy_wizard: 'Wizard',
     heroPrice: (c)=> `💰 ${c} — tap to buy`,
     heroBuyConfirm: (n,c)=> `Buy ${n} for ${c} coins?`,
@@ -1988,6 +2000,18 @@ const TRANSLATIONS = {
     item_hawkeye_name: 'Sólyomszem', item_hawkeye_desc: 'A nyilaid 30%-kal gyorsabban repülnek és messzebbre érnek.',
     item_sparebot_name: 'Tartalék-torony', item_sparebot_desc: '18 mp-enként magától letesz melléd egy kis tornyot 8 mp-re.',
     item_shieldgen_name: 'Pajzsgenerátor', item_shieldgen_desc: 'Ha az életerőd 30% alá esik, 2 mp-es pajzs kapcsol be (25 mp-enként egyszer).',
+    item_fullthorns_name: 'Teljes tüske', item_fullthorns_desc: 'Minden sebzés 100%-a visszamegy arra, aki okozta — a lövés visszarepül a lövőre.',
+    item_bubble_name: 'Pajzsbuborék', item_bubble_desc: 'Ha 1 mp-ig egy helyben állsz, buborék nő köréd: az ellenséges lövések megállnak rajta.',
+    item_ricochet_name: 'Rikoset', item_ricochet_desc: 'A golyód még két ellenfélre átpattan.',
+    item_elemspec_name: 'Elemi mester', item_elemspec_desc: 'Azonnal választasz: tűz, jég vagy föld — átalakítja a lövésed, a tűz az ultidat, a föld az első képességedet.',
+    item_burstknives_name: 'Robbanó kések', item_burstknives_desc: 'Minden tőr-találatból három kis kés repül tovább két kockányit, és felrobban.',
+    item_soulharvest_name: 'Lélekgyűjtő', item_soulharvest_desc: 'Minden ölés +0,5% sebzést ad a futam végéig, legfeljebb +100%-ig.',
+    item_frosttrap_name: 'Fagyasztócsapda', item_frosttrap_desc: '10 mp-enként csapdát teszel a lábad elé: aki belelép, a közelében lévőkkel együtt megfagy.',
+    item_warstation_name: 'Hadiállomás', item_warstation_desc: 'A tornyaid 70%-kal gyorsabban lőnek robbanó rakétát, és gyógyítanak, amíg mellettük állsz.',
+    spec_fire_name: 'Tűz', spec_fire_desc: 'Igazi lángszóró. Az ultid kb. tíz lángcsóvától feltöltődik, és minden irányba mágikus lángkört robbant.',
+    spec_ice_name: 'Jég', spec_ice_desc: 'Minden 5. lövés jégdárda: jégbe zárja az ellenfelet, nagyot sebez, a jég pedig láthatóan olvad. Akit túl sok jég ér, szétfagy.',
+    spec_earth_name: 'Föld', spec_earth_desc: 'Folyamatos kőszilánk-zápor, minden 5. lövés nehéz kőtömb. Az első képességed két kockányira kőfalat emel.',
+    specPickTitle: 'VÁLASSZ ELEMET', specPickSub: 'A futam végéig ez határozza meg a mágusodat.',
     enemy_wizard: 'Varázsló',
     heroPrice: (c)=> `💰 ${c} — koppints a vásárláshoz`,
     heroBuyConfirm: (n,c)=> `Megveszed: ${n} — ${c} arany?`,
@@ -2221,6 +2245,7 @@ const GAME_TEXT_EN = {
     engineer:{ label:'Engineer', role:'BUILDER', strong:'Deployed structures hold the ground', weak:'Slow, stationary power' },
   },
   abilities: {
+    earthwall:{ label:'Earth Wall', desc:'Raises a stone wall two tiles ahead: enemies cannot get through, and their shots stop in it.' },
     dash:{ label:'Dash', desc:'Quick evade with a brief moment of invulnerability.' },
     shield:{ label:'Shield', desc:'Temporary invulnerability.' },
     fireball:{ label:'Fireball', desc:'Spreading explosion, area damage.' },
@@ -2267,6 +2292,7 @@ const GAME_TEXT_EN = {
     mistform:{ label:'Mist Form', desc:'You turn to mist — enemies lose your trail and charge your old position while you walk away. Lasts longer with every rank.' },
   },
   ultimates: {
+    infernonova:{ label:'Arcane Inferno', desc:'A magical ring of fire in every direction, as far as your flamethrower reaches.' },
     fortress:{ label:'Fortress', desc:'Big shield, healing and a shockwave all around.' },
     precision:{ label:'Precision Mode', desc:'Every shot pierces and crits for a while.' },
     bloodrage:{ label:'Blood Rage', desc:'Huge damage, speed and lifesteal.' },
@@ -3078,7 +3104,7 @@ const CLASSES = {
 // TESZT MÓD: ha true, minden hős és pecsét azonnal elérhető, szintkövetelmény nélkül —
 // ha később vissza akarod kapcsolni a normál, fokozatos feloldást, írd false-ra.
 const TEST_MODE_UNLOCK_ALL = false;
-function isClassUnlocked(id){ return TEST_MODE_UNLOCK_ALL || isAdminUser() || heroOwned(id); }
+function isClassUnlocked(id){ return !HIDDEN_HEROES.has(id) && (TEST_MODE_UNLOCK_ALL || isAdminUser() || heroOwned(id)); }
 
 /* =========================================================
    KÉPESSÉGEK (adatvezérelt, 22 db) — run(p, rank)
@@ -3090,6 +3116,11 @@ const ABILITIES = {
     desc:'A sebző aurád rövid időre kétszer akkora és sokkal erősebb.',
     run(p,r){ p.buffs.bulwark = Math.max(p.buffs.bulwark||0, 150 + r*40);
       addRing(p.x,p.y,'#c9a06a',TANK_AURA.radius*1.7,20,4); addShake(3,6); } },
+  /* A föld-mágus fala: csak az Elemi mester föld-ágával kerül az első
+     helyre (cls:'__spec', ezért egyik hős készletében sem jelenik meg). */
+  earthwall:{ label:'Földfal', icon:'🪨', req:1, cdMax:420, maxRank:1, cls:'__spec',
+    desc:'Két kockányira előtted kőfalat emelsz: az ellenfelek nem jutnak át rajta, a lövéseik megállnak benne.',
+    run(p,r){ spawnEarthWall(p, r); } },
   runewall:{ label:'Rúnafal', icon:'🔯', req:1, cdMax:600, maxRank:3, cls:'mage',
     desc:'Öt másodperces rúnafal magad köré: a bent lévőket kilöki és sebzi, a belépőket visszatolja.',
     run(p,r){ spawnRuneWall(p, r); } },
@@ -3489,6 +3520,9 @@ const ULTIMATES = {
     run(p){ p.buffs.precision=260; addParticles(p.x,p.y,'#3ddc97',30); } },
   bloodrage:{ label:'Vérdüh', icon:'🔥', chargeMax:720, desc:'Óriási sebzés, sebesség és vérszívás.',
     run(p){ p.buffs.berserkUlt=280; p.buffs.lifesteal=Math.max(p.buffs.lifesteal,280); p.surgeActive=Math.max(p.surgeActive,280); addParticles(p.x,p.y,'#ff5c3c',40); } },
+  /* Az Elemi mester tűz-ágának ultija: kb. 10 lövésnyi tüzeléstől telik. */
+  infernonova:{ label:'Mágikus lángkör', icon:'🌋', chargeMax:600, desc:'Minden irányba lángszóró-messzeségű mágikus tűzkör.',
+    run(p){ infernoNova(p); } },
   elemental:{ label:'Elemi vihar', icon:'🌩️', chargeMax:800, desc:'Meteorzápor és villámok az egész pályán.',
     run(p){ for(let i=0;i<8;i++){ const q=meteorSpot(p); game.meteors.push({x:q.x,y:q.y,t:0,delay:20+i*7,r:100,dmg:45,exploded:false,color:'#8b5cf6'}); }
       nearestEnemies(p.x,p.y,99999,6).forEach(en=>{ en.hp-=32; en.hitFlash=8; game.particles.push({x:p.x,y:p.y,vx:0,vy:0,life:1,color:'#c9a6ff',bolt:{tx:en.x,ty:en.y}}); }); } },
@@ -3520,6 +3554,11 @@ const COMPANION_PAIRS = {
   sniper: ['berserker'],
 };
 const NORMAL_HERO_IDS = ['tank','sniper','berserker','mage','assassin','support','necromancer','hunter','engineer'];
+/* IDEIGLENESEN ELREJTETT HŐSÖK. A Támogató a többjátékos módig nem
+   választható (társként továbbra is jöhet). A kódja, a megvásárlása és
+   a statisztikája megmarad: ha kivesszük innen, minden visszajön. */
+const HIDDEN_HEROES = new Set(['support']);
+function heroListed(id){ return !!CLASSES[id] && !HIDDEN_HEROES.has(id); }
 function companionOptions(playerCls){
   return COMPANION_PAIRS[playerCls] || NORMAL_HERO_IDS.slice();
 }
@@ -3714,8 +3753,9 @@ window.addEventListener('keydown', e=>{
   }
   if(k===' ') e.preventDefault(); // ne görgessen a szóköz
   // felszerelés-választás billentyűzetről: 1 / 2 / 3
-  if(game && game.state==='itempick' && game.itemOffer && /^[1-3]$/.test(k)){
-    const id = game.itemOffer[Number(k)-1]; if(id) chooseItem(id); return;
+  if(game && game.state==='itempick' && /^[1-3]$/.test(k)){
+    if(game.specOffer){ chooseSpec(MAGE_SPEC_ORDER[Number(k)-1]); return; }
+    if(game.itemOffer){ const id = game.itemOffer[Number(k)-1]; if(id) chooseItem(id); return; }
   }
   keys[k] = true;
   if(k==='escape' && typeof settingsOpen==='function' && settingsOpen()){ closeSettings(); return; }
@@ -5474,6 +5514,7 @@ function setClass(id){
 function renderClassCards(){
   classRow.innerHTML='';
   Object.entries(CLASSES).forEach(([id,c])=>{
+    if(HIDDEN_HEROES.has(id)) return;   // ideiglenesen nem választható
     const unlocked = isClassUnlocked(id);
     const owned = heroOwned(id);
     const price = heroPrice(id);
@@ -5983,7 +6024,7 @@ function renderRewardLadder(){
   for(let lvl=2; lvl<=REWARD_LADDER_MAX; lvl++){
     const isMilestone = REWARD_MILESTONES.includes(lvl);
     const coins = levelCoinReward(lvl) + (isMilestone?MILESTONE_BONUS:0);
-    const heroesHere = Object.entries(CLASSES).filter(([id,c])=>c.req===lvl).map(([id,c])=>c.icon).join(' ');
+    const heroesHere = Object.entries(CLASSES).filter(([id,c])=>c.req===lvl && heroListed(id)).map(([id,c])=>c.icon).join(' ');
     const reached = curLevel>=lvl;
     html += `<div style="display:flex; justify-content:space-between; font-size:12px; padding:4px 2px; border-bottom:1px solid #1c2333;
       ${reached?'color:#7dffb0;':'color:var(--dim);'} ${isMilestone?'font-weight:bold; color:var(--gold);':''}">
@@ -6025,12 +6066,12 @@ function renderSettings(){
 }
 function renderStatsBlock(){
   const el = document.getElementById('statsBlock'); if(!el) return;
-  const unlockedHeroes = Object.keys(CLASSES).filter(id=>isClassUnlocked(id)).length;
+  const unlockedHeroes = Object.keys(CLASSES).filter(id=>heroListed(id) && isClassUnlocked(id)).length;
   const rows = [
     [T('statRuns'), profile.totalRuns||0],
     [T('statKills'), profile.totalKills||0],
     [T('statBestWave'), profile.bestWaveCampaign||0],
-    [T('statHeroes'), unlockedHeroes+' / '+Object.keys(CLASSES).length],
+    [T('statHeroes'), unlockedHeroes+' / '+Object.keys(CLASSES).filter(heroListed).length],
   ];
   const hist = (profile.history||[]).slice(0, 10);
   const histHtml = hist.length
@@ -6642,6 +6683,7 @@ function resetGame(){
     bullets:[], enemyBullets:[], enemies:[], particles:[], floaters:[], orbs:[], fireballs:[], turrets:[], meteors:[], obstacles:[],
     clouds:[], drones:[], beams:[], traps:[], slowT:0,
     barrels:[], hazards:[], crates:[],
+    fxFlames:[], puddles:[], novas:[], drips:[], earthWalls:[],   // elemi mágus effektjei
     pendingSpawns:[], swings:[], pickups:[], runeWalls:[], killsThisRun:0,
     // futam-statisztika a végi összefoglalóhoz (csak játék közben nő, szünetben áll)
     runFrames:0, ultsUsed:0, abilitiesUsed:0, damageTaken:0, bestWave:1,
@@ -7181,6 +7223,7 @@ function update(){
      (WORLD.w/h), a vászon csak ablak rá. */
   const dif = game.diff;
   p._px = p.x; p._py = p.y;
+  p._shotDmgF = 0;   // ebben a képkockában lövedéktől kapott sebzés (a tüskéhez)
   const hp0 = p.hp;   // sérülés-hang detektáláshoz (frame végén hasonlítjuk)
   const armorFactor = clamp(1 - (p.armor||0) + (p.buffs.berserk>0?0.2:0) - (p.buffs.boneward>0?0.35:0) - (p.buffs.godShield>0?0.3:0) - (p.buffs.masterShield>0?0.7:0), 0.15, 2);
 
@@ -7384,8 +7427,12 @@ function update(){
       else if(t.fireCd<=0){ nearest.hp -= (t.dmg||8); nearest.hitFlash=6; t.fireCd=26; addParticles(nearest.x,nearest.y,'#9d5cff',3); }
     } else if(nearest && best<(t.heavy?360:300) && t.fireCd<=0){
       // TÚLTÖLTŐ MODUL: sűrűbb tüzelés
-      t.fireCd = Math.round((t.heavy?14:30) * (hasItem(game.player,'overclock') ? 0.6 : 1)); const a = Math.atan2(nearest.y-t.y, nearest.x-t.x);
-      game.bullets.push({ x:t.x,y:t.y, vx:Math.cos(a)*8, vy:Math.sin(a)*8, r:4, life:60, friendly:true, dmg:(t.dmg||8) });
+      const ws = hasItem(game.player,'warstation');
+      t.fireCd = Math.round((t.heavy?14:30) * (ws ? 0.59 : 1)); const a = Math.atan2(nearest.y-t.y, nearest.x-t.x);
+      const tb = { x:t.x,y:t.y, vx:Math.cos(a)*8, vy:Math.sin(a)*8, r:4, life:60, friendly:true, dmg:(t.dmg||8) };
+      // HADIÁLLOMÁS: a torony robbanó rakétát lő
+      if(ws){ tb.look='rocket'; tb.explode = { r:46, dmg:Math.round((t.dmg||8)*1.1), col:'#ffb35c' }; tb.vx*=0.9; tb.vy*=0.9; }
+      game.bullets.push(tb);
     }
   });
   game.turrets = game.turrets.filter(t=>t.life>0);
@@ -7431,8 +7478,17 @@ function update(){
   // --- Csapdák/aknák (Vadász, Gépész) — az első ráérő ellenfelet sebzik és gyökeret eresztik ---
   game.traps.forEach(tr=>{
     if(!tr.armed) return;
+    if(tr.frost){ tr.t = (tr.t||0) + 1; if(--tr.life <= 0){ tr.armed = false; return; } }
     for(const en of game.enemies){
       if(dist(en.x,en.y,tr.x,tr.y) < tr.r+en.r){
+        if(tr.frost){
+          // FAGYASZTÓCSAPDA: a közelben mindenki megfagy
+          for(const o of game.enemies){ if(dist(o.x,o.y,tr.x,tr.y) < tr.r*2.2+o.r){
+            o.hp -= tr.dmg; o.hitFlash=8; o.frozen = Math.max(o.frozen||0, tr.root);
+            o.encased = { t:0, dur:tr.root, big:false, trap:true }; } }
+          addRing(tr.x,tr.y,'#cfefff',tr.r*2.6,20,4); addDebris(tr.x,tr.y,'#cfefff',10,5,{speed:3,life:40,gravity:0.25});
+          addFlash('#8fe3ff',0.08,10); tr.armed=false; break;
+        }
         en.hp -= tr.dmg; en.hitFlash=8; en.frozen = Math.max(en.frozen||0, tr.root||50);
         addParticles(tr.x,tr.y,'#c9a24a',16); tr.armed=false; break;
       }
@@ -7482,7 +7538,7 @@ function update(){
     const shotGap = (game.runFrames||0) - (p._lastShotF!==undefined ? p._lastShotF : -999);
     p._lastShotF = game.runFrames||0;
     p._recoil = 1; p._muzzle = 4;   // vizuális: hátrarúgás + torkolattűz
-    let base = p.bulletDmg * (1 + (p.lowHpDmg||0)*(1 - p.hp/p.maxHp));
+    let base = p.bulletDmg * (1 + (p.lowHpDmg||0)*(1 - p.hp/p.maxHp)) * (1 + 0.005*(hasItem(p,'soulharvest') ? (p._souls||0) : 0));
     if(p.buffs.berserk>0) base *= 1.25;
     if(p.buffs.berserkUlt>0) base *= 1.7;
     const crit = (p.buffs.precision>0 || Math.random() < (p.critChance||0));
@@ -7524,7 +7580,7 @@ function update(){
            lövedékek élettartamát szorozzuk. Itt egy helyen elintézhető,
            mert tudjuk, hány lövedék jött létre ebben a lövésben. */
         const rm = rangeMul();
-        if(rm > 1) for(let bi=_nb; bi<game.bullets.length; bi++) game.bullets[bi].life *= rm;
+        if(rm > 1) for(let bi=_nb; bi<game.bullets.length; bi++) if(!game.bullets[bi].noRange) game.bullets[bi].life *= rm;
         itemsOnFire(p, _nb, wep, base, shotGap);
       }
     } else {
@@ -7555,7 +7611,10 @@ function update(){
         }
       }
     }
-    b.x+=b.vx; b.y+=b.vy; b.life--;
+    if(b.drag){ b.vx*=b.drag; b.vy*=b.drag; }
+    if(b.grow) b.r += b.grow;
+    b.x+=b.vx; b.y+=b.vy; b.life--; b.age=(b.age||0)+1;
+    if(b.life<=0 && b.explodeAtEnd && b.explode) bulletExplode(b);
     if(bulletHitsObstacle(b)){ if(b.explode) bulletExplode(b); b.life=0; }
   });
   // a VILÁG határáig repüljenek, ne a vászonig — különben a nagyobb
@@ -7569,11 +7628,8 @@ function update(){
   const frostAura = hasItem(p,'frostaura');
   game.enemies.forEach(en=>{
     if(en.hitFlash>0) en.hitFlash--;
-    // MÉREGPENGE: a méreg fél másodpercenként mar, 3 mp-ig
-    if(en.venomT > 0){
-      en.venomT--;
-      if(en.venomT % 30 === 0){ en.hp -= en.venomDmg; en.hitFlash = Math.max(en.hitFlash,3); addParticles(en.x,en.y,'#8dff6a',2); }
-    }
+    // JÉGBE ZÁRVA: olvad, és ha túl sok jég érte, szétfagy
+    if(en.encased) tickEncase(en);
     if(en.strafeTimer>0){ en.strafeTimer--; } else { en.strafe*=-1; en.strafeTimer=40+Math.random()*60; }
     if(en.frozen>0){ en.frozen--; return; }
     // láthatatlanság VAGY bokorban rejtőzés: az ellenfelek a régi, elhagyott pontot keresik
@@ -7772,7 +7828,20 @@ function update(){
         if(b.crit){ addShake(3,5); addRing(b.x,b.y,'#ffd166',en.r*1.6+10,12,2); }
         addFloater(en.x, en.y-en.r-6, Math.round(bd), b.crit?'#ff5c7c':'#ffe9a8', !!b.crit);
         // felszerelés találatkor (a tornyok lövedéke nem számít)
-        if(!b.friendly) itemOnHit(p, en, bd, false);
+        if(!b.friendly) itemOnHit(p, en, bd, false, b);
+        if(b.shatter) iceLanceHit(b, en, false);
+        else if(b.iceMark) iceScore(en, 1);
+        // RIKOSET: a golyó a következő, még el nem talált ellenfélre fordul
+        if(b.ricochet > 0){
+          if(!b._hit) b._hit = new Set(); b._hit.add(en);
+          let nx=null, nd=360;
+          for(const o of game.enemies){ if(o===en || b._hit.has(o) || o.hp<=0) continue; const dd=dist(en.x,en.y,o.x,o.y); if(dd<nd){ nd=dd; nx=o; } }
+          if(nx){ const sp=Math.hypot(b.vx,b.vy), a=Math.atan2(nx.y-en.y, nx.x-en.x);
+            b.x=en.x; b.y=en.y; b.vx=Math.cos(a)*sp; b.vy=Math.sin(a)*sp; b.life=Math.max(b.life, Math.ceil(nd/sp)+6);
+            b.ricochet--; b.homing=0; addParticles(en.x,en.y,'#bfffe0',6); addRing(en.x,en.y,'#3ddc97',en.r*1.4,10,2); }
+          else b.ricochet = 0;
+        }
+        if(b.knifelet){ b.life = 0; if(b.explode) bulletExplode(b); }
         if(!b.friendly && (p.buffs.lifesteal>0 || p.buffs.berserkUlt>0)) p.hp=Math.min(p.maxHp, p.hp + bd*0.12);
         if(b.pierce){ if(!b._hit) b._hit=new Set(); b._hit.add(en); b._pierced=(b._pierced||0)+1; }
         else { b.life=0; }
@@ -7782,7 +7851,8 @@ function update(){
       if(b.explode) bulletExplode(b);
       if(b.slow) game.boss.slowT = Math.max(game.boss.slowT||0, Math.round(b.slow*0.4));
       const bd = bd0;
-      if(!b.friendly) itemOnHit(p, game.boss, bd, true);
+      if(!b.friendly) itemOnHit(p, game.boss, bd, true, b);
+      if(b.shatter) iceLanceHit(b, game.boss, true);
       game.boss.hp -= bd*0.85; game.boss.hitFlash=6; addParticles(b.x,b.y,'#ff5c7c',5); game.boss._knock=4; game.boss._kdir=Math.atan2(b.vy,b.vx); addUltCharge(bd*0.35); SFX.hit();
       addFloater(game.boss.x, game.boss.y-game.boss.r-8, Math.round(bd*0.85), '#ffd166');
       if(b.pierce){ if(!b._hit) b._hit=new Set(); b._hit.add(game.boss); b._pierced=(b._pierced||0)+1; }
@@ -7921,7 +7991,7 @@ function update(){
       const a = Math.atan2(p.y-b.y, p.x-b.x);
       if(d>260){ b.x+=Math.cos(a)*b.speed; b.y+=Math.sin(a)*b.speed; }
       else if(d<160){ b.x-=Math.cos(a)*b.speed*0.7; b.y-=Math.sin(a)*b.speed*0.7; }
-      b.x = clamp(b.x,b.r,w-b.r); b.y = clamp(b.y,b.r,h-b.r);
+      b.x = clamp(b.x,b.r,WORLD.w-b.r); b.y = clamp(b.y,b.r,WORLD.h-b.r);   // a VILÁG széle, nem a vászoné
       resolveObstacles(b);
       if(b.attackTimer > 80*dif.fireRate*(b.fireRate||1)){
         b.attackTimer=0; SFX.bossShoot();
@@ -7966,11 +8036,18 @@ function update(){
     const wasAlive = eb.life > 0;
     eb.x+=eb.vx; eb.y+=eb.vy; eb.life--;
     if(bulletHitsObstacle(eb)){ if(eb.fireball && wasAlive) enemyFireballBurst(eb, armorFactor); eb.life=0; }
+    // PAJZSBUBORÉK: 1 mp egy helyben állás után a lövedék megáll a buborékon
+    if(eb.life>0 && bubbleUp(p) && dist(eb.x,eb.y,p.x,p.y) < eb.r+p.r+26){
+      eb.life = 0; eb._burst = true; p._bubbleHit = 12;
+      addParticles(eb.x, eb.y, '#bfefff', 7); addRing(eb.x, eb.y, '#8fd8ff', 16, 10, 2);
+    }
     if(eb.life>0 && dist(eb.x,eb.y,p.x,p.y) < eb.r+p.r){
       if(eb.fireball){ enemyFireballBurst(eb, armorFactor); eb.life=0; }
       else if(p.invuln<=0 && p.shieldActive<=0){
         const tookB = (eb.dmg||8)*armorFactor;
         p.hp -= tookB; eb.life=0; p.invuln=10; addParticles(p.x,p.y,'#ff5c7c',6);
+        p._shotDmgF = (p._shotDmgF||0) + tookB;
+        if(hasItem(p,'fullthorns')) thornShot(p, eb);
         addFloater(p.x, p.y-p.r-8, '-'+Math.max(1,Math.round(tookB)), '#ff7d94');
         addShake(4, 9); addFlash('#ff2d55',0.14,12); addChroma(0.3);
       }
@@ -7983,6 +8060,7 @@ function update(){
 
   tickTankAura(p);   // Tank osztály-passzív: állandó sebző aura
   tickRuneWalls();   // Mágus rúnafalai
+  tickSpecFx();      // elemi mágus: lángok, tócsák, lángkör, földfal
   // a dér magától lejár, ha nem tartod rajta a jeges lövést
   for(const en of game.enemies){ if(en.chillT>0){ en.chillT--; if(en.chillT===0) en.chill=0; } }
   updatePickups();   // földön heverő mágikus tárgyak felszedése
@@ -7998,8 +8076,8 @@ function update(){
   /* TÖVISES MELLVÉRT: aki közelharcban megüt, visszakapja a sebzés egy
      részét. A teljes képkocka-veszteségből dolgozunk, de csak akkor, ha
      tényleg van a közelben ellenfél — így a lövedék nem tükröződik vissza. */
-  if(hasItem(p,'thorns') && p.hp < hp0){
-    const lost = hp0 - p.hp, refl = lost * 0.45;
+  if(hasItem(p,'fullthorns') && p.hp < hp0 - (p._shotDmgF||0)){
+    const lost = hp0 - p.hp - (p._shotDmgF||0), refl = lost;
     let hit = false;
     for(const en of game.enemies){
       if(dist(en.x,en.y,p.x,p.y) < en.r + p.r + 12){
@@ -8126,12 +8204,13 @@ function saveRun(){
       hero: { cls:p.cls, name:p.name, color:p.color, head:p.head, skin:p.skin,
               level:p.level, xp:p.xp, xpNext:p.xpNext, hp:p.hp, maxHp:p.maxHp,
               fireRate:p.fireRate, bulletDmg:p.bulletDmg },
-      abilities: p.abilities.map(a=>({ id:a.id, key:a.key, rank:a.rank })),
+      // a földfal csak a futam közben ül az első helyen: az eredeti képességet mentjük
+      abilities: p.abilities.map(a=>({ id:a._orig||a.id, key:a.key, rank:a._orig ? a._origRank : a.rank })),
       ultKey: p.ult.key, ultCharge: p.ult.charge,
       companion: chosenCompanionClass || 'none',
       // felszerelés (ha hiányzik egy régi mentésből: üres, nulláról gyűlik)
       items: [...(p.items||[])], xpTotal: p.xpTotal||0, itemSteps: p.itemSteps||0,
-      itemOffers: game.itemOffers||0, defied: !!p._defied,
+      itemOffers: game.itemOffers||0, defied: !!p._defied, spec: p.spec||null, souls: p._souls||0,
     }));
   }catch(e){ warnStorageOnce(); }
 }
@@ -8140,6 +8219,18 @@ function loadRunMeta(){
     const raw = localStorage.getItem(RUN_KEY); if(!raw) return null;
     const d = JSON.parse(raw);
     if(!d || d.v!==1 || !d.hero || !CLASSES[d.hero.cls]) return null;
+    /* Elrejtett hőssel (Támogató) mentett futam: a Tankkal folytatódik,
+       ugyanannyi pecséttel, hogy a haladás ne vesszen el. */
+    if(HIDDEN_HEROES.has(d.hero.cls)){
+      const pool = classAbilityPool('tank'), had = (d.abilities||[]).length;
+      d.hero.cls = 'tank'; d.hero.skin = 0;
+      d.abilities = (d.abilities||[]).filter(a=>pool.includes(a.id));
+      for(const id of CLASSES.tank.def){ if(d.abilities.length >= Math.max(had,1)) break;
+        if(!d.abilities.some(a=>a.id===id)) d.abilities.push({ id, rank:1 }); }
+      d.items = []; d.spec = null;
+      if(d.companion === 'tank') d.companion = 'none';
+      try{ localStorage.setItem(RUN_KEY, JSON.stringify(d)); }catch(e){}
+    }
     return d;
   }catch(e){ return null; }
 }
@@ -8175,11 +8266,17 @@ function resumeRun(){
   p.fireRate=d.hero.fireRate; p.bulletDmg=d.hero.bulletDmg;
   p.abilities.forEach(ab=>{ const src=d.abilities.find(a=>a.id===ab.id); if(src) ab.rank=src.rank; });
   p.ult.charge = Math.min(p.ult.chargeMax, d.ultCharge||0);
-  p.items = new Set((d.items||[]).filter(id=>MAGIC_ITEMS[id] && MAGIC_ITEMS[id].cls===p.cls).slice(0, ITEM_SLOTS));
+  p.items = new Set((d.items||[]).map(id=>ITEM_RENAMES[id]||id)
+    .filter(id=>MAGIC_ITEMS[id] && MAGIC_ITEMS[id].cls===p.cls).slice(0, ITEM_SLOTS));
   p.xpTotal = d.xpTotal||0;
-  p.itemSteps = (typeof d.itemSteps==='number') ? d.itemSteps : ITEM_XP_STEPS.filter(x=>x<=p.xpTotal).length;
+  p.itemSteps = Math.floor(p.xpTotal / ITEM_XP_EVERY);   // a már lejátszott dobások
   p._defied = !!d.defied;
+  p._souls = d.souls||0;
   game.itemOffers = d.itemOffers||0;
+  if(d.spec && p.cls==='mage' && p.items.has('elemspec')){
+    applySpec(p, d.spec, true);
+    p.ult.charge = Math.min(p.ult.chargeMax, d.ultCharge||0);
+  }
   game.wave = d.wave; game.chapterWave = d.chapterWave||1;
   game.endless = !!d.endless;
   game.killsThisRun = d.killsThisRun||0;
@@ -9060,7 +9157,7 @@ const TROPHIES = [
   { id:'slaughter',   icon:'⚔️', xp:600,  coins:500,  test:p=> (p.totalKills||0) >= 10000 },
   { id:'rich',        icon:'💰', xp:250,  coins:200,  test:p=> (p.totalCoinsEarned||0) >= 10000 },
   { id:'sixHeroes',   icon:'🎭', xp:400,  coins:300,  test:p=> heroWinCount(p) >= 6 },
-  { id:'allHeroes',   icon:'🏆', xp:1200, coins:1000, test:p=> heroWinCount(p) >= Object.keys(CLASSES).length },
+  { id:'allHeroes',   icon:'🏆', xp:1200, coins:1000, test:p=> heroWinCount(p) >= Object.keys(CLASSES).filter(heroListed).length },
   { id:'untouched',   icon:'🛡️', xp:500,  coins:400,  test:p=> (p.noHitRuns||0) >= 1 },
   { id:'veteran',     icon:'🎖️', xp:300,  coins:250,  test:p=> (p.totalRuns||0) >= 50 },
   { id:'sealMaster',  icon:'✨', xp:350,  coins:280,  test:p=> (p.totalUlts||0) >= 100 },
@@ -9074,7 +9171,7 @@ function conquestOwnedCount(p){
 }
 function heroWinCount(p){
   const w = (p && p.heroWins) || {};
-  return Object.keys(w).filter(id=>CLASSES[id] && (w[id]||0) > 0).length;
+  return Object.keys(w).filter(id=>heroListed(id) && (w[id]||0) > 0).length;
 }
 function trophyEarned(id){ return (profile.trophies||[]).includes(id); }
 function trophyTxt(id, field){
@@ -9785,6 +9882,7 @@ function draw(){
   // csapdák/aknák — halványan látszó jelölés a talajon (nem teljesen láthatatlan, hogy fair legyen)
   game.traps.forEach(tr=>{
     if(!tr.armed) return;
+    if(tr.frost){ drawFrostTrap(ctx, tr, nowT); return; }
     ctx.save(); ctx.globalAlpha = 0.55 + 0.25*Math.sin(nowT/220);
     ctx.beginPath(); ctx.arc(tr.x,tr.y,tr.r*0.55,0,PI2);
     ctx.strokeStyle='#c9a24a'; ctx.lineWidth=2; ctx.setLineDash([4,3]); ctx.stroke(); ctx.setLineDash([]);
@@ -9792,6 +9890,8 @@ function draw(){
     ctx.fillStyle='#e0b85a'; for(let i=0;i<6;i++){ const an=i/6*PI2; ctx.beginPath(); ctx.moveTo(tr.x+Math.cos(an)*tr.r*0.2,tr.y+Math.sin(an)*tr.r*0.2); ctx.lineTo(tr.x+Math.cos(an)*tr.r*0.5,tr.y+Math.sin(an)*tr.r*0.5); ctx.lineTo(tr.x+Math.cos(an+0.4)*tr.r*0.2,tr.y+Math.sin(an+0.4)*tr.r*0.2); ctx.closePath(); ctx.fill(); }
     ctx.restore();
   });
+
+  drawSpecGround(ctx, nowT);   // tócsák, lángkör-rúna
 
   // meteor célzó (szűkülő gyűrű + töltődő belső korong) + robbanás
   game.meteors.forEach(m=>{
@@ -9842,6 +9942,8 @@ function draw(){
     const dmgF = clamp(o.hp/(o.maxHp||o.hp||1),0,1);
     stand(o.x, o.y, ()=> arenaDrawPillar(ctx, o, theme, dmgF), 1);
   });
+  // a föld-mágus fala: tömbönként, hogy a szereplők elé/mögé kerülhessen
+  for(const w of game.earthWalls) for(const b2 of w.blocks) stand(b2.x, b2.y, ()=> drawEarthBlock(ctx, w, b2), 1);
 
   game.turrets.forEach(t=> stand(t.x, t.y, ()=>{
     if(t.mobile){
@@ -9882,7 +9984,7 @@ function draw(){
     const sp2 = arenaToScreen(en.x, en.y);
     const m2 = 90 + en.r;
     if(sp2.x < -m2 || sp2.x > w+m2 || sp2.y < -m2 || sp2.y > h+m2) return;
-    stand(en.x, en.y, ()=> drawEnemyLive(ctx, en, p, lightFx, nowT));
+    stand(en.x, en.y, ()=>{ drawEnemyLive(ctx, en, p, lightFx, nowT); if(en.encased) drawEncase(ctx, en, nowT); });
   });
 
   if(game.boss){
@@ -9917,6 +10019,7 @@ function draw(){
     const pz = arenaIsoZ(p);
     isoDrawFigure(ctx, arenaIsoActor(p, false), p.x, p.y, pz, arenaIsoOpt(p, false));
     ctx.globalAlpha = 1;
+    if(hasItem(p,'bubble')) drawBubble(ctx, p, nowT);   // Pajzsbuborék
     // a hős neve: a tömegben ez mondja meg, melyik alak vagy te
     if(p.name){
       ctx.font='bold 11px Trebuchet MS'; ctx.textAlign='center'; ctx.textBaseline='alphabetic';
@@ -9986,6 +10089,7 @@ function draw(){
   });
   const pcol = p.color;
   game.bullets.forEach(b=>{
+    if(b.look) return;   // a különleges lövedékeket külön rajzoljuk
     const col = b.friendly ? '#dff6ff' : pcol;
     const c = bp(b.x, b.y), t = bp(b.x-b.vx*1.8, b.y-b.vy*1.8);
     const R = Math.max(1.6, b.r*ARENA_ISO.k*1.5);
@@ -9997,6 +10101,9 @@ function draw(){
       ctx.beginPath(); ctx.moveTo(c.x+Math.cos(a2)*s2,c.y+Math.sin(a2)*s2); ctx.lineTo(c.x-Math.cos(a2)*s2,c.y-Math.sin(a2)*s2);
       ctx.moveTo(c.x+Math.cos(a2+1.57)*s2,c.y+Math.sin(a2+1.57)*s2); ctx.lineTo(c.x-Math.cos(a2+1.57)*s2,c.y-Math.sin(a2+1.57)*s2); ctx.stroke(); }
   });
+  ctx.save(); ctx.globalCompositeOperation='source-over';
+  drawLookBullets(ctx, bp, nowT);   // láng, kő, jégdárda, kés, rakéta, tüske
+  ctx.restore();
   ctx.restore();
 
   // részecskék / villámlánc vizuál a TALAJSÍKON (por, szikra, becsapódás)
@@ -11145,6 +11252,10 @@ function enemyFireballBurst(eb, armorFactor){
 function bulletExplode(b){
   if(b._exploded) return; b._exploded = true;
   const e = b.explode, R = e.r || 60, d = e.dmg || 20;
+  if(e.rock){
+    addDebris(b.x, b.y, '#8a6a44', 12, 7, { speed:3.6, life:52, gravity:0.34 });
+    addPuff(b.x, b.y, '#a08868', 8, 16, 2.2); knockback(b.x, b.y, R+22, 24); addShake(5, 10);
+  }
   addRing(b.x, b.y, e.col || '#ff8c3c', R, 18, 4);
   addParticles(b.x, b.y, e.col || '#ff8c3c', 14);
   addFlash(e.col || '#ff8c3c', 0.06, 8);
@@ -11371,6 +11482,8 @@ function updateElementHud(){
   const el = document.getElementById('elementTag'); if(!el) return;
   const p = game && game.player;
   if(!p || !usesElements(p.cls) || !game || game.state!=='playing'){ el.innerHTML=''; el.title=''; return; }
+  if(p.spec){ const sp = MAGE_SPECS[p.spec];
+    el.innerHTML = `<span class="el on" style="color:${sp.col}">${sp.icon} ${T('spec_'+p.spec+'_name')}</span>`; el.title=''; return; }
   const cur = mageElement(p).id;
   el.innerHTML = MAGE_ELEMENT_ORDER.map(id=>{
     const e = MAGE_ELEMENTS[id];
@@ -11608,8 +11721,9 @@ function renderInventory(){
     const it = MAGIC_ITEMS[id];
     return `<div class="invCard" style="border-color:${it.col}55;">`+
       `<div class="iIco">${it.icon}</div>`+
-      `<div><div class="iName" style="color:${it.col}">${T('item_'+id+'_name')}</div>`+
-      `<div class="iDesc">${T('item_'+id+'_desc')}</div></div></div>`;
+      `<div><div class="iName" style="color:${it.col}">${T('item_'+id+'_name')}`+
+      ((id==='elemspec' && p.spec) ? ` — ${MAGE_SPECS[p.spec].icon} ${T('spec_'+p.spec+'_name')}` : '')+`</div>`+
+      `<div class="iDesc">${(id==='elemspec' && p.spec) ? T('spec_'+p.spec+'_desc') : T('item_'+id+'_desc')}</div></div></div>`;
   }).join('');
   for(let i=owned.length; i<ITEM_SLOTS; i++){
     html += `<div class="invCard invEmptySlot"><div class="iIco">◇</div>`+
@@ -11640,19 +11754,28 @@ function updateInvBindBtn(){
    Adatvezérelt: `apply(p)` bekapcsolja, a hatást pedig a megfelelő rendszer
    olvassa ki a `p.items` halmazból. Új tárgy hozzáadása egy bejegyzés.
    ========================================================= */
-const ITEM_SLOTS = 5;                              // ennyi felszerelés lehet nálad egy futamban
-const ITEM_XP_STEPS = [150, 450, 1000, 1800, 3000];  // összegyűjtött XP -> új választás
+const ITEM_SLOTS = 5;          // ennyi felszerelés lehet nálad egy futamban
+/* RITKASÁG: minden 100 összegyűjtött XP egy dobás, és csak 10% eséllyel
+   jön belőle választás. A varázsló pecsétje is csak 10% eséllyel esik.
+   Egy 5 perces futamban ez átlag 2-3 tárgy — néha egy sem, és éppen
+   ettől értékes. */
+const ITEM_XP_EVERY = 100;
+const ITEM_CHANCE = 0.10;
+let itemRoll = ()=>Math.random();   // a tesztek felülírhatják
+/* Régi futam-mentésekben még a lecserélt tárgyak nevei szerepelhetnek. */
+const ITEM_RENAMES = { thorns:'fullthorns', bulwark:'bubble', tracer:'ricochet', venom:'burstknives',
+  soulsiphon:'soulharvest', hawkeye:'frosttrap', overclock:'warstation' };
 /* Minden tárgy SZIGORÚAN egy kaszthoz tartozik: csak az adott hős kaphatja.
    A hatásokat a játék megfelelő pontjai olvassák ki a `p.items` halmazból
    (hasItem). Új tárgy = egy bejegyzés itt + a hatás egy horogban + a
    magyar/angol neve és leírása. */
 const MAGIC_ITEMS = {
   // --- TANK ---
-  thorns:    { cls:'tank',        icon:'🛡️', col:'#c9a06a' },  // közelharci támadó visszakapja a sebzés 45%-át
-  bulwark:   { cls:'tank',        icon:'🏰', col:'#c9a06a' },  // egy helyben állva -35% sebzés
+  fullthorns:{ cls:'tank',       icon:'🌵', col:'#e0b060' },  // minden sebzés 100%-a vissza, lövésnél is
+  bubble:    { cls:'tank',        icon:'🫧', col:'#8fd8ff' },  // 1 mp állás után a lövedékek megállnak rajtad
   quake:     { cls:'tank',        icon:'🥾', col:'#c9a06a' },  // minden 4. csapás lökéshullám
   // --- MESTERLÖVÉSZ ---
-  tracer:    { cls:'sniper',      icon:'🎯', col:'#3ddc97' },  // erősebb, korábbi rákanyarodás
+  ricochet:  { cls:'sniper',      icon:'🎱', col:'#3ddc97' },  // a golyó még 2 ellenfélre átpattan
   coldblood: { cls:'sniper',      icon:'🧊', col:'#3ddc97' },  // 1,5 mp szünet után dupla lövés
   steadyaim: { cls:'sniper',      icon:'🧘', col:'#3ddc97' },  // állva 25%-kal gyorsabb tűz
   // --- BERSERKER ---
@@ -11663,9 +11786,10 @@ const MAGIC_ITEMS = {
   chainseal: { cls:'mage',        icon:'⚡', col:'#9d5cff' },  // a robbanás továbbugrik
   manaspring:{ cls:'mage',        icon:'💧', col:'#9d5cff' },  // -20% képesség-újratöltés
   frostaura: { cls:'mage',        icon:'❄️', col:'#9d5cff' },  // a közeledben lelassulnak
+  elemspec:  { cls:'mage',        icon:'🌋', col:'#ffb14e' },  // felvételkor választasz: tűz / jég / föld
   // --- ORGYILKOS ---
   cloak:     { cls:'assassin',    icon:'🕶️', col:'#c9a6ff' },  // 12 mp-enként eltűnsz, a rejtekből +60%
-  venom:     { cls:'assassin',    icon:'🧪', col:'#c9a6ff' },  // mérgező tőrök
+  burstknives:{ cls:'assassin',   icon:'🔪', col:'#ffb070' },  // a tőrből robbanó kések repülnek tovább
   ghoststep: { cls:'assassin',    icon:'👣', col:'#c9a6ff' },  // ölés után 1 mp láthatatlanság
   // --- TÁMOGATÓ ---
   tether:    { cls:'support',     icon:'💞', col:'#8affc1' },  // a gyógyulásod a társ is kapja
@@ -11673,14 +11797,14 @@ const MAGIC_ITEMS = {
   ward:      { cls:'support',     icon:'👼', col:'#8affc1' },  // 10 mp-enként egy találat elnyelve
   // --- NEKROMANTA ---
   bonehoard: { cls:'necromancer', icon:'💀', col:'#c8b8e8' },  // gyakrabban kel fel szolga
-  soulsiphon:{ cls:'necromancer', icon:'👻', col:'#c8b8e8' },  // ölésenként 2% életerő
+  soulharvest:{ cls:'necromancer', icon:'👻', col:'#c8b8e8' }, // ölésenként +0,5% sebzés, max. +100%
   bonearmor: { cls:'necromancer', icon:'🦴', col:'#c8b8e8' },  // szolgánként -5% sebzés
   // --- VADÁSZ ---
   hmark:     { cls:'hunter',      icon:'🏹', col:'#7dffb0' },  // lassított cél +25% sebzés
   volley:    { cls:'hunter',      icon:'🔱', col:'#7dffb0' },  // minden 3. lövés +2 nyíl
-  hawkeye:   { cls:'hunter',      icon:'🦅', col:'#7dffb0' },  // +30% nyílsebesség és hatótáv
+  frosttrap: { cls:'hunter',      icon:'🧊', col:'#8fe3ff' },  // 10 mp-enként fagyasztócsapda a lábad elé
   // --- GÉPÉSZ ---
-  overclock: { cls:'engineer',    icon:'⚙️', col:'#6ee7ff' },  // a tornyok 40%-kal gyorsabban lőnek
+  warstation:{ cls:'engineer',    icon:'🚀', col:'#ffb35c' },  // rakétatorony + gyógyító állomás + túltöltés
   sparebot:  { cls:'engineer',    icon:'🔧', col:'#6ee7ff' },  // 18 mp-enként kis torony
   shieldgen: { cls:'engineer',    icon:'🔋', col:'#6ee7ff' },  // 30% HP alatt pajzs
 };
@@ -11714,9 +11838,9 @@ function queueItemOffer(){
   return true;
 }
 function tickItemOffers(p){
-  while((p.itemSteps||0) < ITEM_XP_STEPS.length && (p.xpTotal||0) >= ITEM_XP_STEPS[p.itemSteps||0]){
+  while((p.xpTotal||0) >= ((p.itemSteps||0) + 1) * ITEM_XP_EVERY){
     p.itemSteps = (p.itemSteps||0) + 1;
-    queueItemOffer();
+    if(itemRoll() < ITEM_CHANCE) queueItemOffer();
   }
   if(game.itemOffers > 0 && game.state === 'playing'){
     if(canOfferItem(p)) openItemPick(); else game.itemOffers = 0;
@@ -11737,8 +11861,31 @@ function openItemPick(){
   SFX.levelup && SFX.levelup();
   if(pad.connected){ const c = document.querySelector('#itemPickCards .itemCard'); if(c) setPadFocus(c); }
 }
+function openSpecPick(){
+  game.specOffer = true;
+  document.querySelector('#itemPickScreen .title').textContent = T('specPickTitle');
+  document.getElementById('itemPickSub').textContent = T('specPickSub');
+  document.getElementById('itemPickCards').innerHTML = MAGE_SPEC_ORDER.map((id,i)=>{
+    const sp = MAGE_SPECS[id];
+    return `<button type="button" class="itemCard" data-spec="${id}" style="--ic:${sp.col}">`+
+      `<span class="ipKey">${i+1}</span><span class="ipIco">${sp.icon}</span>`+
+      `<span class="ipText"><span class="ipName">${T('spec_'+id+'_name')}</span>`+
+      `<span class="ipDesc">${T('spec_'+id+'_desc')}</span></span></button>`;
+  }).join('');
+  if(pad.connected){ const c = document.querySelector('#itemPickCards .itemCard'); if(c) setPadFocus(c); }
+}
+function chooseSpec(id){
+  if(!game || game.state !== 'itempick' || !game.specOffer || !MAGE_SPECS[id]) return false;
+  game.specOffer = false;
+  document.getElementById('itemPickScreen').classList.add('hidden');
+  game.state = 'playing'; resetSticks();
+  applySpec(game.player, id);
+  saveRun();
+  return true;
+}
 function renderItemPick(){
   const p = game && game.player; if(!p || !game.itemOffer) return;
+  document.querySelector('#itemPickScreen .title').textContent = T('itemPickTitle');
   document.getElementById('itemPickSub').textContent = T('itemPickSub', p.items.size, ITEM_SLOTS);
   document.getElementById('itemPickCards').innerHTML = game.itemOffer.map((id,i)=>{
     const it = MAGIC_ITEMS[id];
@@ -11752,6 +11899,9 @@ function chooseItem(id){
   if(!game || game.state !== 'itempick' || !game.itemOffer || !game.itemOffer.includes(id)) return false;
   const p = game.player;
   game.itemOffer = null;
+  if(id === 'elemspec'){           // azonnal jön az elem-választás, a harc közben áll
+    giveItem(p, id); openSpecPick(); return true;
+  }
   document.getElementById('itemPickScreen').classList.add('hidden');
   game.state = 'playing';
   resetSticks();
@@ -11760,7 +11910,8 @@ function chooseItem(id){
   return true;
 }
 document.getElementById('itemPickCards').addEventListener('click', e=>{
-  const c = e.target.closest('.itemCard'); if(c) chooseItem(c.dataset.item);
+  const c = e.target.closest('.itemCard'); if(!c) return;
+  if(c.dataset.spec) chooseSpec(c.dataset.spec); else chooseItem(c.dataset.item);
 });
 
 /* ---------- HOROGPONTOK ----------
@@ -11783,6 +11934,26 @@ function itemsTick(p, moving){
       addPuff(p.x, p.y, '#c9a6ff', 6, 14, 2); addParticles(p.x, p.y, '#c9a6ff', 12);
     }
   }
+  if(hasItem(p,'frosttrap')){
+    p._trapCd = (p._trapCd||0) + 1;
+    if(p._trapCd >= 600){
+      p._trapCd = 0;
+      const mine = game.traps.filter(t=>t.frost);
+      if(mine.length >= 3) mine[0].armed = false;   // legfeljebb 3 csapda él egyszerre
+      const tx = clamp(p.x + Math.cos(p.facing)*44, 20, WORLD.w-20), ty = clamp(p.y + Math.sin(p.facing)*44, 20, WORLD.h-20);
+      game.traps.push({ x:tx, y:ty, r:34, dmg:Math.round(p.bulletDmg*2.2), root:150, armed:true, frost:true, life:1500, t:0 });
+      addRing(tx, ty, '#8fe3ff', 46, 16, 3); addParticles(tx, ty, '#cfefff', 10);
+    }
+  }
+  if(hasItem(p,'warstation') && p.hp < p.maxHp){
+    for(const t of game.turrets){
+      if(!t.mobile && dist(t.x,t.y,p.x,p.y) < 110){
+        const h = p.maxHp*0.03/60; p.hp = Math.min(p.maxHp, p.hp + h);
+        if(Math.random() < 0.08) addParticles(p.x, p.y, '#8affc1', 1);
+        break;
+      }
+    }
+  }
   if(hasItem(p,'sparebot')){
     p._botCd = (p._botCd||0) + 1;
     if(p._botCd >= 1080){
@@ -11799,7 +11970,7 @@ function itemFireCd(p){
   let fr = p.fireRate;
   if(hasItem(p,'steadyaim') && (p._stillT||0) >= 20) fr *= 0.75;
   if(hasItem(p,'bloodscent') && p._scentN) fr /= (1 + 0.06*p._scentN);
-  return Math.max(4, Math.round(fr));
+  return specFireCd(p, Math.max(4, Math.round(fr)));
 }
 function itemCdMul(p){ return hasItem(p,'manaspring') ? 0.8 : 1; }
 /* Lövéskor: a most keletkezett lövedékeket (nb-től) módosítjuk. */
@@ -11809,7 +11980,7 @@ function itemsOnFire(p, nb, wep, base, gap){
     for(const b of fresh){ b.dmg = Math.round((b.dmg||0)*2); b.crit = true; }
     addRing(p.x, p.y, '#bfe8ff', p.r*1.8, 10, 2);
   }
-  if(hasItem(p,'hawkeye')) for(const b of fresh){ b.vx *= 1.3; b.vy *= 1.3; }
+  if(hasItem(p,'ricochet')) for(const b of fresh) b.ricochet = 2;
   if(hasItem(p,'volley') && fresh.length){
     p._shotN = (p._shotN||0) + 1;
     if(p._shotN % 3 === 0){
@@ -11831,20 +12002,30 @@ function itemsOnFire(p, nb, wep, base, gap){
   }
 }
 /* Találatkor (lövedék VAGY közelharci csapás, a te támadásod). */
-function itemOnHit(p, en, dmg, isBoss){
+function itemOnHit(p, en, dmg, isBoss, b){
   if(hasItem(p,'cloak') && p.buffs.invisible > 0){
     en.hp -= dmg*0.6 * (isBoss ? 0.85 : 1); addRing(en.x, en.y, '#c9a6ff', (en.r||20)*1.8, 12, 2);
   }
   if(hasItem(p,'hmark') && en.slowT > 0) en.hp -= dmg*0.25;
   if(hasItem(p,'bloodpact')) p.hp = Math.min(p.maxHp, p.hp + dmg*0.08);
-  if(hasItem(p,'venom') && !isBoss){ en.venomT = 180; en.venomDmg = Math.max(1, dmg*0.6/6); }
+  // ROBBANÓ KÉSEK: a tőrből három kis kés repül tovább, 2 kockányit, és ott robban
+  if(hasItem(p,'burstknives') && b && !b.knifelet){
+    const a0 = Math.atan2(b.vy, b.vx), sp = 9;
+    for(const da of [-0.38, 0, 0.38]){
+      const a = a0 + da;
+      game.bullets.push({ x:en.x, y:en.y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, r:3, dmg:Math.round(dmg*0.2),
+        life:Math.round(2*GRID_CELL/sp), knifelet:true, look:'knife', noRange:true, spin:Math.random()*PI2,
+        explode:{ r:44, dmg:Math.round(dmg*0.45), col:'#ffb070' }, explodeAtEnd:true, _hit:new Set([en]) });
+    }
+  }
 }
 /* Öléskor. */
 function itemOnKill(p, en){
   if(hasItem(p,'bloodscent')){ p._scentN = Math.min(5, (p._scentN||0) + 1); p._scentT = 180; }
   if(hasItem(p,'ghoststep')){ p.buffs.invisible = Math.max(p.buffs.invisible||0, 60); game._invisPt = { x:p.x, y:p.y }; }
-  if(hasItem(p,'soulsiphon') && p.hp < p.maxHp){
-    const h = p.maxHp*0.02; p.hp = Math.min(p.maxHp, p.hp + h); tetherShare(h);
+  if(hasItem(p,'soulharvest') && (p._souls||0) < 200){
+    p._souls = (p._souls||0) + 1;
+    if(p._souls % 20 === 0) addFloater(p.x, p.y-p.r-20, '👻 +'+(p._souls/2)+'%', '#c8b8e8', true);
   }
 }
 /* A képkocka végén, a sérülés után: csökkentések, elnyelés, végső mentés. */
@@ -11855,7 +12036,6 @@ function itemsOnDamage(p, hp0){
       addRing(p.x, p.y, '#8affc1', p.r*2.6, 16, 4); addFloater(p.x, p.y-p.r-16, '👼', '#8affc1');
     } else {
       let red = 0;
-      if(hasItem(p,'bulwark') && (p._stillT||0) >= 60) red += 0.35;
       if(hasItem(p,'bonearmor')) red += Math.min(0.30, 0.05 * game.turrets.filter(t=>t.skeleton).length);
       if(red > 0) p.hp += (hp0 - p.hp) * Math.min(red, 0.6);
     }
@@ -11871,10 +12051,502 @@ function itemsOnDamage(p, hp0){
   }
 }
 
+
+/* =========================================================
+   ELEMI MESTER — a mágus ritka tárgya: felvételkor tűz / jég / föld
+   ---------------------------------------------------------
+   A választás az egész futamra átírja a mágus lövését, a TŰZ az ultit,
+   a FÖLD pedig az első képesség-billentyűt is. A mostani 1-2-3
+   elemváltás ilyenkor lezárul a választott elemre.
+     TŰZ  — valódi lángszóró; az ulti 10 lövésnyi tüzeléstől feltöltődik,
+            és egy mágikus lángkört robbant minden irányba.
+     JÉG  — jéglövés; minden 5. lövés jégdárda, ami az ellenfelet jégbe
+            zárja (nem mozdul, sokat sebez, látványosan olvad), és akit
+            túl sok jég ér, az szétfagy.
+     FÖLD — folyamatos kőszilánk-sorozat, minden 5. lövés nagy kőtömb;
+            az első billentyű 2 kockányira falat emel.
+   ========================================================= */
+const MAGE_SPECS = {
+  fire:  { id:'fire',  icon:'🔥', col:'#ff7a2a' },
+  ice:   { id:'ice',   icon:'❄️', col:'#8fe3ff' },
+  earth: { id:'earth', icon:'🪨', col:'#c8995a' },
+};
+const MAGE_SPEC_ORDER = ['fire','ice','earth'];
+function applySpec(p, id, silent){
+  if(!p || !MAGE_SPECS[id]) return;
+  p.spec = id;
+  p.element = (id==='ice') ? 'frost' : 'fire';
+  if(id === 'earth' && p.abilities.length && p.abilities[0].id !== 'earthwall'){
+    const a0 = p.abilities[0];
+    p.abilities[0] = { id:'earthwall', key:a0.key, cd:0, rank:1, _orig:a0.id, _origRank:a0.rank };
+  }
+  if(id === 'fire' && p.ult && p.ult.id !== 'infernonova'){
+    p.ult = { id:'infernonova', key:p.ult.key, charge:0, chargeMax:ULTIMATES.infernonova.chargeMax };
+  }
+  if(typeof buildAbilityBar === 'function' && game) buildAbilityBar();
+  updateElementHud();
+  if(!silent){
+    const sp = MAGE_SPECS[id];
+    addFloater(p.x, p.y-p.r-22, sp.icon+' '+T('spec_'+id+'_name'), sp.col, true);
+    addRing(p.x, p.y, sp.col, 150, 28, 6); addRing(p.x, p.y, '#ffffff', 80, 18, 2);
+    addFlash(sp.col, 0.18, 16); addChroma(0.4); addShake(5, 10);
+    addPuff(p.x, p.y, sp.col, 10, 14, 2.4);
+  }
+}
+/* A lövés elemi ágon. Visszatér: true, ha kezelte. */
+function specFire(p, base, crit){
+  const sp = p.spec; if(!sp) return false;
+  p._specShotN = (p._specShotN||0) + 1;
+  const a = p.facing, c = Math.cos(a), s2 = Math.sin(a);
+  if(sp === 'fire'){
+    /* LÁNGSZÓRÓ: 3 képkockánként egy sebző lángnyelv + két díszláng.
+       A láng lassul, nő, színe fehérből narancson át füstbe hal. */
+    const speed = 12.5, life = 40;          // ~280 egység, a végén lelassul és felszáll
+    const jit = (Math.random()-0.5)*0.2;
+    const ox = p.x + c*10, oy = p.y + s2*10;
+    game.bullets.push({ x:ox, y:oy, vx:Math.cos(a+jit)*speed, vy:Math.sin(a+jit)*speed,
+      r:9, grow:1.0, drag:0.962, life, maxLife:life, dmg:Math.round(base*0.22*(crit?2:1)), crit,
+      pierce:true, look:'flame', noRange:true });
+    for(let i=0;i<4;i++){
+      const j = (Math.random()-0.5)*0.46, v = speed*(0.7+Math.random()*0.45);
+      game.fxFlames.push({ x:ox, y:oy, vx:Math.cos(a+j)*v, vy:Math.sin(a+j)*v, r:7+Math.random()*6,
+        life:life*(0.65+Math.random()*0.45), maxLife:life, magic:false, seed:Math.random() });
+    }
+    // izzó szikrák, amik kiszóródnak a lángból
+    if(Math.random() < 0.7){ const j=(Math.random()-0.5)*0.9, v=speed*(0.9+Math.random()*0.5);
+      game.fxFlames.push({ x:ox, y:oy, vx:Math.cos(a+j)*v, vy:Math.sin(a+j)*v, r:1.6, life:life*0.9, maxLife:life, ember:true }); }
+    // az ulti 10 "lövésnyi" (kb. 3,5 mp) tüzeléstől feltöltődik
+    p._flameT = (p._flameT||0) + 1;
+    if(p._flameT % 7 === 0 && p.ult && p.ult.id === 'infernonova') addUltCharge(p.ult.chargeMax/10);
+    if(p._flameT % 2 === 0) SFX.shoot(p.cls);
+    return true;
+  }
+  if(sp === 'ice'){
+    if(p._specShotN % 5 === 0){
+      // JÉGDÁRDA: gyors, átfúrja az első ellenfelet, és jégbe zárja
+      game.bullets.push({ x:p.x, y:p.y, vx:c*p.bulletSpeed*1.7, vy:s2*p.bulletSpeed*1.7, r:7, life:70,
+        dmg:Math.round(base*4*(crit?2:1)), crit, look:'icelance', shatter:true, trail:'#cfefff' });
+      addRing(p.x+c*20, p.y+s2*20, '#cfefff', 26, 10, 2);
+    } else {
+      game.bullets.push({ x:p.x, y:p.y, vx:c*p.bulletSpeed, vy:s2*p.bulletSpeed, r:crit?7:6, life:70,
+        dmg:Math.round(base*0.55*(crit?2:1)), crit, slow:90, chill:1, iceMark:true, trail:'#8fd8ff' });
+    }
+    SFX.shoot(p.cls);
+    return true;
+  }
+  if(sp === 'earth'){
+    if(p._specShotN % 5 === 0){
+      // KŐTÖMB: lassú, nehéz, becsapódáskor robban és ellök
+      game.bullets.push({ x:p.x, y:p.y, vx:c*p.bulletSpeed*0.8, vy:s2*p.bulletSpeed*0.8, r:13, life:90,
+        dmg:Math.round(base*2.6*(crit?2:1)), crit, look:'boulder', spin:Math.random()*PI2,
+        explode:{ r:62, dmg:Math.round(base*1.0), col:'#c8995a', rock:true } });
+      addShake(3, 6);
+    } else {
+      const j = (Math.random()-0.5)*0.12;
+      game.bullets.push({ x:p.x, y:p.y, vx:Math.cos(a+j)*p.bulletSpeed*1.25, vy:Math.sin(a+j)*p.bulletSpeed*1.25,
+        r:6, life:60, dmg:Math.round(base*0.6*(crit?2:1)), crit, look:'rock', spin:Math.random()*PI2,
+        shape:Math.floor(Math.random()*3) });
+    }
+    SFX.shoot(p.cls);
+    return true;
+  }
+  return false;
+}
+function specFireCd(p, cd){
+  if(p.spec === 'fire') return 3;                          // folyamatos lángsugár
+  if(p.spec === 'earth') return Math.max(4, Math.round(cd*0.55));  // sűrű kőzápor
+  return cd;
+}
+
+/* ---------- JÉG ---------- */
+function iceScore(en, n){
+  if(!game.player || game.player.spec !== 'ice') return;
+  en.iceScore = (en.iceScore||0) + n;
+  if(en !== game.boss && en.iceScore >= 10 && en.hp > 0) iceShatter(en);
+}
+function iceLanceHit(b, en, isBoss){
+  if(b._lanced) return; b._lanced = true;
+  const dur = isBoss ? 60 : 210;
+  en.frozen = Math.max(en.frozen||0, dur);
+  en.encased = { t:0, dur, big:true };
+  addRing(en.x, en.y, '#dff6ff', (en.r||20)*2.4, 16, 4); addFlash('#bfefff', 0.08, 8);
+  addDebris(en.x, en.y, '#dff6ff', 8, 4, { speed:2.4, life:34, gravity:0.3 });
+  addShake(3, 6);
+  if(!isBoss) iceScore(en, 4);
+}
+function tickEncase(en){
+  const e = en.encased; e.t++;
+  if(e.t >= e.dur){
+    game.puddles.push({ x:en.x, y:en.y, r:(en.r||16)*(e.big?1.7:1.3), life:420, maxLife:420 });
+    en.encased = null;
+  }
+}
+/* SZÉTFAGYÁS: aki túl sok jeget kapott, az a jégben marad */
+function iceShatter(en){
+  en.hp = 0; en._shattered = true; en.encased = null;
+  addDebris(en.x, en.y, '#e8fbff', 20, 10, { speed:4.6, life:64, gravity:0.32 });
+  addDebris(en.x, en.y, '#8fe3ff', 14, 7, { speed:3.4, life:56, gravity:0.3 });
+  game.puddles.push({ x:en.x, y:en.y, r:(en.r||16)*1.6, life:360, maxLife:360 });
+  addRing(en.x, en.y, '#ffffff', (en.r||18)*3, 20, 3); addRing(en.x, en.y, '#8fe3ff', (en.r||18)*4.2, 26, 4);
+  addPuff(en.x, en.y, '#dff6ff', 6, 12, 1.8);
+  addFloater(en.x, en.y-(en.r||18)-10, '❄️💥', '#cfefff', true);
+  addShake(4, 8);
+}
+
+/* ---------- FÖLD: FAL ---------- */
+function spawnEarthWall(p, r){
+  const d = 2*GRID_CELL;                 // 2 kockányira előtted
+  const cx = clamp(p.x + Math.cos(p.facing)*d, 30, WORLD.w-30);
+  const cy = clamp(p.y + Math.sin(p.facing)*d, 30, WORLD.h-30);
+  const ang = p.facing + Math.PI/2, n = 5, gap = 44;
+  const w = { cx, cy, ang, half:(n*gap)/2, thick:34, life:390, max:390, blocks:[] };
+  for(let i=0;i<n;i++){
+    const u = (i-(n-1)/2)*gap;
+    w.blocks.push({ x:cx+Math.cos(ang)*u, y:cy+Math.sin(ang)*u, h:40+Math.random()*16, seed:Math.random(), delay:i*3 });
+  }
+  game.earthWalls.push(w);
+  // aki pont ott áll, azt kilöki és megsebzi
+  const ca = Math.cos(ang), sa = Math.sin(ang);
+  for(const en of game.enemies){
+    const lx = en.x-cx, ly = en.y-cy, u = lx*ca+ly*sa, v = -lx*sa+ly*ca;
+    if(Math.abs(u) < w.half+en.r && Math.abs(v) < w.thick/2+en.r){
+      const sg = v>=0 ? 1 : -1, push = (w.thick/2+en.r+6) - Math.abs(v);
+      en.x += -sa*sg*push; en.y += ca*sg*push; en.hp -= 18+r*6; en.hitFlash = 8;
+    }
+  }
+  for(const b2 of w.blocks){ addDebris(b2.x, b2.y, '#8a6a44', 5, 5, { speed:2.6, life:40, gravity:0.3 }); addPuff(b2.x, b2.y, '#a08868', 3, 12, 1.6); }
+  addShake(6, 12); SFX.explosion && SFX.explosion(false);
+}
+function tickEarthWalls(){
+  if(!game.earthWalls.length) return;
+  for(const w of game.earthWalls){
+    w.life--;
+    const ca = Math.cos(w.ang), sa = Math.sin(w.ang);
+    const block = (en)=>{
+      const lx = en.x-w.cx, ly = en.y-w.cy, u = lx*ca+ly*sa, v = -lx*sa+ly*ca;
+      if(Math.abs(u) < w.half+en.r*0.6 && Math.abs(v) < w.thick/2+en.r){
+        const sg = (en._wallSide && en._wallW===w) ? en._wallSide : (v>=0 ? 1 : -1);
+        const vv = sg*(w.thick/2+en.r);
+        en.x = w.cx + ca*u - sa*vv; en.y = w.cy + sa*u + ca*vv;
+      } else { en._wallSide = (v>=0?1:-1); en._wallW = w; }
+    };
+    for(const en of game.enemies) block(en);
+    if(game.boss) block(game.boss);
+    for(const eb of game.enemyBullets){
+      const lx = eb.x-w.cx, ly = eb.y-w.cy, u = lx*ca+ly*sa, v = -lx*sa+ly*ca;
+      if(Math.abs(u) < w.half && Math.abs(v) < w.thick/2+eb.r){ eb.life = 0; eb._burst = true; addParticles(eb.x,eb.y,'#b89870',4); }
+    }
+    if(w.life === 40) for(const b2 of w.blocks){ addDebris(b2.x, b2.y, '#7a5c3a', 6, 6, { speed:2.2, life:44, gravity:0.32 }); addPuff(b2.x,b2.y,'#8a7a66',3,12,1.4); }
+  }
+  game.earthWalls = game.earthWalls.filter(w=>w.life>0);
+}
+
+/* ---------- TŰZ: MÁGIKUS LÁNGKÖR (ulti) ---------- */
+function infernoNova(p){
+  const reach = 280, speed = 12.5, life = 40;
+  const base = p.bulletDmg * 2.2;
+  for(let i=0;i<44;i++){
+    const a = i/44*PI2 + (Math.random()-0.5)*0.05;
+    game.bullets.push({ x:p.x, y:p.y, vx:Math.cos(a)*speed, vy:Math.sin(a)*speed, r:11, grow:1.1, drag:0.962,
+      life, maxLife:life, dmg:Math.round(base), pierce:true, look:'flame', magic:true, noRange:true });
+    for(let k2=0;k2<2;k2++){ const j=(Math.random()-0.5)*0.14, v=speed*(0.7+Math.random()*0.4);
+      game.fxFlames.push({ x:p.x, y:p.y, vx:Math.cos(a+j)*v, vy:Math.sin(a+j)*v, r:9+Math.random()*6,
+        life:life*(0.7+Math.random()*0.35), maxLife:life, magic:true, seed:Math.random() }); }
+  }
+  game.novas.push({ x:p.x, y:p.y, t:0, life:70, reach });
+  addFlash('#ff5cc9', 0.22, 18); addChroma(0.6); addShake(10, 18);
+  addRing(p.x, p.y, '#ffd166', reach, 26, 6); addRing(p.x, p.y, '#ff5cc9', reach*0.75, 22, 4);
+  SFX.explosion && SFX.explosion(true);
+}
+
+/* ---------- TELJES TÜSKE / PAJZSBUBORÉK ---------- */
+function thornShot(p, eb){
+  // a lövés visszarepül arra, amerről jött — a legközelebbi ellenfél felé abban az irányban
+  let a = Math.atan2(-eb.vy, -eb.vx); if(!eb.vx && !eb.vy) a = p.facing;
+  let best=null, bs=1e9;
+  for(const en of game.enemies){ const d=dist(p.x,p.y,en.x,en.y); if(d>700) continue;
+    const ea=Math.atan2(en.y-p.y,en.x-p.x); const df=Math.abs(((ea-a+Math.PI*3)%PI2)-Math.PI);
+    if(df<1.05 && d<bs){ bs=d; best=en; } }
+  if(best) a = Math.atan2(best.y-p.y, best.x-p.x);
+  game.bullets.push({ x:p.x, y:p.y, vx:Math.cos(a)*12, vy:Math.sin(a)*12, r:6, life:70, dmg:Math.round(eb.dmg||8),
+    look:'thorn', noItems:true });
+  addRing(p.x, p.y, '#e0b060', p.r*1.8, 10, 2);
+}
+function bubbleUp(p){ return hasItem(p,'bubble') && (p._stillT||0) >= 60; }
+
+/* ---------- RAJZOLÁS ---------- */
+/* Talaj: tócsák, lángkör-rúna, fagyasztócsapda. A hívó a ferde mátrixban van. */
+function drawSpecGround(g, nowT){
+  for(const pd of game.puddles){
+    const k = pd.life/pd.maxLife;
+    const gr = g.createRadialGradient(pd.x, pd.y, 0, pd.x, pd.y, pd.r);
+    gr.addColorStop(0, `rgba(170,220,255,${0.32*k})`); gr.addColorStop(0.7, `rgba(120,190,240,${0.22*k})`); gr.addColorStop(1, 'rgba(120,190,240,0)');
+    g.fillStyle = gr; g.beginPath(); g.ellipse(pd.x, pd.y, pd.r, pd.r*0.8, 0.4, 0, PI2); g.fill();
+    g.strokeStyle = `rgba(230,248,255,${0.35*k})`; g.lineWidth = 1.2;
+    g.beginPath(); g.ellipse(pd.x-pd.r*0.2, pd.y-pd.r*0.15, pd.r*0.35, pd.r*0.18, 0.4, 0, PI2); g.stroke();
+  }
+  for(const nv of game.novas){
+    const k = nv.t/nv.life, R = nv.reach*Math.min(1, 0.35 + k*1.2), a = 1-k;
+    g.save(); g.translate(nv.x, nv.y); g.rotate(nowT/900);
+    g.strokeStyle = `rgba(255,120,220,${0.8*a})`; g.lineWidth = 4;
+    g.beginPath(); g.arc(0,0,R,0,PI2); g.stroke();
+    g.strokeStyle = `rgba(255,209,102,${0.7*a})`; g.lineWidth = 2;
+    g.beginPath(); g.arc(0,0,R*0.82,0,PI2); g.stroke();
+    // rúnák a két kör között
+    g.fillStyle = `rgba(255,230,160,${0.9*a})`;
+    for(let i=0;i<12;i++){ g.save(); g.rotate(i/12*PI2); g.translate(R*0.91,0); g.rotate(Math.PI/2);
+      g.fillRect(-1.5,-7,3,14); g.fillRect(-6,-1.5,12,3); g.beginPath(); g.arc(0,-9,2.2,0,PI2); g.fill(); g.restore(); }
+    // csillag a közepén
+    g.strokeStyle = `rgba(255,150,230,${0.55*a})`; g.lineWidth = 2; g.beginPath();
+    for(let i=0;i<=5;i++){ const an=i*(PI2*2/5)-Math.PI/2; const x=Math.cos(an)*R*0.6, y=Math.sin(an)*R*0.6; i?g.lineTo(x,y):g.moveTo(x,y); }
+    g.stroke(); g.restore();
+  }
+}
+function drawFrostTrap(g, tr, nowT){
+  const pulse = 0.5+0.5*Math.sin(nowT/260 + tr.x);
+  g.save(); g.translate(tr.x, tr.y);
+  const gr = g.createRadialGradient(0,0,0,0,0,tr.r);
+  gr.addColorStop(0,'rgba(200,240,255,0.35)'); gr.addColorStop(1,'rgba(120,200,255,0)');
+  g.fillStyle = gr; g.beginPath(); g.arc(0,0,tr.r,0,PI2); g.fill();
+  g.rotate(nowT/1400);
+  g.strokeStyle = `rgba(210,245,255,${0.55+0.35*pulse})`; g.lineWidth = 2;
+  for(let i=0;i<6;i++){ g.save(); g.rotate(i*Math.PI/3);
+    g.beginPath(); g.moveTo(0,0); g.lineTo(tr.r*0.8,0);
+    g.moveTo(tr.r*0.45,0); g.lineTo(tr.r*0.6,-tr.r*0.14); g.moveTo(tr.r*0.45,0); g.lineTo(tr.r*0.6,tr.r*0.14);
+    g.stroke(); g.restore(); }
+  g.beginPath(); g.arc(0,0,tr.r*0.85,0,PI2); g.setLineDash([5,4]); g.stroke(); g.setLineDash([]);
+  g.restore();
+}
+/* Álló réteg: a földfal kőtömbjei (a szereplőkkel együtt rendezve). */
+function drawEarthBlock(g, w, b2){
+  const A = ARENA_ISO, k = A.k;
+  const age = w.max - w.life - b2.delay;
+  const rise = clamp(age/12, 0, 1), sink = clamp(w.life/40, 0, 1);
+  const ease = 1 - Math.pow(1-rise, 3);
+  const H = b2.h * ease * sink * 1.3;
+  if(H <= 0.5) return;
+  const hw = 24*k*1.7, hh = 12*k*1.7;          // a tömb talp-rombusza képernyőn (átfednek: összefüggő fal)
+  const x = b2.x, y = b2.y, sd = b2.seed;
+  const jig = (i)=> (Math.sin(sd*97+i*13.1)*0.18);
+  // árnyék
+  g.fillStyle = 'rgba(0,0,0,0.32)'; g.beginPath(); g.ellipse(x+hw*0.25, y+hh*0.4, hw*1.25, hh*1.1, 0, 0, PI2); g.fill();
+  // oldallapok (bal világosabb, jobb sötétebb), durva peremmel
+  const top = y - H;
+  g.beginPath(); g.moveTo(x-hw, y); g.lineTo(x, y+hh); g.lineTo(x, top+hh*(1+jig(1))); g.lineTo(x-hw, top*(1)+hh*jig(2)); g.closePath();
+  const sg1 = g.createLinearGradient(x-hw, top, x, y); sg1.addColorStop(0,'#8f8274'); sg1.addColorStop(1,'#6a5e52');
+  g.fillStyle = sg1; g.fill();
+  g.beginPath(); g.moveTo(x, y+hh); g.lineTo(x+hw, y); g.lineTo(x+hw, top+hh*jig(3)); g.lineTo(x, top+hh*(1+jig(1))); g.closePath();
+  const sg2 = g.createLinearGradient(x, top, x+hw, y); sg2.addColorStop(0,'#5b5046'); sg2.addColorStop(1,'#3e3630');
+  g.fillStyle = sg2; g.fill();
+  // tető
+  g.beginPath(); g.moveTo(x-hw, top+hh*jig(2)); g.lineTo(x, top-hh*(1-jig(4))); g.lineTo(x+hw, top+hh*jig(3)); g.lineTo(x, top+hh*(1+jig(1))); g.closePath();
+  const tg = g.createLinearGradient(x-hw, top-hh, x+hw, top+hh);
+  tg.addColorStop(0, '#b3a695'); tg.addColorStop(1, '#8a7d6e'); g.fillStyle = tg; g.fill();
+  g.strokeStyle = 'rgba(30,24,18,0.6)'; g.lineWidth = 1; g.stroke();
+  // csipkés kőcsúcsok a tetején
+  for(let i=0;i<3;i++){ const px = x + (i-1)*hw*0.55, py = top + hh*(0.1+jig(5+i)), ph = hh*(1.2+Math.abs(jig(8+i))*3);
+    g.beginPath(); g.moveTo(px-hw*0.22, py); g.lineTo(px-hw*0.05, py-ph); g.lineTo(px+hw*0.2, py-ph*0.4); g.lineTo(px+hw*0.24, py); g.closePath();
+    g.fillStyle = i===2 ? '#6a5e52' : '#9c8f80'; g.fill(); g.strokeStyle='rgba(30,24,18,0.5)'; g.stroke(); }
+  // moha-foltok
+  g.fillStyle = 'rgba(90,120,70,0.35)'; g.beginPath(); g.ellipse(x-hw*0.5, top+H*0.2, hw*0.22, hh*0.3, 0.3, 0, PI2); g.fill();
+  // repedések és rétegcsíkok
+  g.strokeStyle = 'rgba(40,26,14,0.45)'; g.lineWidth = 1;
+  g.beginPath(); g.moveTo(x-hw*0.6, top+H*0.35); g.lineTo(x-hw*0.3, top+H*0.5); g.lineTo(x-hw*0.45, top+H*0.72);
+  g.moveTo(x+hw*0.35, top+H*0.25); g.lineTo(x+hw*0.55, top+H*0.55); g.stroke();
+  g.strokeStyle = 'rgba(255,235,200,0.18)';
+  g.beginPath(); g.moveTo(x-hw, top+H*0.45); g.lineTo(x, top+H*0.45+hh); g.stroke();
+  // emelkedéskor por a talpnál
+  // törmelék a tövében
+  g.fillStyle = '#5e5348';
+  for(let i=0;i<4;i++){ const rx = x + (jig(20+i))*hw*3, ry = y + hh*0.4 + Math.abs(jig(30+i))*hh*1.5, rs = 2+Math.abs(jig(40+i))*6;
+    g.beginPath(); g.moveTo(rx-rs, ry); g.lineTo(rx-rs*0.3, ry-rs*0.8); g.lineTo(rx+rs, ry-rs*0.3); g.lineTo(rx+rs*0.6, ry+rs*0.3); g.closePath(); g.fill(); }
+  if(rise < 1){ g.fillStyle = `rgba(160,146,128,${0.55*(1-rise)})`; g.beginPath(); g.ellipse(x, y+hh*0.3, hw*1.8, hh*1.6, 0, 0, PI2); g.fill(); }
+}
+/* Jégbe zárt ellenfél: kristály, ami olvad (kisebb lesz, csöpög). */
+function drawEncase(g, en, nowT){
+  const e = en.encased; if(!e) return;
+  const pz = arenaIsoZ(en), melt = clamp(e.t/e.dur, 0, 1);
+  const grow = clamp(e.t/6, 0, 1);
+  const fullH = Math.max((e.big ? 62 : 52) * pz, 3.9*(en.r0||en.r||16));
+  const H = fullH * (1 - melt*0.55) * grow, W = fullH*0.38 * (1 - melt*0.3) * grow;
+  if(H < 1) return;
+  const x = en.x, y = en.y + 4;
+  g.save();
+  // test: áttetsző, sokszögű kristály
+  const pts = [[-W, 0], [-W*1.05, -H*0.55], [-W*0.55, -H*0.92], [0, -H*(1.02 - melt*0.1)], [W*0.6, -H*0.85], [W*1.08, -H*0.5], [W, 0], [0, H*0.12]];
+  g.beginPath(); pts.forEach(([px,py],i)=>{ i?g.lineTo(x+px,y+py):g.moveTo(x+px,y+py); }); g.closePath();
+  const gr = g.createLinearGradient(x-W, y-H, x+W, y);
+  gr.addColorStop(0, 'rgba(235,250,255,0.62)'); gr.addColorStop(0.5, 'rgba(150,215,255,0.42)'); gr.addColorStop(1, 'rgba(90,160,230,0.55)');
+  g.fillStyle = gr; g.fill();
+  g.strokeStyle = 'rgba(240,252,255,0.85)'; g.lineWidth = 1.4; g.stroke();
+  // belső élek (lapok)
+  g.strokeStyle = 'rgba(255,255,255,0.35)'; g.lineWidth = 1;
+  g.beginPath(); g.moveTo(x-W*0.55, y-H*0.92); g.lineTo(x-W*0.1, y-H*0.35); g.lineTo(x, y+H*0.12);
+  g.moveTo(x+W*0.6, y-H*0.85); g.lineTo(x-W*0.1, y-H*0.35); g.moveTo(x-W*1.05, y-H*0.55); g.lineTo(x-W*0.1, y-H*0.35); g.stroke();
+  // csillanás
+  const sh = 0.5+0.5*Math.sin(nowT/180 + en.x);
+  g.fillStyle = `rgba(255,255,255,${0.55+0.35*sh})`;
+  g.beginPath(); g.moveTo(x-W*0.7, y-H*0.7); g.lineTo(x-W*0.45, y-H*0.82); g.lineTo(x-W*0.35, y-H*0.4); g.lineTo(x-W*0.6, y-H*0.3); g.closePath(); g.fill();
+  // olvadás: nedves fény a talpnál + lógó csepp
+  if(melt > 0.15){
+    g.fillStyle = `rgba(200,235,255,${0.5*melt})`;
+    g.beginPath(); g.ellipse(x, y+2, W*1.2, W*0.35, 0, 0, PI2); g.fill();
+    const dy = ((nowT/12 + en.x) % 14);
+    g.fillStyle = 'rgba(220,245,255,0.85)'; g.beginPath(); g.arc(x+W*0.5, y-H*0.2+dy, 1.6, 0, PI2); g.fill();
+  }
+  g.restore();
+}
+function drawBubble(g, p, nowT){
+  const up = bubbleUp(p);
+  p._bubbleA = clamp((p._bubbleA||0) + (up ? 0.12 : -0.1), 0, 1);
+  const a = p._bubbleA; if(a <= 0.01) return;
+  const pz = arenaIsoZ(p), R = 34*pz + 10, cx = p.x, cy = p.y - 22*pz;
+  const hit = (p._bubbleHit||0) > 0 ? (p._bubbleHit--, 1) : 0;
+  g.save();
+  const gr = g.createRadialGradient(cx - R*0.35, cy - R*0.4, R*0.1, cx, cy, R);
+  gr.addColorStop(0, `rgba(255,255,255,${0.22*a})`); gr.addColorStop(0.6, `rgba(143,216,255,${0.10*a})`); gr.addColorStop(1, `rgba(143,216,255,${(0.35+0.4*hit)*a})`);
+  g.fillStyle = gr; g.beginPath(); g.arc(cx, cy, R, 0, PI2); g.fill();
+  g.strokeStyle = `rgba(200,240,255,${(0.6+0.4*hit)*a})`; g.lineWidth = 1.6; g.stroke();
+  // hatszög-háló, lassan forog
+  g.globalAlpha = 0.28*a; g.strokeStyle = '#dff6ff'; g.lineWidth = 1;
+  g.beginPath(); g.arc(cx, cy, R, 0, PI2); g.clip();
+  const t = nowT/2600, s = 11;
+  for(let yy=-R; yy<=R; yy+=s*0.87){ for(let xx=-R; xx<=R; xx+=s*1.5){
+    const ox = xx + ((Math.round(yy/(s*0.87))%2) ? s*0.75 : 0) + Math.sin(t)*4;
+    g.beginPath(); for(let i=0;i<6;i++){ const an=i*Math.PI/3; const px=cx+ox+Math.cos(an)*s*0.5, py=cy+yy+Math.sin(an)*s*0.5; i?g.lineTo(px,py):g.moveTo(px,py); } g.closePath(); g.stroke(); } }
+  g.restore();
+}
+/* Lövedékek külön megjelenéssel. Képernyő-térben, a vetített pont fölé
+   emelve (mint a többi lövés); `bp` a vetítő. */
+const _flameSprites = {};
+function flameSprite(i, magic){
+  const key = i + (magic ? 'm' : 'f');
+  if(_flameSprites[key]) return _flameSprites[key];
+  const S = 64, c = document.createElement('canvas'); c.width = c.height = S;
+  const g = c.getContext('2d');
+  const cols = magic
+    ? [[255,240,255],[255,120,230],[180,80,255],[80,30,120]]
+    : [[255,250,220],[255,190,70],[255,90,30],[90,40,30]];
+  let gr;
+  if(i === 4){   // forró fehér mag
+    gr = g.createRadialGradient(S/2,S/2,0,S/2,S/2,S/2);
+    gr.addColorStop(0,'rgba(255,255,240,1)'); gr.addColorStop(1,'rgba(255,255,240,0)');
+  } else {
+    const [r1,g1,b1] = cols[i], [r2,g2,b2] = cols[Math.min(3,i+1)];
+    gr = g.createRadialGradient(S/2,S/2,0,S/2,S/2,S/2);
+    gr.addColorStop(0, `rgba(${r1},${g1},${b1},1)`); gr.addColorStop(0.55, `rgba(${r2},${g2},${b2},0.55)`); gr.addColorStop(1, `rgba(${r2},${g2},${b2},0)`);
+  }
+  g.fillStyle = gr; g.fillRect(0,0,S,S);
+  return (_flameSprites[key] = c);
+}
+function drawLookBullets(g, bp, nowT){
+  const k = ARENA_ISO.k;
+  // lángok és díszlángok: összeadó fénnyel
+  g.save(); g.globalCompositeOperation = 'lighter';
+  /* Előre legyártott láng-képek: fokozatonként (fehér -> narancs -> vörös
+     -> füst) egy-egy kész színátmenet. A lángszóró képkockánként ~70
+     lángnyelvet rajzol; mindegyikhez új színátmenetet számolni a
+     képkocka negyedét vitte el. */
+  const flame = (x, y, r, age01, magic)=>{
+    const c = bp(x, y), R = Math.max(3, r*k*2.1);
+    const i = age01 < 0.25 ? 0 : age01 < 0.55 ? 1 : age01 < 0.85 ? 2 : 3;
+    const al = age01 > 0.85 ? (1-age01)/0.15*0.5 : (i === 0 ? 0.5 : 0.78);   // a fehér mag ne égesse ki a képet
+    g.globalAlpha = al;
+    g.drawImage(flameSprite(i, magic), c.x - R, c.y - age01*R*0.9 - R, R*2, R*2);
+    if(age01 < 0.3){ g.globalAlpha = 0.3*(1-age01/0.3); g.drawImage(flameSprite(4, false), c.x - R*0.35, c.y - R*0.35, R*0.7, R*0.7); }
+    g.globalAlpha = 1;
+  };
+  for(const f of game.fxFlames){
+    if(f.ember){ const c = bp(f.x, f.y), a01 = 1 - f.life/f.maxLife;
+      g.fillStyle = `rgba(255,${200-120*a01|0},80,${1-a01})`; g.beginPath(); g.arc(c.x, c.y - a01*16, 1.8, 0, PI2); g.fill(); continue; }
+    flame(f.x, f.y, f.r, 1 - f.life/f.maxLife, f.magic);
+  }
+  for(const b of game.bullets){ if(b.look === 'flame') flame(b.x, b.y, b.r, 1 - b.life/b.maxLife, b.magic); }
+  g.restore();
+  // füst a lángnyelvek végén (normál keverés, hogy sötétítsen)
+  for(const f of game.fxFlames){ if(f.ember) continue; const a01 = 1 - f.life/f.maxLife; if(a01 < 0.72) continue;
+    const c = bp(f.x, f.y), R = Math.max(3, f.r*k*2.3), al = (a01-0.72)/0.28*0.22*(1-a01)*4;
+    g.fillStyle = f.magic ? `rgba(70,30,90,${al})` : `rgba(40,34,32,${al})`;
+    g.beginPath(); g.arc(c.x + Math.sin((f.seed||0)*20)*4, c.y - a01*R*1.3, R*1.1, 0, PI2); g.fill(); }
+  for(const b of game.bullets){
+    if(!b.look || b.look === 'flame') continue;
+    const c = bp(b.x, b.y), ang = Math.atan2((b.vx+b.vy)*0.5*k, (b.vx-b.vy)*k);
+    if(b.look === 'rock' || b.look === 'boulder'){
+      const big = b.look === 'boulder', R = Math.max(4, b.r*k*(big?2.4:2.3));
+      b.spin = (b.spin||0) + (big?0.12:0.3);
+      // porcsík
+      // csak a nagy kőtömb húz porcsíkot; a kis szilánk tisztán, kőként látszik
+      if(big){ const t0 = bp(b.x-b.vx*3, b.y-b.vy*3);
+        g.strokeStyle = 'rgba(170,150,120,0.18)'; g.lineWidth = R*0.9; g.lineCap = 'round';
+        g.beginPath(); g.moveTo(t0.x, t0.y); g.lineTo(c.x, c.y); g.stroke(); }
+      // árnyék a talajon
+      const sh = bp(b.x, b.y); g.fillStyle = 'rgba(0,0,0,0.28)'; g.beginPath(); g.ellipse(sh.x, sh.y + 26*ARENA_ISO.k*1.6, R*0.9, R*0.4, 0, 0, PI2); g.fill();
+      g.save(); g.translate(c.x, c.y); g.rotate(b.spin);
+      const n = big ? 8 : 5 + (b.shape||0);
+      g.beginPath(); for(let i=0;i<n;i++){ const an=i/n*PI2, rr2=R*(0.78+0.22*Math.sin(i*2.7+(b.shape||0))); i?g.lineTo(Math.cos(an)*rr2,Math.sin(an)*rr2):g.moveTo(Math.cos(an)*rr2,Math.sin(an)*rr2); } g.closePath();
+      const rg = g.createLinearGradient(-R,-R,R,R); rg.addColorStop(0, big?'#b8a894':'#a89884'); rg.addColorStop(0.55, big?'#857564':'#7c6c5c'); rg.addColorStop(1, big?'#4a3e34':'#4e4238');
+      g.fillStyle = rg; g.fill(); g.strokeStyle = 'rgba(30,24,18,0.75)'; g.lineWidth = 1; g.stroke();
+      g.strokeStyle = 'rgba(255,245,225,0.45)'; g.beginPath(); g.moveTo(-R*0.7,-R*0.2); g.lineTo(-R*0.2,-R*0.7); g.stroke();
+      if(big){ g.strokeStyle='rgba(40,26,14,0.5)'; g.beginPath(); g.moveTo(-R*0.4,-R*0.2); g.lineTo(R*0.1,R*0.1); g.lineTo(R*0.2,R*0.5); g.stroke();
+        g.fillStyle='rgba(255,240,210,0.35)'; g.beginPath(); g.arc(-R*0.35,-R*0.35,R*0.28,0,PI2); g.fill(); }
+      g.restore();
+    } else if(b.look === 'icelance'){
+      const L = 56*k*1.6, W = 8*k*1.6;
+      const t0 = bp(b.x-b.vx*2.5, b.y-b.vy*2.5);
+      g.save(); g.globalCompositeOperation='lighter';
+      g.strokeStyle='rgba(160,225,255,0.35)'; g.lineWidth=W*2.2; g.lineCap='round'; g.beginPath(); g.moveTo(t0.x,t0.y); g.lineTo(c.x,c.y); g.stroke();
+      g.restore();
+      g.save(); g.translate(c.x, c.y); g.rotate(ang);
+      g.beginPath(); g.moveTo(L*0.55,0); g.lineTo(0,-W); g.lineTo(-L*0.45,-W*0.55); g.lineTo(-L*0.5,0); g.lineTo(-L*0.45,W*0.55); g.lineTo(0,W); g.closePath();
+      const ig = g.createLinearGradient(0,-W,0,W); ig.addColorStop(0,'#ffffff'); ig.addColorStop(0.5,'#a8e4ff'); ig.addColorStop(1,'#4fa8e0');
+      g.fillStyle = ig; g.fill(); g.strokeStyle='rgba(255,255,255,0.9)'; g.lineWidth=1; g.stroke();
+      g.strokeStyle='rgba(255,255,255,0.7)'; g.beginPath(); g.moveTo(L*0.5,0); g.lineTo(-L*0.45,0); g.stroke();
+      g.restore();
+    } else if(b.look === 'knife'){
+      b.spin = (b.spin||0) + 0.55;
+      const R = 11*k*1.6;
+      g.save(); g.globalCompositeOperation='lighter';
+      g.fillStyle='rgba(255,176,112,0.35)'; g.beginPath(); g.arc(c.x,c.y,R*1.4,0,PI2); g.fill(); g.restore();
+      g.save(); g.translate(c.x, c.y); g.rotate(b.spin);
+      g.beginPath(); g.moveTo(R,0); g.lineTo(-R*0.2,-R*0.28); g.lineTo(-R*0.6,-R*0.12); g.lineTo(-R*0.6,R*0.12); g.lineTo(-R*0.2,R*0.28); g.closePath();
+      g.fillStyle='#e8eef6'; g.fill(); g.strokeStyle='#ffb070'; g.lineWidth=1; g.stroke();
+      g.restore();
+    } else if(b.look === 'rocket'){
+      const t0 = bp(b.x-b.vx*3.2, b.y-b.vy*3.2), R = 4*k*1.6;
+      g.strokeStyle='rgba(200,200,210,0.35)'; g.lineWidth=R*1.6; g.lineCap='round'; g.beginPath(); g.moveTo(t0.x,t0.y); g.lineTo(c.x,c.y); g.stroke();
+      g.save(); g.translate(c.x,c.y); g.rotate(ang);
+      g.fillStyle='#dfe6ec'; g.fillRect(-R*2,-R*0.7,R*3,R*1.4); g.fillStyle='#ff6b4a'; g.beginPath(); g.moveTo(R*1.8,0); g.lineTo(R,-R*0.7); g.lineTo(R,R*0.7); g.closePath(); g.fill();
+      g.globalCompositeOperation='lighter'; g.fillStyle='rgba(255,180,80,0.9)'; g.beginPath(); g.arc(-R*2.3,0,R*0.9+Math.random()*R*0.5,0,PI2); g.fill();
+      g.restore();
+    } else if(b.look === 'thorn'){
+      const R = 8*k*1.6;
+      g.save(); g.translate(c.x,c.y); g.rotate(ang);
+      g.globalCompositeOperation='lighter'; g.fillStyle='rgba(224,176,96,0.35)'; g.beginPath(); g.arc(0,0,R*1.3,0,PI2); g.fill();
+      g.globalCompositeOperation='source-over';
+      g.beginPath(); g.moveTo(R*1.4,0); g.lineTo(-R*0.6,-R*0.45); g.lineTo(-R*0.3,0); g.lineTo(-R*0.6,R*0.45); g.closePath();
+      g.fillStyle='#f3d08a'; g.fill(); g.strokeStyle='#8a5a1e'; g.lineWidth=1; g.stroke();
+      g.restore();
+    }
+  }
+}
+/* A díszlángok, csöppek, tócsák és lángkörök léptetése — a játék update-je hívja. */
+function tickSpecFx(){
+  for(const f of game.fxFlames){ const dr = f.ember ? 0.975 : 0.962; f.vx*=dr; f.vy*=dr; f.x+=f.vx; f.y+=f.vy; if(!f.ember) f.r+=0.95; f.life--; }
+  game.fxFlames = game.fxFlames.filter(f=>f.life>0);
+  for(const pd of game.puddles) pd.life--;
+  game.puddles = game.puddles.filter(pd=>pd.life>0);
+  for(const nv of game.novas) nv.t++;
+  game.novas = game.novas.filter(nv=>nv.t<nv.life);
+  for(const d of game.drips) d.life--;
+  game.drips = game.drips.filter(d=>d.life>0);
+  tickEarthWalls();
+}
+
 /* A legyőzött varázsló PECSÉTET hagy hátra: felvéve azonnal egy
    plusz választást kapsz. Csak akkor esik, ha van még hová tenni. */
 function dropWizardItem(x, y){
   const p = game && game.player; if(!canOfferItem(p)) return;
+  if(itemRoll() >= ITEM_CHANCE) return;   // ritka: csak minden tizedik varázsló hagy pecsétet
   game.pickups = game.pickups || [];
   if(game.pickups.some(pu=>pu.sigil)) return;
   game.pickups.push({ x, y, sigil:true, icon:'🔮', col:'#c9a6ff', t:0, r:14 });
@@ -12004,6 +12676,7 @@ const CLASS_WEAPONS = {
      csoport ellen sokkal jobb. */
   mage: { style:'shot', label:'element',
     fire(p, base, crit){
+      if(specFire(p, base, crit)) return;   // Elemi mester: tűz / jég / föld
       const d = base*(crit?2:1);
       const el = mageElement(p).id;
       const b = { x:p.x, y:p.y,
@@ -14099,13 +14772,23 @@ function loop(t){
   pollGamepad();
   let steps = 0;
   const iso = isoActive();   // az izometrikus jelenet átveszi a hurkot, amíg fut
-  while(frameAcc >= STEP_MS && steps < 4){
-    if(iso) isoUpdate();
-    else { update(); if(game && game.state==='playing'){ tickVfx(); tickSwings(); } }
-    frameAcc -= STEP_MS; steps++;
+  /* BIZTONSÁGI HÁLÓ: egyetlen hiba se fagyassza le a játékot. Eddig egy
+     kivétel az update-ben megszakította a hurkot, és a kép örökre megállt
+     (így járt a boss-harc egy kiadáson át). A hibát naplózzuk és
+     számoljuk — a tesztek ezt a számlálót figyelik, tehát nem bújhat el. */
+  try{
+    while(frameAcc >= STEP_MS && steps < 4){
+      if(iso) isoUpdate();
+      else { update(); if(game && game.state==='playing'){ tickVfx(); tickSwings(); } }
+      frameAcc -= STEP_MS; steps++;
+    }
+    if(steps === 4) frameAcc = 0;        // lassú eszközön ne halmozódjon restancia (nincs halál-spirál)
+    if(iso) isoDraw(); else draw();
+  }catch(e){
+    frameAcc = 0;
+    window.__loopErrors = (window.__loopErrors||0) + 1;
+    if(window.__loopErrors <= 3) console.error('Játékhurok-hiba:', e);
   }
-  if(steps === 4) frameAcc = 0;        // lassú eszközön ne halmozódjon restancia (nincs halál-spirál)
-  if(iso) isoDraw(); else draw();
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
@@ -14160,7 +14843,7 @@ document.getElementById('startBtn').addEventListener('click', ()=>{
    hogy a menükben a számbillentyűk szabadok maradjanak. */
 window.addEventListener('keydown', (e)=>{
   if(!game || game.state !== 'playing') return;
-  const p = game.player; if(!p || !usesElements(p.cls)) return;
+  const p = game.player; if(!p || !usesElements(p.cls) || p.spec) return;   // az Elemi mester lezárja az elemet
   const idx = ['1','2','3'].indexOf(e.key);
   if(idx < 0) return;
   setMageElement(p, MAGE_ELEMENT_ORDER[idx]);
