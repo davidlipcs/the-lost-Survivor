@@ -50,6 +50,9 @@ a baj, mit csináltál, hogyan tesztelted. Magyarul.
   társként marad. Ne kapcsold vissza kérés nélkül.
 - **Felszerelés:** futamonként, 5 hely, szigorú kaszt-kötés; 100 XP-nként
   10% esély egy választásra, a varázsló-pecsét is 10%.
+- **Ellenfél-zsákmány:** mesterlövész→Távcső, tank→Életerő, rajlény→Dupla
+  lövés, rohamozó→Gyorstöltés, felderítő→Fürgeség; ölésenként 10%,
+  rétegenként max. 3 (a Dupla lövés 1), nem foglal felszerelés-helyet.
 - **Mobilon is működjön minden.**
 
 ## Tesztelés
