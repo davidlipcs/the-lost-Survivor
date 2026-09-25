@@ -123,6 +123,7 @@
     .itemCard .ipIco{ font-size:28px; flex:none; }
     .itemCard .ipText{ gap:3px; } }
   .invCard.invEmptySlot{ opacity:0.55; border-style:dashed; }
+  .invLootHead{ font-size:11px; letter-spacing:2px; color:var(--dim); margin:8px 2px 0; text-transform:uppercase; }
   #invHint{ font-size:11px; color:var(--dim); margin:0 auto 12px; max-width:480px; line-height:1.5; }
   #invEmpty{ color:var(--dim); font-size:12px; padding:14px; text-align:center; }
 
@@ -1599,6 +1600,12 @@ const TRANSLATIONS = {
     spec_ice_name: 'Ice', spec_ice_desc: 'Every 5th shot is an ice spear: it locks the enemy in ice, hits hard, and the ice visibly melts. Whoever takes too much ice freezes solid and shatters.',
     spec_earth_name: 'Earth', spec_earth_desc: 'A constant stream of stone shards, and every 5th shot a heavy boulder. Your first ability raises a stone wall two tiles ahead.',
     specPickTitle: 'CHOOSE YOUR ELEMENT', specPickSub: 'It shapes your mage for the rest of the run.',
+    loot_scope_name: 'Scope', loot_scope_desc: 'Your shots reach 15% further and hit 15% harder. Stacks up to 3.',
+    loot_vigor_name: 'Vigor', loot_vigor_desc: '+20% max HP, and you heal the same amount. Stacks up to 3.',
+    loot_twinshot_name: 'Twin Shot', loot_twinshot_desc: 'Every attack fires a second shot at 70% damage.',
+    loot_haste_name: 'Quickcharge', loot_haste_desc: 'Abilities and your ultimate recharge 15% faster. Stacks up to 3.',
+    loot_swift_name: 'Swiftness', loot_swift_desc: '+10% movement speed. Stacks up to 3.',
+    lootHead: 'Loot from enemies — no slot needed',
     enemy_wizard: 'Wizard',
     heroPrice: (c)=> `💰 ${c} — tap to buy`,
     heroBuyConfirm: (n,c)=> `Buy ${n} for ${c} coins?`,
@@ -2012,6 +2019,12 @@ const TRANSLATIONS = {
     spec_ice_name: 'Jég', spec_ice_desc: 'Minden 5. lövés jégdárda: jégbe zárja az ellenfelet, nagyot sebez, a jég pedig láthatóan olvad. Akit túl sok jég ér, szétfagy.',
     spec_earth_name: 'Föld', spec_earth_desc: 'Folyamatos kőszilánk-zápor, minden 5. lövés nehéz kőtömb. Az első képességed két kockányira kőfalat emel.',
     specPickTitle: 'VÁLASSZ ELEMET', specPickSub: 'A futam végéig ez határozza meg a mágusodat.',
+    loot_scope_name: 'Távcső', loot_scope_desc: 'A lövésed 15%-kal messzebbre ér és 15%-kal többet sebez. 3 rétegig halmozódik.',
+    loot_vigor_name: 'Életerő', loot_vigor_desc: '+20% max. életerő, és ugyanennyit gyógyulsz is. 3 rétegig halmozódik.',
+    loot_twinshot_name: 'Dupla lövés', loot_twinshot_desc: 'Minden támadásod egy második lövést is kilő, 70%-os sebzéssel.',
+    loot_haste_name: 'Gyorstöltés', loot_haste_desc: 'A képességeid és az ultid 15%-kal gyorsabban töltődnek. 3 rétegig halmozódik.',
+    loot_swift_name: 'Fürgeség', loot_swift_desc: '+10% mozgási sebesség. 3 rétegig halmozódik.',
+    lootHead: 'Ellenfél-zsákmány — nem foglal helyet',
     enemy_wizard: 'Varázsló',
     heroPrice: (c)=> `💰 ${c} — koppints a vásárláshoz`,
     heroBuyConfirm: (n,c)=> `Megveszed: ${n} — ${c} arany?`,
@@ -3031,7 +3044,7 @@ function toggleMusic(){
    AI/KÉPESSÉG SEGÉDFÜGGVÉNYEK
    ========================================================= */
 function addUltShake(){ addShake(11, 20); }
-function addUltCharge(a){ const p=game&&game.player; if(p&&p.ult) p.ult.charge=Math.min(p.ult.chargeMax,p.ult.charge+a); }
+function addUltCharge(a){ const p=game&&game.player; if(p&&p.ult) p.ult.charge=Math.min(p.ult.chargeMax,p.ult.charge+a*(typeof lootUltMul==='function'?lootUltMul(p):1)); }
 function aoeDamage(x,y,r,dmg,color){
   game.enemies.forEach(en=>{ if(dist(en.x,en.y,x,y)<r+en.r){
     en.hp-=dmg; en.hitFlash=8; addParticles(en.x,en.y,color||'#fff',3);
@@ -6656,7 +6669,7 @@ function makePlayer(name, color, head){
     armor:cls.armor||0, regen:cls.regen||0, critChance:cls.critChance||0, lowHpDmg:cls.lowHpDmg||0, cdScale:cls.cdScale||1,
     powerDamp: cls.allAbilities ? 0.7 : 1,   // minden pecsétet ismer, de mindegyiket gyengébben használja
     items: new Set(),   // a futamban megszerzett felszerelés (legfeljebb ITEM_SLOTS)
-    xpTotal: 0, itemSteps: 0,   // összegyűjtött XP + hány XP-küszöb adott már választást
+    xpTotal: 0, itemSteps: 0, loot: {},   // + ellenfél-zsákmány rétegei   // összegyűjtött XP + hány XP-küszöb adott már választást
     dashing:0, shieldActive:0, surgeActive:0, invuln:0, hazSlow:0,
     buffs:{ lifesteal:0, berserk:0, multishot:0, precision:0, invisible:0, berserkUlt:0, boneward:0, godShield:0, masterShield:0 },
     abilities: equipped.slice(0,MAX_SLOTS).map(id=>({ id, key:(abilityKeys[id]||'').toLowerCase(), cd:0, rank:1 })),
@@ -7288,7 +7301,7 @@ function update(){
     const d = screenDirToArena(mvx, mvy);
     mvx = d.x*mag; mvy = d.y*mag;
   }
-  let sp = p.speed * (p.surgeActive>0 ? 1.5 : 1) * itemMoveMul(p);
+  let sp = p.speed * (p.surgeActive>0 ? 1.5 : 1) * itemMoveMul(p) * lootMoveMul(p);
   if(p.dashing > 0){ sp = p.speed * 3.0; p.dashing--; }
   if(p.hazSlow>0){ if(p.dashing<=0) sp *= 0.5; p.hazSlow--; }   // fagyzóna lassítás
   p.x = clamp(p.x + mvx*sp, p.r, WORLD.w-p.r);
@@ -7326,7 +7339,7 @@ function update(){
     if(ab.cd>0) ab.cd--;
     if(ab.key && keys[ab.key] && ab.cd<=0){
       ABILITIES[ab.id].run(p, ab.rank * (p.powerDamp||1) * abilityBalanceMult(ab.id) * abilityUpgradeMult(ab.id));
-      ab.cd = Math.round(ABILITIES[ab.id].cdMax * (p.cdScale||1) * itemCdMul(p));
+      ab.cd = Math.round(ABILITIES[ab.id].cdMax * (p.cdScale||1) * itemCdMul(p) * lootCdMul(p));
       ab.cdMax = ab.cd;
       recordAbilityUse(ab.id);
       vfxPunch(p.x, p.y, heroSkinData(p.cls,p.skin).skin.glow || p.color, 1);
@@ -7538,7 +7551,7 @@ function update(){
     const shotGap = (game.runFrames||0) - (p._lastShotF!==undefined ? p._lastShotF : -999);
     p._lastShotF = game.runFrames||0;
     p._recoil = 1; p._muzzle = 4;   // vizuális: hátrarúgás + torkolattűz
-    let base = p.bulletDmg * (1 + (p.lowHpDmg||0)*(1 - p.hp/p.maxHp)) * (1 + 0.005*(hasItem(p,'soulharvest') ? (p._souls||0) : 0));
+    let base = p.bulletDmg * (1 + (p.lowHpDmg||0)*(1 - p.hp/p.maxHp)) * (1 + 0.005*(hasItem(p,'soulharvest') ? (p._souls||0) : 0)) * lootDmgMul(p);
     if(p.buffs.berserk>0) base *= 1.25;
     if(p.buffs.berserkUlt>0) base *= 1.7;
     const crit = (p.buffs.precision>0 || Math.random() < (p.critChance||0));
@@ -7569,6 +7582,11 @@ function update(){
         p.facing = f0;
       } else {
         wep.fire(p, base, crit);
+        // DUPLA LÖVÉS (a rajlény zsákmánya): egy második lövés/csapás, kicsit elfordítva, 70%-kal
+        if(lootN(p,'twinshot') && !(p.spec==='fire')){
+          const f0 = p.facing; p.facing = f0 + 0.1; p._twin = true;
+          try{ wep.fire(p, base*0.7, false); } finally { p._twin = false; p.facing = f0; }
+        }
         if(wep.style==='melee' && p.buffs.precision>0){
           // pontosság-buff közelharcnál: második, hátrafelé irányuló suhintás
           const f0=p.facing; p.facing += Math.PI; wep.fire(p, base*0.6, false); p.facing=f0;
@@ -7579,7 +7597,7 @@ function update(){
         /* Hatótáv a pálya méretéhez igazítva: a most keletkezett
            lövedékek élettartamát szorozzuk. Itt egy helyen elintézhető,
            mert tudjuk, hány lövedék jött létre ebben a lövésben. */
-        const rm = rangeMul();
+        const rm = rangeMul() * lootRangeMul(p);
         if(rm > 1) for(let bi=_nb; bi<game.bullets.length; bi++) if(!game.bullets[bi].noRange) game.bullets[bi].life *= rm;
         itemsOnFire(p, _nb, wep, base, shotGap);
       }
@@ -7925,6 +7943,7 @@ function update(){
       }
     }
     itemOnKill(p, en);
+    dropEnemyLoot(en);   // 10%: a típus saját zsákmánya
     // a varázsló hagyatéka: egy pecsét, ami plusz felszerelés-választást ad
     if(en.type==='wizard') dropWizardItem(en.x, en.y);
     // Nekromanta passzíva: esély, hogy a legyőzött ellenfél csontváz-szolgaként feltámadjon
@@ -8211,6 +8230,7 @@ function saveRun(){
       // felszerelés (ha hiányzik egy régi mentésből: üres, nulláról gyűlik)
       items: [...(p.items||[])], xpTotal: p.xpTotal||0, itemSteps: p.itemSteps||0,
       itemOffers: game.itemOffers||0, defied: !!p._defied, spec: p.spec||null, souls: p._souls||0,
+      loot: p.loot||{},
     }));
   }catch(e){ warnStorageOnce(); }
 }
@@ -8272,6 +8292,8 @@ function resumeRun(){
   p.itemSteps = Math.floor(p.xpTotal / ITEM_XP_EVERY);   // a már lejátszott dobások
   p._defied = !!d.defied;
   p._souls = d.souls||0;
+  // a zsákmány: a max. életerő-bónuszt a mentett maxHp már tartalmazza, ezért csak a rétegeket állítjuk vissza
+  p.loot = {}; for(const k in (d.loot||{})) if(LOOT_BY_ID[k]) p.loot[k] = Math.min(LOOT_BY_ID[k].max, d.loot[k]|0);
   game.itemOffers = d.itemOffers||0;
   if(d.spec && p.cls==='mage' && p.items.has('elemspec')){
     applySpec(p, d.spec, true);
@@ -11729,6 +11751,15 @@ function renderInventory(){
     html += `<div class="invCard invEmptySlot"><div class="iIco">◇</div>`+
       `<div><div class="iName">${T('invSlotEmpty')}</div><div class="iDesc">${T('invSlotHow')}</div></div></div>`;
   }
+  // ellenfél-zsákmány: nem foglal helyet, rétegekkel
+  const lootIds = p ? Object.keys(p.loot||{}).filter(k=>p.loot[k]>0 && LOOT_BY_ID[k]) : [];
+  if(lootIds.length){
+    html += `<div class="invLootHead">${T('lootHead')}</div>`;
+    html += lootIds.map(k=>{ const d = LOOT_BY_ID[k];
+      return `<div class="invCard" style="border-color:${d.col}55;"><div class="iIco">${d.icon}</div>`+
+        `<div><div class="iName" style="color:${d.col}">${T('loot_'+k+'_name')} <span style="color:var(--dim)">${p.loot[k]}/${d.max}</span></div>`+
+        `<div class="iDesc">${T('loot_'+k+'_desc')}</div></div></div>`; }).join('');
+  }
   grid.innerHTML = html;
   const hint = document.getElementById('invHint');
   if(hint) hint.textContent = (p && owned.length < ITEM_SLOTS && !itemsLeft(p).length) ? T('invAllTaken') : T('invHint');
@@ -12096,7 +12127,7 @@ function applySpec(p, id, silent){
 /* A lövés elemi ágon. Visszatér: true, ha kezelte. */
 function specFire(p, base, crit){
   const sp = p.spec; if(!sp) return false;
-  p._specShotN = (p._specShotN||0) + 1;
+  if(!p._twin) p._specShotN = (p._specShotN||0) + 1;   // a Dupla lövés második lövése nem számít bele
   const a = p.facing, c = Math.cos(a), s2 = Math.sin(a);
   if(sp === 'fire'){
     /* LÁNGSZÓRÓ: 3 képkockánként egy sebző lángnyelv + két díszláng.
@@ -12122,7 +12153,7 @@ function specFire(p, base, crit){
     return true;
   }
   if(sp === 'ice'){
-    if(p._specShotN % 5 === 0){
+    if(!p._twin && p._specShotN % 5 === 0){
       // JÉGDÁRDA: gyors, átfúrja az első ellenfelet, és jégbe zárja
       game.bullets.push({ x:p.x, y:p.y, vx:c*p.bulletSpeed*1.7, vy:s2*p.bulletSpeed*1.7, r:7, life:70,
         dmg:Math.round(base*4*(crit?2:1)), crit, look:'icelance', shatter:true, trail:'#cfefff' });
@@ -12135,7 +12166,7 @@ function specFire(p, base, crit){
     return true;
   }
   if(sp === 'earth'){
-    if(p._specShotN % 5 === 0){
+    if(!p._twin && p._specShotN % 5 === 0){
       // KŐTÖMB: lassú, nehéz, becsapódáskor robban és ellök
       game.bullets.push({ x:p.x, y:p.y, vx:c*p.bulletSpeed*0.8, vy:s2*p.bulletSpeed*0.8, r:13, life:90,
         dmg:Math.round(base*2.6*(crit?2:1)), crit, look:'boulder', spin:Math.random()*PI2,
@@ -12542,6 +12573,51 @@ function tickSpecFx(){
   tickEarthWalls();
 }
 
+
+/* =========================================================
+   ELLENFÉL-ZSÁKMÁNY — minden kaszt felveheti
+   ---------------------------------------------------------
+   A felszerelést a varázsló pecsétje adja; a többi ellenfél-típus a
+   saját zsákmányát ejti, szintén csak 10% eséllyel. A zsákmány a futam
+   végéig tart, NEM foglal felszerelés-helyet, és rétegenként
+   halmozódik egy plafonig — ha elérted, az a típus többet nem ejt.
+   ========================================================= */
+const LOOT_CHANCE = 0.10;
+const ENEMY_LOOT = {
+  sniper:    { id:'scope',     icon:'🔭', col:'#3ddc97', max:3 },  // +15% hatótáv és sebzés
+  tank:      { id:'vigor',     icon:'❤️', col:'#ff5c7c', max:3 },  // +20% max. életerő
+  swarmling: { id:'twinshot',  icon:'👯', col:'#ff6ec7', max:1 },  // dupla lövés
+  charger:   { id:'haste',     icon:'⏱️', col:'#ffb347', max:3 },  // +15% gyorsabb képesség- és ulti-töltés
+  scout:     { id:'swift',     icon:'👟', col:'#ff8a5c', max:3 },  // +10% mozgási sebesség
+};
+const LOOT_BY_ID = {}; for(const k in ENEMY_LOOT) LOOT_BY_ID[ENEMY_LOOT[k].id] = ENEMY_LOOT[k];
+function lootN(p, id){ return (p && p.loot && p.loot[id]) || 0; }
+function dropEnemyLoot(en){
+  const p = game && game.player; const def = ENEMY_LOOT[en.type]; if(!p || !def) return;
+  if(lootN(p, def.id) >= def.max) return;
+  if(itemRoll() >= LOOT_CHANCE) return;
+  game.pickups = game.pickups || [];
+  if(game.pickups.some(q=>q.loot===def.id)) return;   // egyszerre egy ugyanabból a földön
+  game.pickups.push({ x:en.x, y:en.y, loot:def.id, icon:def.icon, col:def.col, t:0, r:14 });
+  addRing(en.x, en.y, def.col, 46, 18, 3);
+}
+function giveLoot(p, id){
+  const def = LOOT_BY_ID[id]; if(!def) return false;
+  p.loot = p.loot || {};
+  if(lootN(p, id) >= def.max) return false;
+  p.loot[id] = lootN(p, id) + 1;
+  if(id === 'vigor'){ const add = Math.round(p.maxHp*0.2); p.maxHp += add; p.hp = Math.min(p.maxHp, p.hp + add); }
+  addFloater(p.x, p.y - p.r - 18, def.icon+' '+T('loot_'+id+'_name')+(def.max>1 ? ' '+p.loot[id]+'/'+def.max : ''), def.col, true);
+  addRing(p.x, p.y, def.col, 64, 18, 3);
+  try { SFX.orb && SFX.orb(); } catch(e){}
+  return true;
+}
+function lootMoveMul(p){ return 1 + 0.10*lootN(p,'swift'); }
+function lootDmgMul(p){ return 1 + 0.15*lootN(p,'scope'); }
+function lootRangeMul(p){ return 1 + 0.15*lootN(p,'scope'); }
+function lootCdMul(p){ return 1 - 0.15*lootN(p,'haste'); }
+function lootUltMul(p){ return 1 + 0.15*lootN(p,'haste'); }
+
 /* A legyőzött varázsló PECSÉTET hagy hátra: felvéve azonnal egy
    plusz választást kapsz. Csak akkor esik, ha van még hová tenni. */
 function dropWizardItem(x, y){
@@ -12560,6 +12636,7 @@ function updatePickups(){
     pu.t++;
     if(dist(pu.x, pu.y, p.x, p.y) < pu.r + p.r){
       pu.taken = true;
+      if(pu.loot){ giveLoot(p, pu.loot); continue; }
       if(pu.sigil && queueItemOffer()){
         addFloater(p.x, p.y - p.r - 18, T('itemSigil'), '#c9a6ff', true);
         addRing(p.x, p.y, '#c9a6ff', 70, 20, 4);
