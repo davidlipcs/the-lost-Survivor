@@ -46,6 +46,10 @@ a baj, mit csináltál, hogyan tesztelted. Magyarul.
 - **Admin:** a Google-lel bejelentkezett, ellenőrzött **davidlipcs@gmail.com**
   (`ADMIN_EMAILS`). A begépelt `davidlipcs1234` név CSAK addig admin, amíg
   a Google-bejelentkezés nincs beállítva.
+- **Támogató:** a többjátékos módig NEM választható hős (`HIDDEN_HEROES`),
+  társként marad. Ne kapcsold vissza kérés nélkül.
+- **Felszerelés:** futamonként, 5 hely, szigorú kaszt-kötés; 100 XP-nként
+  10% esély egy választásra, a varázsló-pecsét is 10%.
 - **Mobilon is működjön minden.**
 
 ## Tesztelés
