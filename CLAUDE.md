@@ -49,7 +49,10 @@ a baj, mit csináltál, hogyan tesztelted. Magyarul.
 - **Támogató:** a többjátékos módig NEM választható hős (`HIDDEN_HEROES`),
   társként marad. Ne kapcsold vissza kérés nélkül.
 - **Felszerelés:** futamonként, 5 hely, szigorú kaszt-kötés; 100 XP-nként
-  10% esély egy választásra, a varázsló-pecsét is 10%.
+  10% esély egy választásra, a varázsló-pecsét is 10%. CSAK David nyolc
+  tárgya: Teljes tüske, Pajzsbuborék (Tank), Rikoset, Elemi mester,
+  Robbanó kések, Lélekgyűjtő, Fagyasztócsapda, Hadiállomás. A Berserkernek
+  nincs, amíg David nem választ neki. Saját ötletet ne tegyél be.
 - **Ellenfél-zsákmány:** mesterlövész→Távcső, tank→Életerő, rajlény→Dupla
   lövés, rohamozó→Gyorstöltés, felderítő→Fürgeség; ölésenként 10%,
   rétegenként max. 3 (a Dupla lövés 1), nem foglal felszerelés-helyet.
