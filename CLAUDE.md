@@ -56,6 +56,10 @@ a baj, mit csináltál, hogyan tesztelted. Magyarul.
 - **Ellenfél-zsákmány:** mesterlövész→Távcső, tank→Életerő, rajlény→Dupla
   lövés, rohamozó→Gyorstöltés, felderítő→Fürgeség; ölésenként 10%,
   rétegenként max. 3 (a Dupla lövés 1), nem foglal felszerelés-helyet.
+- **Gyógyítás:** minden hősnek saját gombon (H / zöld ✚ / LT), 30% életerő,
+  10 mp; a „Gyógyulás” képesség nem foglal képesség-helyet.
+- **Ellenfelek:** feleannyi (`ENEMY_COUNT_MUL` 0,5), kétszeres élet,
+  másfélszeres sebzés; a boss nem változik.
 - **Mobilon is működjön minden.**
 
 ## Tesztelés

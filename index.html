@@ -437,6 +437,17 @@
   #ultBtn.ready{ opacity:1; border-color:var(--gold); box-shadow:0 0 16px rgba(255,209,102,0.5); }
   #ultBtn .ultFill{ position:absolute; left:0; right:0; bottom:0; background:rgba(255,209,102,0.28); height:0%; }
   #ultBtn span{ position:relative; z-index:1; }
+  #healBtn{ position:absolute; right:calc(10px*var(--ui-scale)); right:max(calc(10px*var(--ui-scale)),env(safe-area-inset-right)); bottom:calc(144px*var(--ui-scale)); z-index:6;
+    width:calc(48px*var(--ui-scale)); height:calc(48px*var(--ui-scale)); border-radius:50%; border:2px solid #2a4838; background:rgba(14,28,22,0.9);
+    color:#8affc1; font-size:calc(22px*var(--ui-scale)); font-weight:bold; display:flex; align-items:center; justify-content:center; cursor:pointer;
+    opacity:0.55; overflow:hidden; touch-action:none; }
+  #healBtn.hidden{ display:none; }
+  #healBtn.ready{ opacity:1; border-color:#8affc1; box-shadow:0 0 14px rgba(138,255,193,0.45); }
+  #healBtn .healFill{ position:absolute; left:0; right:0; bottom:0; background:rgba(138,255,193,0.25); height:0%; }
+  #healBtn span{ position:relative; z-index:1; }
+  #healBtn .healKey{ position:absolute; right:calc(6px*var(--ui-scale)); bottom:calc(3px*var(--ui-scale)); font-size:calc(9px*var(--ui-scale)); color:rgba(255,255,255,0.6); }
+  #healBtn .healCdTxt{ position:absolute; top:calc(4px*var(--ui-scale)); font-size:calc(10px*var(--ui-scale)); color:#fff; }
+  @media (pointer:coarse){ #healBtn .healKey{ display:none; } }
   #buffTray{ position:absolute; left:50%; transform:translateX(-50%); bottom:calc(62px*var(--ui-scale)); z-index:5;
     display:flex; gap:calc(5px*var(--ui-scale)); pointer-events:none; }
   #buffTray .buff{ font-size:calc(12px*var(--ui-scale)); background:rgba(18,24,38,0.85); border:1px solid #3a4560; border-radius:6px; padding:1px 5px; }
@@ -580,6 +591,7 @@
 
   <div id="abilityBar" class="hidden"></div>
   <div id="buffTray" class="hidden"></div>
+  <button id="healBtn" class="hidden" aria-label="Heal (H)"><div class="healFill"></div><span>✚</span><span class="healKey">H</span><span class="healCdTxt"></span></button>
   <button id="ultBtn" class="hidden"><div class="ultFill"></div><span>💥</span></button>
 
   <div id="levelUpBanner" class="hidden">
@@ -1407,10 +1419,10 @@ const TRANSLATIONS = {
     useNameBtn: "✅ Use this name", heroPickLabel: "CHOOSE YOUR HERO", skinPickLabel: "APPEARANCE — UNIQUE VARIANTS FOR THIS HERO",
     abilityPickLabel: "SEALS — CHOOSE UP TO 5", difficultyLabel: "DIFFICULTY", backBtn: "Back to main menu",
     ladderBtn: "📜 Ladder", soundLabel:'SOUND', musicLabel:'MUSIC', onLabel:'ON', offLabel:'OFF',
-    controlsCoarse: `Left side — move, right side — aim and <b>fire continuously</b>. Tap the ability icons at the bottom, and the ULT button on the right, to fight. ⏸ at the top = pause.`,
-    controlsKeyboard: (k)=> `WASD / arrows — move &nbsp;|&nbsp; Mouse — aim, left click — fire &nbsp;|&nbsp; equipped seals use your set keys, ULT: ${k} &nbsp;|&nbsp; P / Esc — pause<br>`+
+    controlsCoarse: `Left side — move, right side — aim and <b>fire continuously</b>. Tap the ability icons at the bottom, and the ULT button on the right, to fight; the green ✚ above it heals you. ⏸ at the top = pause.`,
+    controlsKeyboard: (k)=> `WASD / arrows — move &nbsp;|&nbsp; Mouse — aim, left click — fire &nbsp;|&nbsp; equipped seals use your set keys, ULT: ${k} &nbsp;|&nbsp; H — heal &nbsp;|&nbsp; P / Esc — pause<br>`+
       `On touch: left side moves, right side aims and fires, tap the icons to use your seals.`,
-    controlsPad: `<br>Controller (Xbox/PS): left stick — move, right stick — aim+fire (RT/R2 also fires), A·B·X·Y·LB — seals, RB — ULT, Start — pause.<br>`+
+    controlsPad: `<br>Controller (Xbox/PS): left stick — move, right stick — aim+fire (RT/R2 also fires), A·B·X·Y·LB — seals, RB — ULT, LT/L2 — heal, Start — pause.<br>`+
       `In menus: d-pad / left stick — navigate, A — select, B — back.`,
     abilityHint: (n)=> `Equipped: <b>${n}/5</b> · Click a seal to equip/unequip it, click the key button to rebind it (tap the seal on touch to use it).`,
 
@@ -1824,10 +1836,10 @@ const TRANSLATIONS = {
     useNameBtn: "✅ Ez a név használata", heroPickLabel: "HARCOS KIVÁLASZTÁSA", skinPickLabel: "KINÉZET — EGYEDI VÁLTOZATOK EHHEZ A HARCOSHOZ",
     abilityPickLabel: "KÉPESSÉGEK — VÁLASSZ MAX 5-öT", difficultyLabel: "NEHÉZSÉGI SZINT", backBtn: "Vissza a főmenübe",
     ladderBtn: "📜 Létra", soundLabel:'HANGOK', musicLabel:'ZENE', onLabel:'BE', offLabel:'KI',
-    controlsCoarse: `Bal fél — mozgás, jobb fél — célzás és <b>folyamatos lövés</b>. Alul a képesség-ikonokra, jobbra az ULT gombra bökve harcolsz. Fent ⏸ = szünet.`,
-    controlsKeyboard: (k)=> `WASD / nyilak — mozgás &nbsp;|&nbsp; Egér — célzás, bal katt — lövés &nbsp;|&nbsp; a felszerelt képességek a beállított billentyűkön, ULT: ${k} &nbsp;|&nbsp; P / Esc — szünet<br>`+
+    controlsCoarse: `Bal fél — mozgás, jobb fél — célzás és <b>folyamatos lövés</b>. Alul a képesség-ikonokra, jobbra az ULT gombra bökve harcolsz; fölötte a zöld ✚ gyógyít. Fent ⏸ = szünet.`,
+    controlsKeyboard: (k)=> `WASD / nyilak — mozgás &nbsp;|&nbsp; Egér — célzás, bal katt — lövés &nbsp;|&nbsp; a felszerelt képességek a beállított billentyűkön, ULT: ${k} &nbsp;|&nbsp; H — gyógyítás &nbsp;|&nbsp; P / Esc — szünet<br>`+
       `Érintőn: bal fél mozgat, jobb fél céloz és lő, az ikonokra bökve használod a képességeket.`,
-    controlsPad: `<br>Kontroller (Xbox/PS): bal kar — mozgás, jobb kar — célzás+lövés (RT/R2 is lő), A·B·X·Y·LB — képességek, RB — ULT, Start — szünet.<br>`+
+    controlsPad: `<br>Kontroller (Xbox/PS): bal kar — mozgás, jobb kar — célzás+lövés (RT/R2 is lő), A·B·X·Y·LB — képességek, RB — ULT, LT/L2 — gyógyítás, Start — szünet.<br>`+
       `Menüben: d-pad / bal kar — lépkedés, A — kiválasztás, B — vissza.`,
     abilityHint: (n)=> `Felszerelve: <b>${n}/5</b> · Kattints egy képességre a fel-/leszereléshez, a billentyű-gombra kattintva átállíthatod (érintőn a képességre bökve használod).`,
 
@@ -3068,47 +3080,47 @@ const CLASSES = {
     strong:'Rengeteg élet és páncél', weak:'Lassú, alacsony DPS',
     hp:170, speed:1.9, fireRate:26, bulletDmg:13, bulletSpeed:7, bulletCount:1,
     armor:0.3, regen:0, critChance:0, lowHpDmg:0, cdScale:1, ult:'fortress',
-    def:['shield','shockwave','heal','turret'] },
+    def:['shield','shockwave','turret'] },
   sniper:{ label:'Sniper', role:'MESTERLÖVÉSZ', req:1, col:'#3ddc97', icon:'🎯',
     strong:'Óriási sebzés és hatótáv', weak:'Lassú tűz, közelben sebezhető',
     hp:100, speed:2.2, fireRate:42, bulletDmg:34, bulletSpeed:12, bulletCount:1,
     armor:0, regen:0, critChance:0.2, lowHpDmg:0, cdScale:1, ult:'precision',
-    def:['railgun','blink','dash','turret','heal'] },
+    def:['railgun','blink','dash','turret'] },
   berserker:{ label:'Berserker', role:'ROHAMOZÓ', req:1, col:'#ff8a5c', icon:'🪓',
     strong:'Alacsony HP-n brutális sebzés', weak:'Nincs távolsági fölénye',
     hp:130, speed:2.55, fireRate:16, bulletDmg:11, bulletSpeed:8, bulletCount:1,
     armor:-0.1, regen:0, critChance:0.1, lowHpDmg:0.8, cdScale:1, ult:'bloodrage',
-    def:['dash','berserk','shockwave','lifesteal','heal'] },
+    def:['dash','berserk','shockwave','lifesteal'] },
   mage:{ label:'Mágus', role:'VARÁZSLÓ', req:2, col:'#8b5cf6', icon:'🔮',
     strong:'Erős, gyorsan újratöltődő képességek', weak:'Törékeny',
     hp:90, speed:2.25, fireRate:22, bulletDmg:13, bulletSpeed:8, bulletCount:1,
     armor:0, regen:0, critChance:0, lowHpDmg:0, cdScale:0.8, ult:'elemental',
-    def:['fireball','meteor','ice','chain','poison','heal'] },
+    def:['fireball','meteor','ice','chain','poison'] },
   assassin:{ label:'Assassin', role:'ORGYILKOS', req:3, col:'#ff5c7c', icon:'🗡️',
     strong:'Villámgyors, kritikus burst', weak:'Nagyon törékeny',
     hp:85, speed:2.75, fireRate:15, bulletDmg:12, bulletSpeed:11, bulletCount:1,
     armor:-0.05, regen:0, critChance:0.28, lowHpDmg:0, cdScale:0.85, ult:'shadowstep',
-    def:['blink','dash','shotgun','lifesteal','cluster','heal'] },
+    def:['blink','dash','shotgun','lifesteal','cluster'] },
   support:{ label:'Support', role:'TÁMOGATÓ', req:2, col:'#6ee7ff', icon:'✚',
     strong:'Gyógyulás, tornyok, kitartás', weak:'Alacsony önsebzés',
     hp:120, speed:2.2, fireRate:24, bulletDmg:11, bulletSpeed:8, bulletCount:1,
     armor:0.1, regen:0.04, critChance:0, lowHpDmg:0, cdScale:0.85, ult:'lifeaura',
-    def:['heal','turret','drone','shield','surge'] },
+    def:['turret','drone','shield','surge'] },
   necromancer:{ label:'Nekromanta', role:'IDÉZŐ', req:2, col:'#9d5cff', icon:'💀',
     strong:'Csontváz-szolgák harcolnak helyetted', weak:'Gyenge egyedül, felkészülés kell',
     hp:105, speed:2.1, fireRate:26, bulletDmg:11, bulletSpeed:8, bulletCount:1,
     armor:0, regen:0.02, critChance:0, lowHpDmg:0, cdScale:0.9, ult:'undeadlegion',
-    def:['raise','soulbomb','boneward','heal'] },
+    def:['raise','soulbomb','boneward'] },
   hunter:{ label:'Vadász', role:'CSAPDAÁSZ', req:3, col:'#c9a24a', icon:'🏹',
     strong:'Csapdák és társ irányítják a csatateret', weak:'Felkészülés nélkül gyenge burst',
     hp:112, speed:2.35, fireRate:20, bulletDmg:11, bulletSpeed:9, bulletCount:1,
     armor:0, regen:0, critChance:0.12, lowHpDmg:0, cdScale:0.95, ult:'huntingground',
-    def:['snaretrap','beast','piercingshot','dash','heal'] },
+    def:['snaretrap','beast','piercingshot','dash'] },
   engineer:{ label:'Gépész', role:'SZERKEZETÉPÍTŐ', req:3, col:'#ff9d4d', icon:'⚙️',
     strong:'Telepített szerkezetek tartják a terepet', weak:'Lassú, helyhez kötött erő',
     hp:140, speed:2.0, fireRate:28, bulletDmg:9, bulletSpeed:7, bulletCount:1,
     armor:0.15, regen:0.02, critChance:0, lowHpDmg:0, cdScale:0.9, ult:'mechbarrage',
-    def:['minefield','laserwall','repairdrone','shield','heal'] },
+    def:['minefield','laserwall','repairdrone','shield'] },
 };
 // TESZT MÓD: ha true, minden hős és pecsét azonnal elérhető, szintkövetelmény nélkül —
 // ha később vissza akarod kapcsolni a normál, fokozatos feloldást, írd false-ra.
@@ -3496,12 +3508,12 @@ function isAbilityInPool(id, cls){
   return classAbilityPool(c).includes(id);
 }
 const CLASS_BASE_ABILITIES = {
-  tank:        ['shield','shockwave','mirrorshield','adrenaline','heal','grenade','dash','bulwark'],
+  tank:        ['shield','shockwave','mirrorshield','adrenaline','grenade','dash','bulwark'],
   sniper:      ['railgun','multishot','dash','blink','shotgun','adrenaline','strike'],
   berserker:   ['berserk','lifesteal','dash','shockwave','adrenaline','bloodmagic','surge'],
   mage:        ['fireball','ice','chain','meteor','poison','timewarp','blink','runewall'],
   assassin:    ['dash','blink','lifesteal','surge','shotgun','adrenaline','strike'],
-  support:     ['heal','healcloud','shield','drone','mirrorshield','adrenaline','timewarp'],
+  support:     ['healcloud','shield','drone','mirrorshield','adrenaline','timewarp'],
   necromancer: ['raise','soulbomb','boneward','poison','bloodmagic','lifesteal','chain'],
   hunter:      ['snaretrap','beast','piercingshot','multishot','dash','poison','surge'],
   engineer:    ['minefield','laserwall','repairdrone','turret','drone','mortar','cluster','grenade'],
@@ -3651,6 +3663,9 @@ function pollGamepad(){
       if(edge(5) && game.state==='playing') keys[p.ult.key] = true;
       if(rel(5)) keys[p.ult.key] = false;
     }
+    // LT / L2: gyógyítás
+    if(edge(6) && game.state==='playing') keys['h'] = true;
+    if(rel(6)) keys['h'] = false;
   }
   if(edge(9) && game) togglePause();                   // Start / Options
   // menüben / átvezetőn: fókusz-navigáció d-paddel vagy bal karral, A = választ, B = vissza
@@ -3827,7 +3842,7 @@ canvas.addEventListener('pointercancel', endPointer);
 
 // (a képesség-ikonok most dinamikusan épülnek — lásd buildAbilityBar)
 // mozgás/rendszer-billentyűk nem köthetők képességre
-const RESERVED_KEYS = new Set(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright','p','escape']);
+const RESERVED_KEYS = new Set(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright','p','escape','h']);   // H = gyógyítás
 function displayKey(t){ return t===' ' ? 'SPACE' : (t||'').toUpperCase(); }
 function usedKeys(exceptTarget){
   const u=new Set();
@@ -5918,14 +5933,14 @@ const abilityGrid = document.getElementById('abilityGrid');
 const slotRow = document.getElementById('slotRow');
 function ensureKey(id){ if(!abilityKeys[id] || usedKeys(id).has(abilityKeys[id])) abilityKeys[id]=freeDefaultKey(); }
 function equipDefaults(){
-  equipped = CLASSES[chosenClass].def.filter(id=>isAbilityUnlocked(id)).slice(0,MAX_SLOTS);
+  equipped = CLASSES[chosenClass].def.filter(id=>id!=='heal' && isAbilityUnlocked(id)).slice(0,MAX_SLOTS);
   /* A kaszt alapértelmezett listája régebbi, mint a készlet-rendszer, ezért
      előfordulhat, hogy nincs benne elég használható képesség. Ilyenkor a
      saját alap-készletéből töltjük fel — sose induljon üres sávval. */
   if(equipped.length < Math.min(3, MAX_SLOTS)){
     for(const id of classBaseAbilities(chosenClass)){
       if(equipped.length >= MAX_SLOTS) break;
-      if(!equipped.includes(id) && isAbilityUnlocked(id)) equipped.push(id);
+      if(id!=='heal' && !equipped.includes(id) && isAbilityUnlocked(id)) equipped.push(id);
     }
   }
   equipped.forEach(ensureKey);
@@ -6298,6 +6313,11 @@ updateControlsHint();
 /* =========================================================
    ELLENFÉL-DEFINÍCIÓK
    ========================================================= */
+/* David kérésére: FELEANNYI ellenfél jöhet, de mindegyik erősebb —
+   kétszer annyi élet, másfélszeres sebzés (a lövéseik is). A boss nem
+   változik. Kétszeres élet = kétszeres XP ellenfelenként, így a szintlépés
+   tempója nagyjából marad. */
+const ENEMY_COUNT_MUL = 0.5, ENEMY_HP_MUL = 2, ENEMY_DMG_MUL = 1.5;
 const ENEMY_DEFS = {
   grunt:    { r:16, hp:33, dmg:12, speed:0.95, kind:'melee', color:'#8b6bff' },
   scout:    { r:11, hp:15, dmg:7,  speed:1.75, kind:'melee', color:'#ff8a5c' },
@@ -6661,7 +6681,9 @@ function makePlayer(name, color, head){
     xpTotal: 0, itemSteps: 0, loot: {},   // + ellenfél-zsákmány rétegei   // összegyűjtött XP + hány XP-küszöb adott már választást
     dashing:0, shieldActive:0, surgeActive:0, invuln:0, hazSlow:0,
     buffs:{ lifesteal:0, berserk:0, multishot:0, precision:0, invisible:0, berserkUlt:0, boneward:0, godShield:0, masterShield:0 },
-    abilities: equipped.slice(0,MAX_SLOTS).map(id=>({ id, key:(abilityKeys[id]||'').toLowerCase(), cd:0, rank:1 })),
+    // a gyógyítás saját gombon van (H), ezért a képesség-helyekről kimarad
+    abilities: equipped.filter(id=>id!=='heal').slice(0,MAX_SLOTS).map(id=>({ id, key:(abilityKeys[id]||'').toLowerCase(), cd:0, rank:1 })),
+    healCd: 0,
     ult: { id:cls.ult, key:(ultKey||'').toLowerCase(), charge:0, chargeMax:ULTIMATES[cls.ult].chargeMax },
   };
 }
@@ -6892,7 +6914,7 @@ function spawnWave(){
      csúszkával amúgy is feljebb tolható, ha a gép bírja. */
   const raw = Math.min(130, 11 + wn*3.9);
   const count = (isAdminUser() && game.mode==='story') ? 1
-    : Math.max(8, Math.round(raw * game.diff.count * cmul * density));
+    : Math.max(4, Math.round(raw * game.diff.count * cmul * density * ENEMY_COUNT_MUL));
   /* Csoportos beérkezés: az ellenfelek 3-5 fős rajokban jönnek, nem egyesével
      csordogálva. Ugyanannyi ellenfél így sokkal telibbnek hat, mert egyszerre
      többen vannak a képernyőn — az egyenletes szivárgás azt eredményezte, hogy
@@ -7003,7 +7025,7 @@ function spawnEnemyType(type, forcedX, forcedY, hpMult=1, rMult=1){
      páncélja mellett se az életük, se a sebzésük nem volt elég. Az alap
      életszorzó és a sebzés-görbe is feljebb megy — a görbe alakja marad,
      csak nem nulláról indul. */
-  const hpRamp = (1 + dw*0.058 + Math.pow(dw/52, 2)*2.9) * 1.35;
+  const hpRamp = (1 + dw*0.058 + Math.pow(dw/52, 2)*2.9) * 1.35 * ENEMY_HP_MUL;
   const scale = hpRamp * (game.chapter ? (game.chapter.enemyScale||1) : 1);
   game.enemies.push({
     /* Két sugár: `r` a TALÁLATI doboz (megnövelve), `r0` a RAJZÉ. Ha a
@@ -7012,7 +7034,7 @@ function spawnEnemyType(type, forcedX, forcedY, hpMult=1, rMult=1){
        képkockasebességet. A találati doboz nagyobb, a kép marad. */
     type, x, y, r: def.r*rMult*HITBOX_MUL, r0: def.r*rMult,
     hp: Math.round(def.hp*scale*hpMult*dif.hp), maxHp: Math.round(def.hp*scale*hpMult*dif.hp),
-    dmg: Math.round(def.dmg*(1+dw*0.030)*dif.dmg*1.25),
+    dmg: Math.round(def.dmg*(1+dw*0.030)*dif.dmg*1.25*ENEMY_DMG_MUL),
     /* Az ellenfél sosem lehet gyorsabb a hősnél: a kitérés minden fokozaton
        maradjon járható út. A típusok közti különbség megmarad (a Felderítő
        továbbra is a leggyorsabb), csak a plafon van behúzva a hős alá. */
@@ -7335,6 +7357,20 @@ function update(){
       SFX.ability();
     }
   });
+  /* --- GYÓGYÍTÁS: minden hősnek, saját gombon (H / ✚ / LT) ---
+     30% életerő, 10 mp visszatöltés. A kristállyal vett "Gyógyulás"-
+     fejlesztések erősítik. Teli életnél nem sül el feleslegesen. */
+  if(p.healCd > 0) p.healCd--;
+  // a gomb MEGJEGYZI a koppintást: egy villámgyors érintés se vesszen el két képkocka között
+  const wantHeal = keys['h'] || p._healReq; p._healReq = false;
+  if(wantHeal && p.healCd <= 0 && p.hp < p.maxHp){
+    const h = p.maxHp * HEAL_PCT * abilityUpgradeMult('heal');
+    p.hp = Math.min(p.maxHp, p.hp + h); tetherShare(h);
+    p.healCd = HEAL_CD;
+    addParticles(p.x, p.y, '#8affc1', 22); addRing(p.x, p.y, '#8affc1', 70, 20, 4); addRing(p.x, p.y, '#ffffff', 40, 14, 2);
+    addFloater(p.x, p.y - p.r - 16, '+'+Math.round(h), '#8affc1', true);
+    try{ SFX.ability(); }catch(e){}
+  }
   // --- Ultimate (töltődő) + feltöltődés-jelzés ---
   if(p.ult){
     const rdy = p.ult.charge >= p.ult.chargeMax;
@@ -7737,12 +7773,12 @@ function update(){
           // TŰZGOLYÓ: lassú, jól látható, de becsapódáskor területre sebez
           const a = Math.atan2(p.y-en.y, p.x-en.x);
           game.enemyBullets.push({ x:en.x, y:en.y, vx:Math.cos(a)*3.4, vy:Math.sin(a)*3.4,
-            r:11, life:200, dmg: Math.round(14*dif.dmg), col:'#ff8c3c',
-            fireball:{ r:78, dmg: Math.round(16*dif.dmg) } });
+            r:11, life:200, dmg: Math.round(14*dif.dmg*ENEMY_DMG_MUL), col:'#ff8c3c',
+            fireball:{ r:78, dmg: Math.round(16*dif.dmg*ENEMY_DMG_MUL) } });
         } else {
           // RÚNAKÖR: a lábad alá égeti, van időd kilépni belőle
           game.meteors.push({ x:p.x, y:p.y, t:0, delay:60, r:92,
-            dmg: Math.round(20*dif.dmg), exploded:false, color:'#a86ede', hostile:true });
+            dmg: Math.round(20*dif.dmg*ENEMY_DMG_MUL), exploded:false, color:'#a86ede', hostile:true });
         }
         SFX.eshoot();
       }
@@ -7755,9 +7791,9 @@ function update(){
       /* Felső korlát: zsúfolt pályán az idéző kivár. Enélkül a hullám és
          az idézők együtt olyan tömeget hoznak, amit se a játékos, se a
          képkockasebesség nem bír el. */
-      const crowded = game.enemies.length > 66;
+      const crowded = game.enemies.length > Math.round(66*ENEMY_COUNT_MUL);
       if(!crowded && en.spawnT <= 0 && (en.spawnLeft === undefined || en.spawnLeft > 0)){
-        en.spawnLeft = (en.spawnLeft === undefined ? 14 : en.spawnLeft) - 1;
+        en.spawnLeft = (en.spawnLeft === undefined ? Math.round(14*ENEMY_COUNT_MUL) : en.spawnLeft) - 1;
         en.spawnT = Math.max(70, (near ? 115 : 190) - game.wave*3);
         const pool = SPAWNER_POOL[Math.min(SPAWNER_POOL.length-1, Math.floor(game.wave/4))];
         const n = 1 + (near ? 1 : 0) + (Math.random() < 0.35 ? 1 : 0);
@@ -9137,6 +9173,7 @@ function hideCombatUI(){
   document.getElementById('abilityBar').classList.add('hidden');
   document.getElementById('buffTray').classList.add('hidden');
   document.getElementById('ultBtn').classList.add('hidden');
+  if(healBtnEl) healBtnEl.classList.add('hidden');
   document.getElementById('pauseBtn').classList.add('hidden');
   document.getElementById('menuEmbers').classList.remove('hidden');
 }
@@ -10282,6 +10319,8 @@ function drawOffscreenMarkers(g, w, h){
 const abilityBarEl = document.getElementById('abilityBar');
 const buffTrayEl = document.getElementById('buffTray');
 const ultBtnEl = document.getElementById('ultBtn');
+const healBtnEl = document.getElementById('healBtn');
+const HEAL_CD = 600, HEAL_PCT = 0.30;   // 10 mp, 30% életerő
 function buildAbilityBar(){
   const p = game.player;
   abilityBarEl.innerHTML='';
@@ -10322,6 +10361,12 @@ function updateAbilityBar(){
       }
     }
   });
+  if(healBtnEl){
+    const hk = clamp(1 - (p.healCd||0)/HEAL_CD, 0, 1);
+    healBtnEl.querySelector('.healFill').style.height = (hk*100)+'%';
+    healBtnEl.classList.toggle('ready', hk >= 1);
+    healBtnEl.querySelector('.healCdTxt').textContent = p.healCd > 0 ? Math.ceil(p.healCd/60) : '';
+  }
   const u=p.ult, pct=clamp(u.charge/u.chargeMax,0,1);
   ultBtnEl.querySelector('.ultFill').style.height = (pct*100)+'%';
   ultBtnEl.classList.toggle('ready', pct>=1);
@@ -10331,6 +10376,14 @@ function updateAbilityBar(){
   if(p.surgeActive>0) act.push('🌀'); if(game.slowT>0) act.push('⏳');
   buffTrayEl.innerHTML = act.map(e=>`<span class="buff">${e}</span>`).join('');
 }
+// gyógyító gomb bekötése (tap / kattintás)
+(function(){
+  if(!healBtnEl) return;
+  const press=(e)=>{ e.preventDefault(); keys['h']=true; if(game && game.player) game.player._healReq = true; };
+  const release=(e)=>{ e.preventDefault(); keys['h']=false; };
+  healBtnEl.addEventListener('pointerdown',press); healBtnEl.addEventListener('pointerup',release);
+  healBtnEl.addEventListener('pointerleave',release); healBtnEl.addEventListener('pointercancel',release);
+})();
 // ult gomb bekötése (tap / kattintás)
 (function(){
   const press=(e)=>{ e.preventDefault(); if(game&&game.player) keys[game.player.ult.key]=true; };
@@ -14737,6 +14790,7 @@ function showCombatUI(){
   document.getElementById('abilityBar').classList.remove('hidden');
   document.getElementById('buffTray').classList.remove('hidden');
   document.getElementById('ultBtn').classList.remove('hidden');
+  if(healBtnEl) healBtnEl.classList.remove('hidden');
   document.getElementById('pauseBtn').classList.remove('hidden');
   document.getElementById('invBtn').classList.remove('hidden');
   updateInvKeyBadge();
