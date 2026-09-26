@@ -69,6 +69,9 @@ a baj, mit csináltál, hogyan tesztelted. Magyarul.
   / nyílzápor), Főmérnök (Gépész, egy ág: drónraj — 3 állandó drón, oda
   lő, ahová te, csak amikor te is lősz).
   Az erősség mércéje az Elemi mester (a saját helyzetében ~1,5–2,8×).
+  Elemi mester **Föld** ága (David kérése): a kőszilánk hátralöki, akit
+  eltalál; a nagy kőtömb végiggörget a soron, mindenkit megsebez (annyit,
+  mint régen az első: ütés + robbanás) és félrelök, a végén becsapódik.
   Saját ötletet ne tegyél be.
 - **Ellenfél-zsákmány:** mesterlövész→Távcső, tank→Életerő, rajlény→Dupla
   lövés, rohamozó→Gyorstöltés, felderítő→Fürgeség; ölésenként 10%,
