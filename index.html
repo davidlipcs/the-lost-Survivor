@@ -9687,8 +9687,10 @@ const ARENA_CAM = { x: 0, y: 0, ready: false };
    képernyőméretűek (ott a tervezett elrendezés erre van szabva), a sima
    csata (végtelen / kampány fejezet nélkül) kap nagyobb terepet. */
 /* Mekkora a pálya? A sima csata terepe a vászon ennyiszerese
-   tengelyenként. 3,4 -> 11,6-szoros terület az eredetihez képest. */
-const WORLD_SCALE_PLAIN = 3.4;
+   tengelyenként. 2,4 -> 5,8-szoros terület az eredetihez képest: a
+   3,4-es pálya területének a fele (David kérte, a feleannyi ellenfélhez).
+   A lőtávolság (rangeMul) ezzel együtt arányosan kisebb lett. */
+const WORLD_SCALE_PLAIN = 2.4;
 /* A TALÁLATI DOBOZ szorzója. Az alakok szélesebbek lettek, és a régi
    sugár már nem takarta a testüket: a lövés átment a válluk mellett,
    pedig ránézésre találatnak látszott. Ez a hősre és az ellenfelekre

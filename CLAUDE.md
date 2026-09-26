@@ -60,6 +60,9 @@ a baj, mit csináltál, hogyan tesztelted. Magyarul.
   10 mp; a „Gyógyulás” képesség nem foglal képesség-helyet.
 - **Ellenfelek:** feleannyi (`ENEMY_COUNT_MUL` 0,5), kétszeres élet,
   másfélszeres sebzés; a boss nem változik.
+- **Pálya:** sima csatában a vászon 2,4-szerese tengelyenként
+  (`WORLD_SCALE_PLAIN`) — a korábbi 3,4-es terület fele. A lőtávolság
+  (`rangeMul`) a pályával együtt változik (David így kérte).
 - **Mobilon is működjön minden.**
 
 ## Tesztelés
