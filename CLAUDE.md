@@ -66,7 +66,8 @@ a baj, mit csináltál, hogyan tesztelted. Magyarul.
   méregpenge: csak ha valaki meghal, akkor 7 mp-ig látszik / villámlépés),
   Holtak ura (Nekromanta, egy ág: 50%-kal feltámad a megölt ellenfél, az ő
   életével, nem tűnik el, nincs felső határ), Vadonúr (Vadász: farkasfalka
-  / nyílzápor). A **Gépésznek** még nincs mestere — David választ.
+  / nyílzápor), Főmérnök (Gépész, egy ág: drónraj — 3 állandó drón, oda
+  lő, ahová te, csak amikor te is lősz).
   Az erősség mércéje az Elemi mester (a saját helyzetében ~1,5–2,8×).
   Saját ötletet ne tegyél be.
 - **Ellenfél-zsákmány:** mesterlövész→Távcső, tank→Életerő, rajlény→Dupla
@@ -81,6 +82,10 @@ a baj, mit csináltál, hogyan tesztelted. Magyarul.
   **nehezebb trófeákból** jár: a trófea `gems` mezője, kb. a pénzjutalma
   tizede (20–150). A könnyű trófeák nem adnak. A korábban megszerzett
   trófeák gyémántja egyszer, utólag jóváíródik (`trophyGemsPaid`).
+- **Mesterlövész-nézet:** a Mesterlövésszel (mindig, nem csak tárggyal)
+  az EGÉSZ pálya a képernyőn van (`sniperView`, `ARENA_ISO.z`), és a lövése
+  a pálya átlóján is átér. Az ellenfelek ugyanott bukkannak fel, mint eddig
+  (a játékmenet-távolságok a normál nézethez, `ARENA_ISO.k0`-hoz kötöttek).
 - **Pálya:** sima csatában a vászon 2,4-szerese tengelyenként
   (`WORLD_SCALE_PLAIN`) — a korábbi 3,4-es terület fele. A lőtávolság
   (`rangeMul`) a pályával együtt változik (David így kérte).
