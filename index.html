@@ -2632,12 +2632,18 @@ const DIFFICULTIES = {
    állapotot. A CLASSES-ből olvassuk ki, nem beégetve — így egy később
    hozzáadott, lassabb hős is automatikusan védve lesz. (A CLASSES lejjebb
    áll a fájlban, ezért csak az első kéréskor számoljuk ki, és eltesszük.) */
+/* VASTAGABB ÉS GYORSABB MINDENKI (David kérte): hősök, társ, ellenfelek és a
+   boss is 50%-kal szélesebb (a rajz ÉS a találati felület) és 50%-kal
+   gyorsabban mozog. Két szorzó, egy helyen — így az arányok (pl. hogy az
+   ellenfél sosem gyorsabb a leglassabb hősnél) nem csúsznak el. */
+const BODY_MUL = 1.5;
+const SPEED_MUL = 1.5;
 let _slowestHero = 0;
 function slowestHeroSpeed(){
   if(_slowestHero) return _slowestHero;
   let min = Infinity;
   for(const k in CLASSES){ const sp = CLASSES[k].speed; if(typeof sp==='number' && sp < min) min = sp; }
-  _slowestHero = (min===Infinity) ? 1.9 : min;
+  _slowestHero = ((min===Infinity) ? 1.9 : min) * SPEED_MUL;
   return _slowestHero;
 }
 let chosenDifficulty = 'normal';
@@ -5371,7 +5377,7 @@ function drawBossCape(g,R,col,t,face){        // Király: bíbor köpeny a háta
 }
 function drawBoss(g, b, face){
   const col = b.col || '#ff5c7c', t = Date.now(), light = fxLight();
-  const R = b.r;
+  const R = (b.r0 !== undefined) ? b.r0 : b.r;   // a rajz az eredeti sugárból (a szélességet a hívó nyújtja)
   const intro = b._introT>0 ? b._introT/70 : 0;   // 1 → 0
   const scaleIn = intro>0 ? (1 - intro*intro)*(1 + Math.sin((1-intro)*Math.PI)*0.16) : 1;
   const hover = Math.sin(t/900)*3;
@@ -6706,7 +6712,7 @@ function makeCompanion(cls){
   const c = CLASSES[cls] || CLASSES.tank;
   const bal = c.sealed ? {hp:1,dmg:1} : heroBalanceMult(cls);
   return {
-    cls, skin:0, x:0, y:0, r:16, facing:0, alive:true, hitFlash:0, invuln:0,
+    cls, skin:0, x:0, y:0, r:Math.round(16*BODY_MUL), r0:16, facing:0, alive:true, hitFlash:0, invuln:0,
     color: c.col || '#78dc78',   // a hős-objektumnak is van színe; a közös rajzkód erre támaszkodhat
     head: 'commando',
     hp:Math.round(c.hp*bal.hp*1.3), maxHp:Math.round(c.hp*bal.hp*1.3),   // jóval szívósabb, mint korábban — ne haljon el könnyen egy egész pálya alatt
@@ -6749,7 +6755,7 @@ function makePlayer(name, color, head){
   return {
     name, color, head, skin:chosenSkin||0, cls:chosenClass, tier, x:0, y:0,
     r:Math.round(18*HITBOX_MUL), r0:18, _isPlayer:true,
-    speed:cls.speed, vx:0, vy:0, _px:0, _py:0,
+    speed:cls.speed*SPEED_MUL, vx:0, vy:0, _px:0, _py:0,
     hp:Math.round(cls.hp*bal.hp*tierMult), maxHp:Math.round(cls.hp*bal.hp*tierMult), level:1, xp:0, xpNext:60,
     facing:0,
     fireCooldown:0, fireRate:cls.fireRate,
@@ -7117,7 +7123,7 @@ function spawnEnemyType(type, forcedX, forcedY, hpMult=1, rMult=1){
     /* Az ellenfél sosem lehet gyorsabb a hősnél: a kitérés minden fokozaton
        maradjon járható út. A típusok közti különbség megmarad (a Felderítő
        továbbra is a leggyorsabb), csak a plafon van behúzva a hős alá. */
-    speed: Math.min(def.speed*dif.speed, slowestHeroSpeed()*0.94), kind: def.kind, color: def.color,
+    speed: Math.min(def.speed*dif.speed*SPEED_MUL, slowestHeroSpeed()*0.94), kind: def.kind, color: def.color,
     // a hatótáv a pályamérettel nő: nagyobb terepen a lövő ellenfél is
     // messzebbről kell hogy elérjen, különben csak megkerülöd
     range: (def.range||0) * rangeMul(), splits: !!def.splits, isChild: !!(hpMult<1),
@@ -7225,13 +7231,14 @@ function spawnBoss(isMini){
     fireRate: bd ? (bd.fireRate||1) : (isMini ? 1 : va.fireRate),
     /* A boss a hős ELÉ érkezik, a képernyő tetejére — a régi fix pont a
        megnőtt pályán a sarokban volt, és sosem ért oda hozzád. */
-    x: bossEntryX(), y: bossEntryY(), r: bd ? (bd.r||46) : (isMini? 34 : va.r),
+    x: bossEntryX(), y: bossEntryY(), r0: bd ? (bd.r||46) : (isMini? 34 : va.r),
+    r: (bd ? (bd.r||46) : (isMini? 34 : va.r)) * BODY_MUL,   // a találati test szélesebb; a rajz r0-ból, vízszintesen nyújtva
     /* A boss élete eddig +16-tal nőtt szintenként — 40. szinten ez +640, miközben
        a hős sebzése addigra sokszorosára nő. A mérés szerint minden fejezet-boss
        úgy fogyott 0-ra, hogy a hős 96-100% életen maradt. Most szorzóval nő. */
     // a boss élete is szelídebben nő a hős szintjével, hogy ne nyúljon el a harc
     hp: Math.round((bd ? bd.hp*(1 + lvl*0.048) : (isMini ? (220+game.wave*14) : (480+lvl*20)*va.hpMult)) * dm),
-    maxHp: 0, speed: (bd ? bd.speed : (isMini?1.4:va.speed))*game.diff.speed, attackTimer:0, hitFlash:0, frozen:0,
+    maxHp: 0, speed: (bd ? bd.speed : (isMini?1.4:va.speed))*game.diff.speed*SPEED_MUL, attackTimer:0, hitFlash:0, frozen:0,
     spiralAng:0,
   };
   game.boss.maxHp = game.boss.hp;
@@ -7474,8 +7481,8 @@ function update(){
     game.enemies.forEach(en=>{ const d=dist(comp.x,comp.y,en.x,en.y); if(d<best){best=d; nearest=en;} });
     if(game.boss){ const d=dist(comp.x,comp.y,game.boss.x,game.boss.y); if(d<best){best=d; nearest=game.boss;} }
     const distToPlayer = dist(comp.x,comp.y,p.x,p.y);
-    if(distToPlayer>150){ const a=Math.atan2(p.y-comp.y,p.x-comp.x); comp.x+=Math.cos(a)*2.3; comp.y+=Math.sin(a)*2.3; }
-    else if(nearest && best>90 && best<280){ const a=Math.atan2(nearest.y-comp.y,nearest.x-comp.x); comp.x+=Math.cos(a)*1.1; comp.y+=Math.sin(a)*1.1; }
+    if(distToPlayer>150){ const a=Math.atan2(p.y-comp.y,p.x-comp.x); comp.x+=Math.cos(a)*2.3*SPEED_MUL; comp.y+=Math.sin(a)*2.3*SPEED_MUL; }
+    else if(nearest && best>90 && best<280){ const a=Math.atan2(nearest.y-comp.y,nearest.x-comp.x); comp.x+=Math.cos(a)*1.1*SPEED_MUL; comp.y+=Math.sin(a)*1.1*SPEED_MUL; }
     comp.x = clamp(comp.x, 30, WORLD.w-30); comp.y = clamp(comp.y, 30, WORLD.h-30);
     if(comp.fireCooldown>0) comp.fireCooldown--;
 
@@ -7689,8 +7696,13 @@ function update(){
          A p.x/p.y-t csak a lövés idejére toljuk előre, mert MINDEN
          fegyver abból számol — így egyetlen ponton intézzük mind a
          kilencet, a többlövés szórását is beleértve. */
-      const mzx = Math.cos(p.facing) * p.r * 1.25;
-      const mzy = Math.sin(p.facing) * p.r * 1.25;
+      /* A közelharci csapás a hős TESTÉBŐL indul, nem a "csőből": a vastagabb
+         hősnél a cső 44 egységre előrébb van, és a szorosan eléd lépő ellenfél
+         különben a csapás mögé kerülne. */
+      const mzOff = (wep.style === 'melee') ? 0 : p.r * 1.25;
+      p._mzReach = (wep.style === 'melee') ? p.r * 1.25 : 0;   // a csapás elérése ennyivel hosszabb: ugyanoda ér el, mint eddig
+      const mzx = Math.cos(p.facing) * mzOff;
+      const mzy = Math.sin(p.facing) * mzOff;
       const _mx = p.x, _my = p.y, _nb = game.bullets.length;
       p.x += mzx; p.y += mzy;
       try{
@@ -7719,6 +7731,7 @@ function update(){
       }
       } finally {
         p.x = _mx; p.y = _my;                 // a hős a helyén marad
+        p._mzReach = 0;
         /* Hatótáv a pálya méretéhez igazítva: a most keletkezett
            lövedékek élettartamát szorozzuk. Itt egy helyen elintézhető,
            mert tudjuk, hány lövedék jött létre ebben a lövésben. */
@@ -9795,7 +9808,7 @@ function arenaIsoZ(e){
 }
 /* Az alakok SZÉLESEBBEK: a csípő-szorzót emeljük meg, nem a léptéket —
    így vaskosabbak lesznek, de nem nyúlnak égig. */
-const FIG_WIDE = 1.30;
+const FIG_WIDE = 1.30 * BODY_MUL;
 function arenaWideBody(bs){
   if(!bs) return bs;
   if(!bs._wide) bs._wide = Object.assign({}, bs, { hip: (bs.hip||1) * FIG_WIDE });
@@ -9851,7 +9864,7 @@ const WORLD_SCALE_PLAIN = 2.4;
    pedig ránézésre találatnak látszott. Ez a hősre és az ellenfelekre
    EGYFORMÁN vonatkozik, tehát nem tolja el a mérleget — csak egybevág a
    rajz és a fizika. */
-const HITBOX_MUL = 1.28;
+const HITBOX_MUL = 1.28 * BODY_MUL;   // a vastagabb alakhoz nagyobb találati test (David kérte)
 function worldScaleFor(){ return (game && game.chapter) ? 1 : WORLD_SCALE_PLAIN; }
 /* Amennyivel nagyobb a pálya, annyival messzebbre is kell lőni — különben
    a nagyobb terep csak több gyaloglás lenne, nem több tér. */
@@ -10204,7 +10217,8 @@ function draw(){
 
   if(game.boss){
     const b = game.boss;
-    stand(b.x, b.y, ()=> drawBoss(ctx, b, Math.atan2(p.y-b.y, p.x-b.x)));
+    stand(b.x, b.y, ()=>{ ctx.save(); ctx.translate(b.x, b.y); ctx.scale(BODY_MUL, 1); ctx.translate(-b.x, -b.y);
+      drawBoss(ctx, b, Math.atan2(p.y-b.y, p.x-b.x)); ctx.restore(); });
   }
 
   // ---- JÁTÉKOS ----
@@ -13148,6 +13162,7 @@ function drawPickups(g){
    ezért azonnal hat — cserébe rövid a hatótávja. */
 function meleeArc(p, reach, halfAngle, dmg, crit, opt){
   opt = opt || {};
+  reach += (p._mzReach || 0);   // a testből induló csapás a régi "cső" távolságáig is elér
   let hits = 0;
   const targets = game.boss ? game.enemies.concat([game.boss]) : game.enemies;
   for(const en of targets){
