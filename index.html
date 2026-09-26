@@ -1628,6 +1628,8 @@ const TRANSLATIONS = {
     spec_legion_name: 'Undead Legion', spec_legion_desc: 'Every kill has a 50% chance to rise as your skeleton, with that enemy\'s health, fighting until it is killed. Your ultimate summons twice as many.',
     spec_pack_name: 'Wolf Pack', spec_pack_desc: '3 permanent wolves fight beside you. Your ultimate doubles them for 10 s.',
     spec_volley_name: 'Arrow Volley', spec_volley_desc: 'Every 5th shot is a fan of 7 arrows; those arrows go through one enemy.',
+    item_chiefeng_name: 'Chief Engineer', item_chiefeng_desc: '3 permanent drones circle you and fire wherever you fire.',
+    spec_swarm_name: 'Drone Swarm', spec_swarm_desc: '3 permanent drones circle you and fire wherever you fire.',
     heroSpecPickTitle: 'CHOOSE YOUR PATH', heroSpecPickSub: 'It shapes your hero for the rest of the run.',
     spec_fire_name: 'Fire', spec_fire_desc: 'A real flamethrower. Your ultimate fills after about ten bursts of fire and blasts an arcane ring of flame in every direction.',
     spec_ice_name: 'Ice', spec_ice_desc: 'Every 5th shot is an ice spear: it locks the enemy in ice, hits hard, and the ice visibly melts. Whoever takes too much ice freezes solid and shatters.',
@@ -2067,6 +2069,8 @@ const TRANSLATIONS = {
     spec_legion_name: 'Élőholt sereg', spec_legion_desc: 'Minden ölésnél 50% eséllyel az ellenfél a te csontvázadként kel fel, az ő életével, és addig harcol, amíg meg nem ölik. Az ulti kétszer annyit idéz.',
     spec_pack_name: 'Farkasfalka', spec_pack_desc: '3 állandó farkas harcol melletted. Az ulti 10 mp-re megduplázza őket.',
     spec_volley_name: 'Nyílzápor', spec_volley_desc: 'Minden 5. lövés 7 nyílból álló legyező; ezek a nyilak átmennek egy ellenfélen.',
+    item_chiefeng_name: 'Főmérnök', item_chiefeng_desc: '3 állandó drón kering körülötted, és oda lő, ahová te.',
+    spec_swarm_name: 'Drónraj', spec_swarm_desc: '3 állandó drón kering körülötted, és oda lő, ahová te.',
     heroSpecPickTitle: 'VÁLASSZ ÁGAT', heroSpecPickSub: 'A futam végéig ez határozza meg a hősödet.',
     spec_fire_name: 'Tűz', spec_fire_desc: 'Igazi lángszóró. Az ultid kb. tíz lángcsóvától feltöltődik, és minden irányba mágikus lángkört robbant.',
     spec_ice_name: 'Jég', spec_ice_desc: 'Minden 5. lövés jégdárda: jégbe zárja az ellenfelet, nagyot sebez, a jég pedig láthatóan olvad. Akit túl sok jég ér, szétfagy.',
@@ -6941,7 +6945,7 @@ function placeSpawners(n){
      keresett helyet, ami a nagyobb pályán a bal felső sarkot jelenti —
      az idézők a pálya sarkába kerültek, ahol sosem találkoztál velük. */
   const w = WORLD.w, h = WORLD.h, p = game.player;
-  const reach = (canvas.width/ARENA_ISO.k) * 0.95;
+  const reach = (canvas.width/(ARENA_ISO.k0||ARENA_ISO.k)) * 0.95;
   for(let i=0;i<n;i++){
     let x=0, y=0, ok=false;
     for(let tries=0; tries<40 && !ok; tries++){
@@ -7006,7 +7010,7 @@ function spawnWave(){
        kötött gyűrű a nagy pályán a sarokba került, nem köréd. */
     const pl = game.player;
     const cx = pl ? pl.x : WORLD.w/2, cy = pl ? pl.y : WORLD.h/2;
-    const rr = (canvas.width/ARENA_ISO.k) * 0.66;
+    const rr = (canvas.width/(ARENA_ISO.k0||ARENA_ISO.k)) * 0.66;
     const rx = rr, ry = rr;
     for(let k=0;k<ringCount;k++){
       const a = (k/ringCount) * PI2 + Math.random()*0.12;
@@ -7067,7 +7071,7 @@ function spawnEnemyType(type, forcedX, forcedY, hpMult=1, rMult=1){
       const p2 = game.player;
       const cx = p2 ? p2.x : w/2, cy = p2 ? p2.y : h/2;
       // a látómező fél-átlója világ-egységben (a rombusz miatt bőven mérve)
-      const viewR = (canvas.width/ARENA_ISO.k) * 0.62;
+      const viewR = (canvas.width/(ARENA_ISO.k0||ARENA_ISO.k)) * 0.62;
       const rr = viewR + 40 + Math.random()*90;
       const mg = def.r + 6;
       /* A pályán BELÜL kell megjelenniük, különben azonnal a szélre
@@ -7565,10 +7569,20 @@ function update(){
   game.drones.forEach(dr=>{
     dr.life--; if(dr.fireCd>0) dr.fireCd--;
     dr.ang = (dr.ang||Math.random()*6) + 0.05;
-    const tx=p.x+Math.cos(dr.ang)*48, ty=p.y+Math.sin(dr.ang)*48;
+    const orb = dr.swarm ? 62 : 48;
+    const tx=p.x+Math.cos(dr.ang)*orb, ty=p.y+Math.sin(dr.ang)*orb;
     dr.x+=(tx-dr.x)*0.12; dr.y+=(ty-dr.y)*0.12;
     if(dr.heal){
       if(dr.fireCd<=0 && p.hp<p.maxHp){ dr.fireCd=50; const h=p.maxHp*dr.heal*0.08; p.hp=Math.min(p.maxHp,p.hp+h); tetherShare(h); addParticles(p.x,p.y,'#8affc1',4); }
+      return;
+    }
+    // DRÓNRAJ (Főmérnök): nem a legközelebbire lő, hanem oda, ahová te — és csak amikor te is lősz
+    if(dr.swarm){
+      if(firing && dr.fireCd<=0){
+        dr.fireCd = 14; const a = Math.atan2(input.aimY-dr.y, input.aimX-dr.x);
+        game.bullets.push({ x:dr.x,y:dr.y, vx:Math.cos(a)*10, vy:Math.sin(a)*10, r:4, life:Math.round(60*rangeMul()), friendly:true, dmg:dr.dmg, trail:'#6ee7ff' });
+        addParticles(dr.x, dr.y, '#6ee7ff', 1);
+      }
       return;
     }
     let nearest=null, best=99999;
@@ -7710,6 +7724,10 @@ function update(){
            mert tudjuk, hány lövedék jött létre ebben a lövésben. */
         const rm = rangeMul() * lootRangeMul(p);
         if(rm > 1) for(let bi=_nb; bi<game.bullets.length; bi++) if(!game.bullets[bi].noRange) game.bullets[bi].life *= rm;
+        // Mesterlövész-nézet: amit látsz, azt el is éred — a lövés a pálya egyik sarkától a másikig repül
+        if(sniperView()){ const diag = Math.hypot(WORLD.w, WORLD.h);
+          for(let bi=_nb; bi<game.bullets.length; bi++){ const b=game.bullets[bi]; if(b.noRange) continue;
+            const sp=Math.hypot(b.vx,b.vy)||1; b.life = Math.max(b.life, Math.ceil(diag/sp)); } }
         itemsOnFire(p, _nb, wep, base, shotGap);
       }
     } else {
@@ -9801,7 +9819,13 @@ function arenaWideBody(bs){
    világkoordinátákkal dolgozik, elég egyetlen eltolás — a rajzolók
    belsejéhez nem kell hozzányúlni.
    ========================================================= */
-const ARENA_ISO = { k:1, ox:0, oy:0, sx:0, sy:0 };
+const ARENA_ISO = { k:1, k0:1, z:1, ox:0, oy:0, sx:0, sy:0 };
+/* MESTERLÖVÉSZ-NÉZET (David kérte): a Mesterlövésszel az EGÉSZ pálya a
+   képernyőn van, hogy mindenkit lássál és le tudj lőni. A kamera ilyenkor
+   kitávolodik: a padló és az alakok is ugyanannyival kisebbek. A játékmenet
+   távolságai (hol bukkannak fel az ellenfelek) a normál nézethez kötöttek
+   maradnak — ettől nem jönnek közelebb, csak látod őket. */
+function sniperView(){ return !!(game && game.player && game.player.cls === 'sniper' && !game.chapter); }
 
 /* A VILÁG mérete. Eddig mindig a vászon volt: a pálya pont akkora, mint
    a képernyő, kamera nélkül. A sima csatában ez szűk — ezért a világ
@@ -9837,7 +9861,7 @@ function worldFit(){
 
 /* Mekkora darabot lát be a hős a világból? A vászon szélessége
    világ-egységre váltva; a rombusz-vetítés miatt bőven mérve. */
-function viewReach(){ return (canvas.width / ARENA_ISO.k) * 0.62; }
+function viewReach(){ return (canvas.width / (ARENA_ISO.k0||ARENA_ISO.k)) * 0.62; }
 
 /* Meteor-becsapódás helye: a hős KÖRÜL, a látómezőn belül, a pályán
    belül. A régi változat a vászon dobozában sorsolt, ami a megnőtt
@@ -9860,9 +9884,16 @@ function arenaIsoFit(w, h){
      jönne, a nagyobb pálya egyszerűen összement volna a képernyőn —
      ugyanannyit látnál, csak apróbban. Így a figurák mérete állandó, és a
      nagyobb pályát a kamera járja be. */
-  A.k = Math.min(canvas.width, 2*canvas.height) / (canvas.width + canvas.height);
-  // kamera: a követett pont a képernyő közepére kerül
-  const cx = ARENA_CAM.x, cy = ARENA_CAM.y;
+  A.k0 = Math.min(canvas.width, 2*canvas.height) / (canvas.width + canvas.height);
+  A.z = 1;
+  let cx = ARENA_CAM.x, cy = ARENA_CAM.y;
+  if(sniperView()){
+    // az egész világ-rombusz férjen ki (egy kis peremmel), a kamera a pálya közepére néz
+    const fit = Math.min(canvas.width*0.96 / (w + h), canvas.height*0.92 / ((w + h)*0.5));
+    A.z = Math.min(1, fit / A.k0);
+    cx = w/2; cy = h/2;
+  }
+  A.k = A.k0 * A.z;
   A.ox = canvas.width*0.5  - (cx - cy)*A.k;
   A.oy = canvas.height*0.5 - (cx + cy)*A.k*0.5;
   return A;
@@ -9915,7 +9946,7 @@ const ARENA_FIG_SCALE = 1.5;
 /* Egy ÁLLÓ alak a vetített helyén, nyírás nélkül. */
 function arenaUpright(g, x, y, fn, scale){
   const A = ARENA_ISO;
-  const S = (scale === undefined) ? ARENA_FIG_SCALE : scale;
+  const S = ((scale === undefined) ? ARENA_FIG_SCALE : scale) * (A.z || 1);   // kitávolításkor az alakok is kisebbek
   g.save();
   g.setTransform(1,0,0,1,0,0);
   g.translate(A.sx, A.sy);
@@ -11978,6 +12009,7 @@ const MAGIC_ITEMS = {
   shadowmaster:{ cls:'assassin',    icon:'🌑', col:'#c9a6ff' },  // láthatatlanság + árnyklón / méregpenge / villámlépés
   deadlord:    { cls:'necromancer', icon:'💀', col:'#9d5cff' },  // élőholt sereg (egy ág)
   wildlord:    { cls:'hunter',      icon:'🐺', col:'#c98a4a' },  // farkasfalka / nyílzápor
+  chiefeng:    { cls:'engineer',    icon:'🛸', col:'#6ee7ff' },  // drónraj (egy ág)
 };
 for(const k in MAGIC_ITEMS) MAGIC_ITEMS[k].id = k;
 const ITEMS_BY_CLASS = {};
@@ -12290,6 +12322,8 @@ const HERO_SPECS = {
   // VADÁSZ — Vadonúr
   pack:       { item:'wildlord',     icon:'🐺', col:'#c98a4a' },
   volley:     { item:'wildlord',     icon:'🏹', col:'#7dffb0' },
+  // GÉPÉSZ — Főmérnök (egy ág)
+  swarm:      { item:'chiefeng',     icon:'🛸', col:'#6ee7ff' },
 };
 for(const k in MAGE_SPECS) MAGE_SPECS[k].item = 'elemspec';
 const ALL_SPECS = Object.assign({}, MAGE_SPECS, HERO_SPECS);
@@ -12302,6 +12336,7 @@ const MASTER_ITEMS = {
   shadowmaster: ['clone','venom','blink'],
   deadlord:     ['legion'],
   wildlord:     ['pack','volley'],
+  chiefeng:     ['swarm'],
 };
 const FLAIL_REACH = 111;            // a tank csapásának másfélszerese (74)
 const BT_MAX = 20;                  // Vérszomj: 20 réteg × 5% = +100% támadási sebesség
@@ -12322,6 +12357,7 @@ function applyHeroSpec(p, id, silent, restore){
     p.ult = { id:'markstorm', key:p.ult.key, charge:0, chargeMax:ULTIMATES.markstorm.chargeMax };
   }
   if(id === 'pack') for(let i=0;i<3;i++) spawnWolf(p, Infinity, i);
+  if(id === 'swarm') spawnSwarm(p);
   if(STEALTH_SPECS[id]){ p._revealT = 0; p._clones = []; }
   if(id === 'bloodthirst') p._bt = p._bt || 0;
   if(typeof buildAbilityBar === 'function' && game) buildAbilityBar();
@@ -12331,6 +12367,12 @@ function applyHeroSpec(p, id, silent, restore){
     addFlash(sp.col, 0.18, 16); addChroma(0.4); addShake(5, 10);
     addPuff(p.x, p.y, sp.col, 10, 14, 2.4);
   }
+}
+/* DRÓNRAJ: 3 állandó drón kering körülötted, és oda lő, ahová te. */
+function spawnSwarm(p){
+  game.drones = game.drones.filter(d=>!d.swarm);
+  for(let i=0;i<3;i++) game.drones.push({ x:p.x, y:p.y, ang:i/3*PI2, life:Infinity, fireCd:i*6, swarm:true,
+    dmg:Math.round(3 + p.bulletDmg*0.45) });
 }
 function spawnWolf(p, life, i){
   const a = (i||0)/3*PI2 + Math.random();
@@ -12408,7 +12450,7 @@ function heroSpecOnHit(p, en, dmg, isBoss, b){
   const sp = p.spec; if(!sp || !HERO_SPECS[sp]) return;
   if(sp === 'marker' && b && b.mark && !isBoss){
     en.marks = (en.marks||0) + 1; en.markT = 600;
-    if(en.marks >= 3){ en.marks = 0; specBoom(en.x, en.y, 80, Math.round(p.bulletDmg*1.2*specDmgMul(p)), '#ff5c7c'); addShake(3,6); }
+    if(en.marks >= 3){ en.marks = 0; specBoom(en.x, en.y, 80, Math.round(p.bulletDmg*1.0*specDmgMul(p)), '#ff5c7c'); addShake(3,6); }
   }
   if(sp === 'venom' && p.cls === 'assassin' && !isBoss){
     if(!(en.venomImm > 0)){ en.venom = Math.min(5, (en.venom||0) + 1); en.venomT = 240; }
