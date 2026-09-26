@@ -53,10 +53,22 @@ a baj, mit csináltál, hogyan tesztelted. Magyarul.
 - **Támogató:** a többjátékos módig NEM választható hős (`HIDDEN_HEROES`),
   társként marad. Ne kapcsold vissza kérés nélkül.
 - **Felszerelés:** futamonként, 5 hely, szigorú kaszt-kötés; 100 XP-nként
-  10% esély egy választásra, a varázsló-pecsét is 10%. CSAK David nyolc
-  tárgya: Teljes tüske, Pajzsbuborék (Tank), Rikoset, Elemi mester,
-  Robbanó kések, Lélekgyűjtő, Fagyasztócsapda, Hadiállomás. A Berserkernek
-  nincs, amíg David nem választ neki. Saját ötletet ne tegyél be.
+  10% esély egy választásra, a varázsló-pecsét is 10%. CSAK David tárgyai:
+  Teljes tüske, Pajzsbuborék (Tank), Rikoset, Elemi mester, Robbanó kések,
+  Lélekgyűjtő, Fagyasztócsapda, Hadiállomás — és a **hős-mesterek**
+  (`MASTER_ITEMS`, felvételkor ágválasztás, mint az Elemi mesternél):
+  Hadúr (Tank: láncos buzogány / óriási gyógyulás: 2× élet és 2× gyógyító
+  gomb / +40% sebzés), Fegyvermester (Mesterlövész: robbanó lőszer / jelölő
+  / tökéletes célzás: kockánként 2× erősebb követés), Vérúr (Berserker:
+  vértornádó / visszatérő fejsze / vérszomj: ölésenként 5% gyógyulás és
+  +5% támadási sebesség, max. +100%), Árnymester (Orgyilkos: láthatatlan,
+  amíg nem dob, dobás után 2 mp-ig látszik; árnyklón 10 mp, halmozódnak /
+  méregpenge: csak ha valaki meghal, akkor 7 mp-ig látszik / villámlépés),
+  Holtak ura (Nekromanta, egy ág: 50%-kal feltámad a megölt ellenfél, az ő
+  életével, nem tűnik el, nincs felső határ), Vadonúr (Vadász: farkasfalka
+  / nyílzápor). A **Gépésznek** még nincs mestere — David választ.
+  Az erősség mércéje az Elemi mester (a saját helyzetében ~1,5–2,8×).
+  Saját ötletet ne tegyél be.
 - **Ellenfél-zsákmány:** mesterlövész→Távcső, tank→Életerő, rajlény→Dupla
   lövés, rohamozó→Gyorstöltés, felderítő→Fürgeség; ölésenként 10%,
   rétegenként max. 3 (a Dupla lövés 1), nem foglal felszerelés-helyet.
