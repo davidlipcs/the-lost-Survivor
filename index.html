@@ -7977,7 +7977,11 @@ function update(){
             addRing(en.x,en.y,'#8fd8ff',en.r*2.2,16,3); addParticles(en.x,en.y,'#8fd8ff',10); }
         }
         if(b.poison) spawnPoisonCloud(b);
-        if(b.explode) bulletExplode(b);
+        if(b.explode && !(b.pierce && b.explodeAtEnd)) bulletExplode(b);   // az átgörgő kőtömb a végén robban
+        // FÖLD: a kő hátralöki / félrelöki, akit eltalál
+        if(b.shove && en.hp > 0){ const a=Math.atan2(b.vy,b.vx);
+          en.x = clamp(en.x + Math.cos(a)*b.shove, en.r, WORLD.w-en.r); en.y = clamp(en.y + Math.sin(a)*b.shove, en.r, WORLD.h-en.r);
+          if(b.look==='boulder'){ addDebris(en.x,en.y,'#8a6a44',5,4,{speed:2.6,life:34,gravity:0.3}); addShake(2,4); } }
         en._knock = 6; en._kdir = Math.atan2(b.vy,b.vx);   // vizuális hőkölés a lövedék irányába
         if(b.crit){ addShake(3,5); addRing(b.x,b.y,'#ffd166',en.r*1.6+10,12,2); }
         addFloater(en.x, en.y-en.r-6, Math.round(bd), b.crit?'#ff5c7c':'#ffe9a8', !!b.crit);
@@ -12270,14 +12274,16 @@ function specFire(p, base, crit){
   if(sp === 'earth'){
     if(!p._twin && p._specShotN % 5 === 0){
       // KŐTÖMB: lassú, nehéz, becsapódáskor robban és ellök
+      /* David kérése: a nagy kőtömb nem áll meg az első ellenfélen — végiggörget
+         a soron, mindenkit megsebez és félrelök, a végén becsapódik. */
       game.bullets.push({ x:p.x, y:p.y, vx:c*p.bulletSpeed*0.8, vy:s2*p.bulletSpeed*0.8, r:13, life:90,
-        dmg:Math.round(base*2.6*(crit?2:1)), crit, look:'boulder', spin:Math.random()*PI2,
-        explode:{ r:62, dmg:Math.round(base*1.0), col:'#c8995a', rock:true } });
+        dmg:Math.round(base*3.6*(crit?2:1)), crit, look:'boulder', spin:Math.random()*PI2, pierce:true, shove:34,   // = a régi ütés + robbanás, most mindenkinek a sorban
+        explodeAtEnd:true, explode:{ r:62, dmg:Math.round(base*1.0), col:'#c8995a', rock:true } });
       addShake(3, 6);
     } else {
       const j = (Math.random()-0.5)*0.12;
       game.bullets.push({ x:p.x, y:p.y, vx:Math.cos(a+j)*p.bulletSpeed*1.25, vy:Math.sin(a+j)*p.bulletSpeed*1.25,
-        r:6, life:60, dmg:Math.round(base*0.6*(crit?2:1)), crit, look:'rock', spin:Math.random()*PI2,
+        r:6, life:60, dmg:Math.round(base*0.6*(crit?2:1)), crit, look:'rock', spin:Math.random()*PI2, shove:9,
         shape:Math.floor(Math.random()*3) });
     }
     SFX.shoot(p.cls);
