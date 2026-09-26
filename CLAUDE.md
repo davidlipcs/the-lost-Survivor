@@ -21,7 +21,10 @@ Merge után az ágat állítsd vissza a `main`-re
 következő PR ütközik: a squash miatt ugyanaz a tartalom kétszer
 szerepelne.
 
-Minden kiadásnál emeld a `sw.js`-ben a `CACHE_NAME` verziót.
+Minden kiadásnál emeld a `sw.js`-ben a `CACHE_NAME` verziót, és vele
+EGYÜTT az `index.html`-ben az `APP_VERSION`-t (ugyanaz a szám, pl. `v52`).
+A játék ebből ismeri fel, hogy új változat jött, és a főmenüben magától
+frissül (harc közben soha); a verzió a főmenü bal alsó sarkában látszik.
 
 ## E-mail
 
