@@ -64,6 +64,11 @@ a baj, mit csináltál, hogyan tesztelted. Magyarul.
   10 mp; a „Gyógyulás” képesség nem foglal képesség-helyet.
 - **Ellenfelek:** feleannyi (`ENEMY_COUNT_MUL` 0,5), kétszeres élet,
   másfélszeres sebzés; a boss nem változik.
+- **Gyémánt (🔷):** így hívjuk a régi „kristályt” (angolul *diamond*; a
+  kódban továbbra is `profile.shards`). Napi küldetésekből és a
+  **nehezebb trófeákból** jár: a trófea `gems` mezője, kb. a pénzjutalma
+  tizede (20–150). A könnyű trófeák nem adnak. A korábban megszerzett
+  trófeák gyémántja egyszer, utólag jóváíródik (`trophyGemsPaid`).
 - **Pálya:** sima csatában a vászon 2,4-szerese tengelyenként
   (`WORLD_SCALE_PLAIN`) — a korábbi 3,4-es terület fele. A lőtávolság
   (`rangeMul`) a pályával együtt változik (David így kérte).
