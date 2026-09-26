@@ -46,6 +46,10 @@ a baj, mit csináltál, hogyan tesztelted. Magyarul.
 - **Admin:** a Google-lel bejelentkezett, ellenőrzött **davidlipcs@gmail.com**
   (`ADMIN_EMAILS`). A begépelt `davidlipcs1234` név CSAK addig admin, amíg
   a Google-bejelentkezés nincs beállítva.
+  Az admin **semmit nem kap ingyen feloldva** (hős, szint, pecsét,
+  kinézet, fejezet): mindent meg kell vennie, de a pénztárcája nem fogy
+  el — mindig **100 000 💰 és 1000 🔷** (`ADMIN_WALLET`). A valódi
+  egyenleg (`profile.coins`/`shards`) ettől érintetlen marad.
 - **Támogató:** a többjátékos módig NEM választható hős (`HIDDEN_HEROES`),
   társként marad. Ne kapcsold vissza kérés nélkül.
 - **Felszerelés:** futamonként, 5 hely, szigorú kaszt-kötés; 100 XP-nként

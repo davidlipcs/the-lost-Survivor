@@ -1459,10 +1459,10 @@ const TRANSLATIONS = {
     lockTag: (lvl)=> `🔒 Lv.${lvl}`,
     speedSlow: 'Slow', speedMedium: 'Medium', speedFast: 'Fast', speedVeryFast: 'Very fast',
     hdHp: '❤️ HP', hdDmg: '⚔️ Damage', hdSpeed: '💨 Speed', hdRange: '🎯 Range',
-    hdUpgrade: '🔧 Upgrade', hdTestTier: '🔧 Test tier',
+    hdUpgrade: '🔧 Upgrade',
     hdTierNote: (t, pct)=> `— upgraded to tier ${t} (+${pct}%)`,
     dmgPerSec: (dmg, dps)=> `${dmg} (${dps}/s)`,
-    tierTestTitle: (t)=> `Test: tier ${t}`, tierOwnedTitle: (t)=> `Tier ${t} (owned)`,
+    tierOwnedTitle: (t)=> `Tier ${t} (owned)`,
     tierBuyTitle: (t, cost)=> `Tier ${t} — ${cost} 🔷`,
     googleSignIn: 'Sign in with Google', googleSignOut: 'Sign out',
     googleSignOutConfirm: 'Sign out? Your progress stays on this device, but it will not be saved to the cloud until you sign in again.',
@@ -1479,7 +1479,6 @@ const TRANSLATIONS = {
     nerfDotTitle: 'tuned down', upgBadgeTitle: 'Seal upgrade',
     buffDotTitle: (p)=> `tuned up to ${p}% — rarely used, so it hits harder`,
     boostedTitle: (p)=> ` · tuned up to ${p}%`,
-    adminMaxAbility: 'Admin: this seal is already at the highest (test) tier.',
     abilityMaxed: (name)=> `“${name}” is already at the highest (3rd) upgrade tier.`,
     confirmAbilityUpg: (name, t, cost)=> `Upgrade “${name}” to tier ${t} for ${cost} 🔷? (+8% power per tier)`,
     notEnoughCoinsSkin: (cost, have)=> `Not enough coins for this look — you need ${cost} 💰 and you have ${have}.`,
@@ -1876,10 +1875,10 @@ const TRANSLATIONS = {
     lockTag: (lvl)=> `🔒 Lv.${lvl}`,
     speedSlow: 'Lassú', speedMedium: 'Közepes', speedFast: 'Gyors', speedVeryFast: 'Nagyon gyors',
     hdHp: '❤️ HP', hdDmg: '⚔️ Sebzés', hdSpeed: '💨 Sebesség', hdRange: '🎯 Hatótáv',
-    hdUpgrade: '🔧 Fejlesztés', hdTestTier: '🔧 Teszt-szint',
+    hdUpgrade: '🔧 Fejlesztés',
     hdTierNote: (t, pct)=> `— ${t}. szintre fejlesztve (+${pct}%)`,
     dmgPerSec: (dmg, dps)=> `${dmg} (${dps}/mp)`,
-    tierTestTitle: (t)=> `Teszt: ${t}. szint`, tierOwnedTitle: (t)=> `${t}. szint (megvéve)`,
+    tierOwnedTitle: (t)=> `${t}. szint (megvéve)`,
     tierBuyTitle: (t, cost)=> `${t}. szint — ${cost} 🔷`,
     googleSignIn: 'Bejelentkezés Google-lel', googleSignOut: 'Kijelentkezés',
     googleSignOutConfirm: 'Kijelentkezel? A haladásod ezen az eszközön megmarad, de amíg újra be nem jelentkezel, nem mentődik a felhőbe.',
@@ -1896,7 +1895,6 @@ const TRANSLATIONS = {
     nerfDotTitle: 'finomhangolva', upgBadgeTitle: 'Pecsét-fejlesztés',
     buffDotTitle: (p)=> `felerősítve ${p}%-ra — ritkán használod, ezért többet üt`,
     boostedTitle: (p)=> ` · felerősítve ${p}%-ra`,
-    adminMaxAbility: 'Admin: ez a pecsét már a legmagasabb (teszt) szinten van.',
     abilityMaxed: (name)=> `„${name}” már a legmagasabb (3.) fejlesztési szinten van.`,
     confirmAbilityUpg: (name, t, cost)=> `Fejleszted „${name}”-t a(z) ${t}. szintre ${cost} 🔷-ért? (+8% erő szintenként)`,
     notEnoughCoinsSkin: (cost, have)=> `Nincs elég pénzed ehhez a kinézethez — ${cost} 💰 kell, neked ${have} van.`,
@@ -2713,17 +2711,12 @@ function questProgress(trackKey, amount, mode){
    KARAKTERFEJLESZTÉS — külön pénznemmel (kristály), 3 szint hősönként
    ========================================================= */
 const HERO_TIER_COSTS = [25, 35, 50];   // 1., 2., 3. szint ára kristályban
-let adminTierOverride = {};             // csak a davidlipcs1234-nek: melyik szinten akarja tesztelni az adott hőst
-function heroTier(cls){
-  if(isAdminUser()) return (adminTierOverride[cls]!=null) ? adminTierOverride[cls] : 3;
-  return profile.heroTiers[cls] || 0;
-}
+function heroTier(cls){ return profile.heroTiers[cls] || 0; }
 function buyHeroTier(cls){
   const cur = profile.heroTiers[cls]||0;
   if(cur>=3) return false;
   const cost = HERO_TIER_COSTS[cur];
-  if((profile.shards||0) < cost) return false;
-  profile.shards -= cost;
+  if(!spendShards(cost)) return false;
   profile.heroTiers[cls] = cur+1;
   saveProfile();
   return true;
@@ -2735,17 +2728,13 @@ function buyHeroTier(cls){
    független, az csak a túlhasznált pecséteket koptatja kicsit)
    ========================================================= */
 const ABILITY_UPGRADE_COSTS = [15, 20, 30];   // 1., 2., 3. szint ára kristályban, pecsétenként
-function abilityUpgradeTier(id){
-  if(isAdminUser()) return 3;
-  return profile.abilityUpgrades[id] || 0;
-}
+function abilityUpgradeTier(id){ return profile.abilityUpgrades[id] || 0; }
 function abilityUpgradeMult(id){ return 1 + abilityUpgradeTier(id)*0.08; }   // +8% erő fejlesztési szintenként, max +24%
 function buyAbilityUpgrade(id){
   const cur = profile.abilityUpgrades[id]||0;
   if(cur>=3) return false;
   const cost = ABILITY_UPGRADE_COSTS[cur];
-  if((profile.shards||0) < cost) return false;
-  profile.shards -= cost;
+  if(!spendShards(cost)) return false;
   profile.abilityUpgrades[id] = cur+1;
   saveProfile();
   return true;
@@ -2789,6 +2778,26 @@ function isAdminUser(){
   const n = (el ? el.value : '').trim().toLowerCase();
   return ADMIN_USERNAMES.includes(n);
 }
+
+/* AZ ADMIN PÉNZTÁRCÁJA. Az admin semmit nem kap ingyen feloldva: mindent
+   ugyanúgy meg kell vennie, mint bárki másnak — csak a pénze nem fogy el
+   (David kérte, hogy a boltot a játékos szemével próbálhassa ki). A valódi
+   egyenleg (profile.coins / profile.shards) érintetlen marad: az admin egy
+   külön, fix összeget lát, és a vásárlás abból "fizet", ami nem csökken.
+   Aki nem admin, annak ezek a függvények pontosan a régi viselkedést adják. */
+const ADMIN_WALLET = { coins: 100000, shards: 1000 };
+function coinBal(){ return isAdminUser() ? ADMIN_WALLET.coins : (profile.coins||0); }
+function shardBal(){ return isAdminUser() ? ADMIN_WALLET.shards : (profile.shards||0); }
+function spendCoins(n){
+  if(coinBal() < n) return false;
+  if(!isAdminUser()) profile.coins = (profile.coins||0) - n;
+  return true;
+}
+function spendShards(n){
+  if(shardBal() < n) return false;
+  if(!isAdminUser()) profile.shards = (profile.shards||0) - n;
+  return true;
+}
 // gépelés közben azonnal frissítse a zárolás-jelzéseket, ne csak képernyőváltáskor
 document.getElementById('nameInput').addEventListener('input', ()=>{
   // a nevet megjegyezzük: a hódító térképen a saját királyságod ezt viseli
@@ -2797,6 +2806,10 @@ document.getElementById('nameInput').addEventListener('input', ()=>{
   if(typeof renderClassCards==='function') renderClassCards();
   if(typeof renderMapCards==='function') renderMapCards();
   if(typeof buildLoadoutUI==='function') buildLoadoutUI();
+  // az admin-pénztárca miatt a kijelzett pénz, a hős-szintek és a kinézetek is a névtől függnek
+  if(typeof renderProfile==='function') renderProfile();
+  if(typeof renderHeroDetail==='function') renderHeroDetail();
+  if(typeof renderHeroLooks==='function') renderHeroLooks();
 });
 
 function recordHeroPlay(clsId){
@@ -3125,7 +3138,7 @@ const CLASSES = {
 // TESZT MÓD: ha true, minden hős és pecsét azonnal elérhető, szintkövetelmény nélkül —
 // ha később vissza akarod kapcsolni a normál, fokozatos feloldást, írd false-ra.
 const TEST_MODE_UNLOCK_ALL = false;
-function isClassUnlocked(id){ return !HIDDEN_HEROES.has(id) && (TEST_MODE_UNLOCK_ALL || isAdminUser() || heroOwned(id)); }
+function isClassUnlocked(id){ return !HIDDEN_HEROES.has(id) && (TEST_MODE_UNLOCK_ALL || heroOwned(id)); }
 
 /* =========================================================
    KÉPESSÉGEK (adatvezérelt, 22 db) — run(p, rank)
@@ -3491,7 +3504,7 @@ const ABILITIES = {
    Az alapok azonnal járnak a kaszt feloldásával; az elit képességeket meg
    kell venni. A profil-szint már nem kapuzza őket — a kaszt teszi. */
 function isAbilityUnlocked(id, cls){
-  if(TEST_MODE_UNLOCK_ALL || isAdminUser()) return true;
+  if(TEST_MODE_UNLOCK_ALL) return true;
   const a = ABILITIES[id]; if(!a) return false;
   const c = cls || chosenClass;
   if(classKnowsAll(c)) return true;
@@ -4588,15 +4601,13 @@ function heroSkinData(cls, skinIdx){
 }
 function skinKey(cls, idx){ return cls+'_'+idx; }
 function isSkinUnlocked(cls, idx){
-  if(isAdminUser()) return true;
   const { skin } = heroSkinData(cls, idx);
   return !skin.price || !!profile.unlockedSkins[skinKey(cls, idx)];
 }
 function buySkin(cls, idx){
   const { skin } = heroSkinData(cls, idx);
   if(isSkinUnlocked(cls, idx)) return true;
-  if((profile.coins||0) < skin.price) return false;
-  profile.coins -= skin.price;
+  if(!spendCoins(skin.price)) return false;
   profile.unlockedSkins[skinKey(cls, idx)] = true;
   saveProfile();
   return true;
@@ -5442,8 +5453,8 @@ function renderHeroLooks(){
     }
     wrap.addEventListener('click', ()=>{
       if(!isSkinUnlocked(chosenClass, i)){
-        if((profile.coins||0) < sk.price){
-          alert(T('notEnoughCoinsSkin', sk.price, profile.coins||0));
+        if(coinBal() < sk.price){
+          alert(T('notEnoughCoinsSkin', sk.price, coinBal()));
           return;
         }
         if(!confirm(T('confirmSkin', skinTxt(sk), sk.price))) return;
@@ -5518,10 +5529,10 @@ function renderProfile(){
   document.getElementById('profLvl').textContent = profileLevel();
   document.getElementById('profLvl2').textContent = profileLevel();
   document.getElementById('profXpTxt').textContent = (profile.xp||0);
-  document.getElementById('profCoins').textContent = (profile.coins||0);
-  document.getElementById('profCoins2').textContent = (profile.coins||0);
-  document.getElementById('profShards').textContent = (profile.shards||0);
-  document.getElementById('profShards2').textContent = (profile.shards||0);
+  document.getElementById('profCoins').textContent = coinBal();
+  document.getElementById('profCoins2').textContent = coinBal();
+  document.getElementById('profShards').textContent = shardBal();
+  document.getElementById('profShards2').textContent = shardBal();
   document.getElementById('bestWaveTxt').textContent = (profile.bestWaveCampaign||0);
   const into = (profile.xp||0) % PROFILE_STEP;
   document.getElementById('profXpFill').style.width = (into/PROFILE_STEP*100) + '%';
@@ -5535,7 +5546,18 @@ function setClass(id){
   chosenSkin = 0;
   renderHeadOptions(); renderHeroLooks(); drawPreview(); renderHeroDetail();
 }
+/* Csak megvett hőssel és megvett képességgel lehessen elindulni. Ha a név
+   változik (pl. az admin-névről vissza, vagy fordítva), a korábbi választás
+   egy meg nem vett hősre / elit pecsétre mutathat — ilyenkor visszaállunk. */
+function ensureOwnedLoadout(){
+  if(!isClassUnlocked(chosenClass)){ chosenClass = 'tank'; equipDefaults(); return; }
+  if(equipped.some(id=>!isAbilityUnlocked(id))){
+    equipped = equipped.filter(id=>isAbilityUnlocked(id));
+    if(!equipped.length) equipDefaults();
+  }
+}
 function renderClassCards(){
+  ensureOwnedLoadout();
   classRow.innerHTML='';
   Object.entries(CLASSES).forEach(([id,c])=>{
     if(HIDDEN_HEROES.has(id)) return;   // ideiglenesen nem választható
@@ -5568,7 +5590,7 @@ function renderClassCards(){
     drawHeroFigure(pc, { x:pcx, y:pcy, r:pR, cls:id, skin:(id===chosenClass?chosenSkin:0), head:chosenHead, facing:-Math.PI/2, invuln:0 }, { preview:true });
     if(!unlocked && heroVisible(id)) card.addEventListener('click', ()=>{
       const cost = heroPrice(id);
-      if((profile.coins||0) < cost){ alert(T('notEnoughCoins', cost, profile.coins||0)); return; }
+      if(coinBal() < cost){ alert(T('notEnoughCoins', cost, coinBal())); return; }
       if(!confirm(T('heroBuyConfirm', clsTxt(id,'label'), cost))) return;
       if(buyHero(id)){ chosenClass=id; equipDefaults(); renderClassCards(); buildLoadoutUI(); refreshMenu(); }
     });
@@ -5592,9 +5614,8 @@ function renderHeroDetail(){
   if(!panel) return;
   const id = chosenClass, c = CLASSES[id]; if(!c) return;
   const bal = heroBalanceMult(id);
-  const admin = isAdminUser();
   const ownedTier = profile.heroTiers[id]||0;
-  const activeTier = admin ? (adminTierOverride[id]!=null?adminTierOverride[id]:3) : ownedTier;
+  const activeTier = ownedTier;
   const tierMult = 1 + activeTier*0.05;
   const baseHp = Math.round(c.hp * bal.hp);
   const hp = Math.round(c.hp * bal.hp * tierMult);
@@ -5606,11 +5627,10 @@ function renderHeroDetail(){
   const dmgValTxt = activeTier>0 ? `${baseDmg} → <span style="color:#ff8a5c;">${dmg}</span> (+${dmg-baseDmg})` : T('dmgPerSec', dmg, dps);
   let dotsHtml = '';
   for(let t=1;t<=3;t++){
-    const owned = admin ? true : ownedTier>=t;
-    const isActive = admin && activeTier===t;
+    const owned = ownedTier>=t;
     const cost = HERO_TIER_COSTS[t-1];
-    dotsHtml += `<span class="tierDot ${owned?'owned':''} ${isActive?'active':''}" data-tier="${t}"
-      title="${admin?T('tierTestTitle',t):(owned?T('tierOwnedTitle',t):T('tierBuyTitle',t,cost))}">${owned?'★':t}</span>`;
+    dotsHtml += `<span class="tierDot ${owned?'owned':''}" data-tier="${t}"
+      title="${owned?T('tierOwnedTitle',t):T('tierBuyTitle',t,cost)}">${owned?'★':t}</span>`;
   }
   panel.style.setProperty('--hdcol', c.col);
   panel.innerHTML = `<canvas id="hdPortrait" width="96" height="96"></canvas>
@@ -5620,7 +5640,7 @@ function renderHeroDetail(){
       <div class="hdRow"><span class="hdLabel">${T('hdDmg')}</span><div class="hdBarBg"><div class="hdBarFill" style="width:${clamp(dmg/40*100,4,100)}%; background:#ff8a5c;"></div></div><span class="hdVal" style="width:auto;">${dmgValTxt}</span></div>
       <div class="hdRow"><span class="hdLabel">${T('hdSpeed')}</span><div class="hdBarBg"><div class="hdBarFill" style="width:${clamp((c.speed-1.7)/1.4*100,4,100)}%; background:#6ee7ff;"></div></div><span class="hdVal">${speedLabel(c.speed)} (${c.speed.toFixed(1)})</span></div>
       <div class="hdRow"><span class="hdLabel">${T('hdRange')}</span><div class="hdBarBg"><div class="hdBarFill" style="width:${clamp(range/1000*100,4,100)}%; background:#c9a6ff;"></div></div><span class="hdVal">${range} px</span></div>
-      <div class="hdRow" style="margin-top:6px;"><span class="hdLabel">${admin?T('hdTestTier'):T('hdUpgrade')}</span><div style="display:flex; gap:6px;">${dotsHtml}</div></div>
+      <div class="hdRow" style="margin-top:6px;"><span class="hdLabel">${T('hdUpgrade')}</span><div style="display:flex; gap:6px;">${dotsHtml}</div></div>
     </div>`;
   const pc = document.getElementById('hdPortrait').getContext('2d');
   const { skin } = heroSkinData(id, chosenSkin);
@@ -5629,11 +5649,10 @@ function renderHeroDetail(){
   panel.querySelectorAll('.tierDot').forEach(dot=>{
     dot.addEventListener('click', ()=>{
       const t = parseInt(dot.dataset.tier, 10);
-      if(admin){ adminTierOverride[id] = (activeTier===t) ? 0 : t; renderHeroDetail(); return; }
       if(ownedTier>=t){ return; }   // már megvan
       if(t !== ownedTier+1){ return; }   // csak sorban lehet fejleszteni
       const cost = HERO_TIER_COSTS[t-1];
-      if((profile.shards||0) < cost){ alert(T('notEnoughShards', cost, profile.shards||0)); return; }
+      if(shardBal() < cost){ alert(T('notEnoughShards', cost, shardBal())); return; }
       if(!confirm(T('confirmHeroTier', clsTxt(id,'label'), t, cost))) return;
       buyHeroTier(id);
       renderHeroDetail(); renderProfile();
@@ -5681,7 +5700,7 @@ function campaignCurrent(){
    (Adminnak / teszt-módban minden nyitva marad, hogy ellenőrizni lehessen.) */
 function campaignOpen(i){
   if(i >= roadLength()) return false;
-  if(TEST_MODE_UNLOCK_ALL || isAdminUser()) return true;
+  if(TEST_MODE_UNLOCK_ALL) return true;
   return i === campaignCurrent();
 }
 function campaignCleared(i){
@@ -5983,7 +6002,7 @@ function buildLoadoutUI(){
     });
     else if(buyable) cell.addEventListener('click', ()=>{
       const cost = eliteCost(id);
-      if((profile.shards||0) < cost){ alert(T('notEnoughShards', cost, profile.shards||0)); return; }
+      if(shardBal() < cost){ alert(T('notEnoughShards', cost, shardBal())); return; }
       if(!confirm(T('eliteBuyConfirm', abTxt(id,'label'), cost))) return;
       if(buyElite(chosenClass, id)){ buildLoadoutUI(); refreshMenu(); }
     });
@@ -5992,10 +6011,9 @@ function buildLoadoutUI(){
       upgEl.addEventListener('click', (ev)=>{
         ev.stopPropagation();
         const cur = profile.abilityUpgrades[id]||0;
-        if(isAdminUser()){ alert(T('adminMaxAbility')); return; }
         if(cur>=3){ alert(T('abilityMaxed', abTxt(id,'label'))); return; }
         const cost = ABILITY_UPGRADE_COSTS[cur];
-        if((profile.shards||0) < cost){ alert(T('notEnoughShards', cost, profile.shards||0)); return; }
+        if(shardBal() < cost){ alert(T('notEnoughShards', cost, shardBal())); return; }
         if(!confirm(T('confirmAbilityUpg', abTxt(id,'label'), cur+1, cost))) return;
         buyAbilityUpgrade(id);
         buildLoadoutUI(); renderProfile();
@@ -11633,12 +11651,11 @@ function heroOwned(cls){
   return heroPrice(cls) === 0 || profile.ownedHeroes.includes(cls);
 }
 /* Látszik-e a boltban? A szint most már csak kirakat-feltétel. */
-function heroVisible(cls){ return profileLevel() >= (CLASSES[cls].req||1) || heroOwned(cls); }
+function heroVisible(cls){ return isAdminUser() || profileLevel() >= (CLASSES[cls].req||1) || heroOwned(cls); }
 function buyHero(cls){
   if(heroOwned(cls)) return false;
   const cost = heroPrice(cls);
-  if((profile.coins||0) < cost) return false;
-  profile.coins -= cost;
+  if(!spendCoins(cost)) return false;
   profile.ownedHeroes = profile.ownedHeroes || [];
   profile.ownedHeroes.push(cls);
   saveProfile();
@@ -11703,8 +11720,7 @@ function buyElite(cls, id){
   if(!a || !(a.epic||a.legendary) || a.cls !== cls) return false;
   if(eliteOwned(cls, id)) return false;
   const cost = eliteCost(id);
-  if((profile.shards||0) < cost) return false;
-  profile.shards -= cost;
+  if(!spendShards(cost)) return false;
   profile.eliteUnlocks = profile.eliteUnlocks || {};
   profile.eliteUnlocks[cls] = profile.eliteUnlocks[cls] || [];
   profile.eliteUnlocks[cls].push(id);
