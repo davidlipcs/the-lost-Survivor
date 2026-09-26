@@ -603,6 +603,7 @@
   </div>
 
   <div id="startScreen" class="overlay">
+    <div id="appVersion" style="position:absolute; left:10px; bottom:8px; font-size:10px; color:var(--dim); opacity:0.7; letter-spacing:1px; pointer-events:none;"></div>
     <button class="bigBtn ghost" id="ladderToggleBtnTL" style="position:absolute; top:14px; left:14px; padding:6px 12px; font-size:11px; margin:0; z-index:5;">📜 Létra</button>
     <button class="bigBtn ghost" id="langToggleBtn" aria-label="Nyelv / Language" style="position:absolute; top:14px; right:14px; padding:6px 12px; font-size:11px; margin:0; z-index:5;">🇬🇧 EN</button>
     <div class="titleWrap">
@@ -871,11 +872,49 @@
    ========================================================= */
 
 // ---- PWA: telepíthetőség (asztali ikon/ablak, telefonon "Kezdőképernyőhöz adás") ----
+/* A VERZIÓ: ugyanaz a szám, mint az sw.js CACHE_NAME-jében (minden kiadásnál
+   együtt emeljük). A főmenü sarkában látszik, így mindig ellenőrizhető,
+   melyik változat fut. */
+const APP_VERSION = 'v52';
+/* ÖNFRISSÍTÉS: egy háttérben nyitva hagyott (vagy kezdőképernyőre tett) játék
+   magától nem tölt újra — órákig a régi változat futhatott, pedig az új már
+   kint volt. Ezért visszatéréskor (és 10 percenként) megnézzük, van-e újabb;
+   ha van, a FŐMENÜBEN újratöltünk. Harc közben soha: ott csak megjegyezzük,
+   és a következő főmenü-megnyitáskor frissül. */
+let _updateReady = false;
+function onMainMenu(){
+  const st = document.getElementById('startScreen');
+  return !!st && !st.classList.contains('hidden') && !(game && game.state === 'playing');
+}
+function maybeReloadForUpdate(){
+  if(!_updateReady || !onMainMenu()) return;
+  // újratöltési hurok ellen: ugyanarra a verzióra csak egyszer (ha a szerver még a régit adná)
+  try{ if(sessionStorage.getItem('lostsurvivor_reloaded_for') === _updateReady) return;
+       sessionStorage.setItem('lostsurvivor_reloaded_for', _updateReady); }catch(e){}
+  _updateReady = false;
+  try{ location.reload(); }catch(e){}
+}
+/* A kiadott verziót az sw.js-ből olvassuk ki (a CACHE_NAME száma), gyorsítótár
+   nélkül. Ha más, mint amit ez az oldal futtat, frissítés jött. */
+function checkForUpdate(){
+  try{
+    fetch('sw.js?v=' + Date.now(), { cache:'no-store' }).then(r=>r.ok ? r.text() : '').then(t=>{
+      const m = /lostsurvivor-cache-(v\d+)/.exec(t || '');
+      if(m && m[1] !== APP_VERSION){ _updateReady = m[1]; maybeReloadForUpdate(); }
+    }).catch(()=>{});
+  }catch(e){}
+}
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) checkForUpdate(); });
+window.addEventListener('focus', checkForUpdate);
+setInterval(checkForUpdate, 10*60*1000);
 if('serviceWorker' in navigator){
   window.addEventListener('load', ()=>{
-    navigator.serviceWorker.register('sw.js').catch(()=>{});
+    navigator.serviceWorker.register('sw.js').then((reg)=>{
+      document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ try{ reg.update().catch(()=>{}); }catch(e){} } });
+    }).catch(()=>{});
   });
 }
+document.addEventListener('DOMContentLoaded', ()=>{ const v=document.getElementById('appVersion'); if(v) v.textContent = APP_VERSION; });
 let deferredInstallPrompt = null;
 window.addEventListener('beforeinstallprompt', (e)=>{
   e.preventDefault();
@@ -5731,6 +5770,7 @@ function renderHeroDetail(){
 const SCREENS = ['startScreen','heroSelectScreen','mapScreen','storyIntro','pauseScreen','bossIntro','winScreen','deathScreen','ladderScreen','settingsScreen','conquestScreen','tableauScreen','trophyScreen','inventoryScreen','itemPickScreen'];
 function showScreen(id){
   SCREENS.forEach(s=>{ const el=document.getElementById(s); if(el) el.classList.toggle('hidden', s!==id); });
+  if(id === 'startScreen') setTimeout(maybeReloadForUpdate, 0);   // ha közben új változat jött, itt frissül
   // a térkép animációja csak akkor pörögjön, amíg tényleg látszik
   if(id!=='mapScreen' && typeof stopCampaignAnim==='function') stopCampaignAnim();
   if(id!=='conquestScreen' && typeof stopConquestAnim==='function') stopConquestAnim();
