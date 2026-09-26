@@ -89,6 +89,11 @@ a baj, mit csináltál, hogyan tesztelted. Magyarul.
   az EGÉSZ pálya a képernyőn van (`sniperView`, `ARENA_ISO.z`), és a lövése
   a pálya átlóján is átér. Az ellenfelek ugyanott bukkannak fel, mint eddig
   (a játékmenet-távolságok a normál nézethez, `ARENA_ISO.k0`-hoz kötöttek).
+- **Vastagabb és gyorsabb mindenki** (David kérte): hős, társ, ellenfelek
+  és boss is 50%-kal szélesebb (rajz ÉS találati felület, `BODY_MUL`) és
+  50%-kal gyorsabban mozog (`SPEED_MUL`). Az ellenfél továbbra is lassabb
+  a leglassabb hősnél. A közelharci csapás a testből indul, az elérése a
+  régi csőtávval hosszabb (`p._mzReach`).
 - **Pálya:** sima csatában a vászon 2,4-szerese tengelyenként
   (`WORLD_SCALE_PLAIN`) — a korábbi 3,4-es terület fele. A lőtávolság
   (`rangeMul`) a pályával együtt változik (David így kérte).
