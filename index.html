@@ -363,6 +363,8 @@
   .trDesc{ font-size:11px; color:var(--dim); line-height:1.4; margin-top:1px; }
   .trRew{ flex:0 0 auto; font-size:10.5px; color:var(--dim); letter-spacing:0.5px; white-space:nowrap; }
   .trophyCard.got .trRew{ color:var(--gold); }
+  .trGem{ color:#7cc4ff; font-weight:bold; margin-top:2px; text-align:right; }
+  .trophyToast .gemRew{ color:#7cc4ff; }
 
   /* ---- trófea-értesítő ---- */
   #trophyToasts{ position:absolute; top:12px; left:50%; transform:translateX(-50%); z-index:60;
@@ -1471,8 +1473,8 @@ const TRANSLATIONS = {
     cloudLoadedMsg: (lvl)=> `☁️ Your cloud save has been loaded (profile level ${lvl}).`,
     cloud_off: '', cloud_syncing: '☁️ Syncing…', cloud_ok: '☁️ Saved to the cloud',
     cloud_error: '⚠️ Cloud save failed — your progress is safe on this device', cloud_offline: '📴 Offline — saved on this device',
-    sealedRetiredMsg: (coins, shards)=> `The Master, the Master of Masters and the God have left the game — they were too strong. You got back everything you spent on them: ${coins} coins${shards? ' and '+shards+' crystals':''}.`,
-    notEnoughShards: (cost, have)=> `Not enough crystals — you need ${cost} 🔷 and you have ${have}. Crystals come from the daily quests.`,
+    sealedRetiredMsg: (coins, shards)=> `The Master, the Master of Masters and the God have left the game — they were too strong. You got back everything you spent on them: ${coins} coins${shards? ' and '+shards+' diamonds':''}.`,
+    notEnoughShards: (cost, have)=> `Not enough diamonds — you need ${cost} 🔷 and you have ${have}. Diamonds come from the daily quests and the harder trophies.`,
     confirmHeroTier: (name, t, cost)=> `Upgrade “${name}” to tier ${t} for ${cost} 🔷?`,
     epicTag: 'EPIC · max rank 10', legendaryTag: 'LEGENDARY · max rank 10',
     tunedTitle: (pct)=> ` (tuned: ${pct}%)`, upgradedTitle: (pct)=> ` — upgraded: +${pct}%`,
@@ -1516,6 +1518,7 @@ const TRANSLATIONS = {
     trophySub: (n,t)=> `${n} / ${t} earned`,
     trophyUnlocked: 'TROPHY EARNED',
     trophyGot: '✓ Earned',
+    trophyGemsBackpay: 'Diamonds for the trophies you already had', trophyGemsTop: 'DIAMONDS CREDITED',
     trophyManyAtOnce: (n)=> `${n} trophies earned`,
     trophy_firstBlood_name: 'First Blood',      trophy_firstBlood_desc: 'Finish your first run.',
     trophy_firstBoss_name: 'Boss Slayer',       trophy_firstBoss_desc: 'Bring down your first boss.',
@@ -1619,7 +1622,7 @@ const TRANSLATIONS = {
     heroPrice: (c)=> `💰 ${c} — tap to buy`,
     heroBuyConfirm: (n,c)=> `Buy ${n} for ${c} coins?`,
     notEnoughCoins: (need,have)=> `Not enough coins: ${need} needed, you have ${have}.`,
-    eliteBuyConfirm: (n,c)=> `Unlock the elite seal "${n}" for ${c} shards?`,
+    eliteBuyConfirm: (n,c)=> `Unlock the elite seal "${n}" for ${c} diamonds?`,
     elem_fire: 'Fire — explodes on impact', elem_frost: 'Frost — slows, freezes on the third hit',
     elem_poison: 'Poison — leaves a spreading cloud',
     sumTitle: 'THIS RUN',
@@ -1708,7 +1711,7 @@ const TRANSLATIONS = {
       'Enemies come in waves. Survive them, and after the twelfth a boss shows up.',
       'Every level-up makes one of your equipped seals stronger, so what you bring matters.',
       'Seals are your abilities — up to five at a time, each on its own key or button. The big one on the right is your ultimate: it charges as you deal damage.',
-      'Matches earn profile XP and coins even when you lose. Coins buy looks, crystals from daily quests upgrade heroes and seals.',
+      'Matches earn profile XP and coins even when you lose. Coins buy looks; diamonds from daily quests and the harder trophies upgrade heroes and seals.',
     ],
     firstRunOk: 'Got it',
 
@@ -1887,8 +1890,8 @@ const TRANSLATIONS = {
     cloudLoadedMsg: (lvl)=> `☁️ Betöltöttük a felhőben lévő mentésed (${lvl}. profilszint).`,
     cloud_off: '', cloud_syncing: '☁️ Egyeztetés…', cloud_ok: '☁️ Mentve a felhőbe',
     cloud_error: '⚠️ Nem sikerült felhőbe menteni — a haladásod ezen az eszközön biztonságban van', cloud_offline: '📴 Nincs net — ezen az eszközön mentve',
-    sealedRetiredMsg: (coins, shards)=> `A Mester, a Mesterek Mestere és az Isten kikerült a játékból — túl erősek voltak. Mindent visszakaptál, amit rájuk költöttél: ${coins} pénzt${shards? ' és '+shards+' kristályt':''}.`,
-    notEnoughShards: (cost, have)=> `Nincs elég kristályod — ${cost} 🔷 kell, neked ${have} van. Kristályt a napi küldetésekből kapsz.`,
+    sealedRetiredMsg: (coins, shards)=> `A Mester, a Mesterek Mestere és az Isten kikerült a játékból — túl erősek voltak. Mindent visszakaptál, amit rájuk költöttél: ${coins} pénzt${shards? ' és '+shards+' gyémántot':''}.`,
+    notEnoughShards: (cost, have)=> `Nincs elég gyémántod — ${cost} 🔷 kell, neked ${have} van. Gyémántot a napi küldetésekből és a nehezebb trófeákból kapsz.`,
     confirmHeroTier: (name, t, cost)=> `Fejleszted „${name}”-t a(z) ${t}. szintre ${cost} 🔷-ért?`,
     epicTag: 'EPIKUS · max 10. rang', legendaryTag: 'LEGENDÁS · max 10. rang',
     tunedTitle: (pct)=> ` (finomhangolva: ${pct}%)`, upgradedTitle: (pct)=> ` — fejlesztve: +${pct}%`,
@@ -1932,6 +1935,7 @@ const TRANSLATIONS = {
     trophySub: (n,t)=> `${n} / ${t} megszerezve`,
     trophyUnlocked: 'TRÓFEA MEGSZEREZVE',
     trophyGot: '✓ Megvan',
+    trophyGemsBackpay: 'Gyémánt a már megszerzett trófeáidért', trophyGemsTop: 'GYÉMÁNT JÓVÁÍRVA',
     trophyManyAtOnce: (n)=> `${n} trófea megszerezve`,
     trophy_firstBlood_name: 'Első vér',          trophy_firstBlood_desc: 'Fejezd be az első futamodat.',
     trophy_firstBoss_name: 'Boss-ölő',           trophy_firstBoss_desc: 'Terítsd le az első bosst.',
@@ -2035,7 +2039,7 @@ const TRANSLATIONS = {
     heroPrice: (c)=> `💰 ${c} — koppints a vásárláshoz`,
     heroBuyConfirm: (n,c)=> `Megveszed: ${n} — ${c} arany?`,
     notEnoughCoins: (need,have)=> `Nincs elég arany: ${need} kell, neked ${have} van.`,
-    eliteBuyConfirm: (n,c)=> `Feloldod a(z) „${n}” elit pecsétet ${c} kristályért?`,
+    eliteBuyConfirm: (n,c)=> `Feloldod a(z) „${n}” elit pecsétet ${c} gyémántért?`,
     elem_fire: 'Tűz — becsapódáskor robban', elem_frost: 'Jég — lassít, harmadik találatra fagyaszt',
     elem_poison: 'Méreg — terjedő felhőt hagy',
     sumTitle: 'EZ A FUTAM',
@@ -2124,7 +2128,7 @@ const TRANSLATIONS = {
       'Az ellenfelek hullámokban jönnek. Éld túl őket — a tizenkettedik után boss következik.',
       'Minden szintlépés egy felszerelt pecsétedet erősíti, szóval nem mindegy, mit viszel magaddal.',
       'A pecsétek a képességeid — egyszerre öt, mindegyik saját billentyűn vagy gombon. A jobb oldali nagy gomb az ultimate: sebzéssel töltöd fel.',
-      'A meccsek vesztésnél is hoznak profil-XP-t és pénzt. A pénz kinézetekre megy, a napi küldetésekből járó kristály hősöket és pecséteket fejleszt.',
+      'A meccsek vesztésnél is hoznak profil-XP-t és pénzt. A pénz kinézetekre megy, a napi küldetésekből és a nehezebb trófeákból járó gyémánt hősöket és pecséteket fejleszt.',
     ],
     firstRunOk: 'Értem',
 
@@ -2599,9 +2603,9 @@ profile.storyProgress = profile.storyProgress || 0;   // legmagasabb feloldott f
 profile.storyDone = profile.storyDone || [];           // teljesített fejezet-id-k
 profile.coins = profile.coins || 0;                     // "pénz" — szintlépésért és meccs végén jár, skinekre költhető
 profile.unlockedSkins = profile.unlockedSkins || {};     // megvásárolt, fizetős kinézetek: "hos_index" -> true
-profile.shards = profile.shards || 0;                    // "kristály" — kizárólag küldetésekből, karakterfejlesztésre
+profile.shards = profile.shards || 0;                    // "gyémánt" (régen: kristály) — küldetésekből és a nehezebb trófeákból, fejlesztésre
 profile.heroTiers = profile.heroTiers || {};              // hősönkénti fejlesztési szint (0-3)
-profile.abilityUpgrades = profile.abilityUpgrades || {};  // pecsétenkénti fejlesztési szint (0-3) — kristállyal fejleszthető
+profile.abilityUpgrades = profile.abilityUpgrades || {};  // pecsétenkénti fejlesztési szint (0-3) — gyémánttal fejleszthető
 profile.quests = profile.quests || null;                  // napi küldetések állapota
 profile.bestWaveCampaign = profile.bestWaveCampaign || 0;  // legmagasabb elért hullám a kampányban
 profile.heroName = profile.heroName || '';                 // a beírt karakternév — a térképen is ez jelenik meg
@@ -2677,7 +2681,7 @@ function awardMatchCoins(){
 }
 
 /* =========================================================
-   NAPI KÜLDETÉSEK — 24 óránként frissülnek, kristályt adnak
+   NAPI KÜLDETÉSEK — 24 óránként frissülnek, gyémántot adnak
    ========================================================= */
 const QUEST_POOL = [
   { id:'kills',     label:'Ölj meg 40 ellenfelet',              target:40, reward:12, track:'kills' },
@@ -2708,9 +2712,9 @@ function questProgress(trackKey, amount, mode){
 }
 
 /* =========================================================
-   KARAKTERFEJLESZTÉS — külön pénznemmel (kristály), 3 szint hősönként
+   KARAKTERFEJLESZTÉS — külön pénznemmel (gyémánt), 3 szint hősönként
    ========================================================= */
-const HERO_TIER_COSTS = [25, 35, 50];   // 1., 2., 3. szint ára kristályban
+const HERO_TIER_COSTS = [25, 35, 50];   // 1., 2., 3. szint ára gyémántban
 function heroTier(cls){ return profile.heroTiers[cls] || 0; }
 function buyHeroTier(cls){
   const cur = profile.heroTiers[cls]||0;
@@ -2723,11 +2727,11 @@ function buyHeroTier(cls){
 }
 
 /* =========================================================
-   PECSÉT-FEJLESZTÉS — kristállyal, VALÓDI, a játékos által
+   PECSÉT-FEJLESZTÉS — gyémánttal, VALÓDI, a játékos által
    irányított erősítés (a napi automata finomhangolás ettől
    független, az csak a túlhasznált pecséteket koptatja kicsit)
    ========================================================= */
-const ABILITY_UPGRADE_COSTS = [15, 20, 30];   // 1., 2., 3. szint ára kristályban, pecsétenként
+const ABILITY_UPGRADE_COSTS = [15, 20, 30];   // 1., 2., 3. szint ára gyémántban, pecsétenként
 function abilityUpgradeTier(id){ return profile.abilityUpgrades[id] || 0; }
 function abilityUpgradeMult(id){ return 1 + abilityUpgradeTier(id)*0.08; }   // +8% erő fejlesztési szintenként, max +24%
 function buyAbilityUpgrade(id){
@@ -7376,7 +7380,7 @@ function update(){
     }
   });
   /* --- GYÓGYÍTÁS: minden hősnek, saját gombon (H / ✚ / LT) ---
-     30% életerő, 10 mp visszatöltés. A kristállyal vett "Gyógyulás"-
+     30% életerő, 10 mp visszatöltés. A gyémánttal vett "Gyógyulás"-
      fejlesztések erősítik. Teli életnél nem sül el feleslegesen. */
   if(p.healCd > 0) p.healCd--;
   // a gomb MEGJEGYZI a koppintást: egy villámgyors érintés se vesszen el két képkocka között
@@ -9203,27 +9207,31 @@ function hideCombatUI(){
    is helyes: aki eddig is sokat játszott, a bevezetéskor megkapja, ami jár.
    A jutalom szándékosan szerény — a trófea elismerés, nem gazdasági motor.
    ========================================================= */
+/* Gyémánt (🔷) CSAK a ritkább / nehezebb trófeákért jár (David kérte). A
+   mennyiség a trófea pénzjutalmával arányos (kb. a tizede); a könnyű, szinte
+   mindenkinek meglévő trófeák (első meccs, első boss, erdő, első föld,
+   20. hullám, 1000 ölés) nem adnak gyémántot. */
 const TROPHIES = [
   { id:'firstBlood',  icon:'🩸', xp:60,   coins:40,   test:p=> (p.totalRuns||0) >= 1 },
   { id:'firstBoss',   icon:'💀', xp:120,  coins:80,   test:p=> (p.storyDone||[]).length >= 1 || (p.bestWaveCampaign||0) >= 12 },
   { id:'pinesBehind', icon:'🌲', xp:80,   coins:50,   test:p=> (p.storyDone||[]).includes('forest') },
-  { id:'crowned',     icon:'👑', xp:400,  coins:300,  test:p=> (p.storyDone||[]).includes('kingdom') },
+  { id:'crowned',     icon:'👑', xp:400,  coins:300, gems:30,  test:p=> (p.storyDone||[]).includes('kingdom') },
   { id:'firstLand',   icon:'🚩', xp:200,  coins:150,  test:p=> conquestOwnedCount(p) >= 1 },
-  { id:'fiveLands',   icon:'🏰', xp:600,  coins:500,  test:p=> conquestOwnedCount(p) >= 5 },
-  { id:'allLands',    icon:'🗺️', xp:1500, coins:1500, test:p=> conquestOwnedCount(p) >= 10 },
+  { id:'fiveLands',   icon:'🏰', xp:600,  coins:500, gems:50,  test:p=> conquestOwnedCount(p) >= 5 },
+  { id:'allLands',    icon:'🗺️', xp:1500, coins:1500, gems:150, test:p=> conquestOwnedCount(p) >= 10 },
   { id:'wave20',      icon:'🌊', xp:200,  coins:150,  test:p=> (p.bestWaveCampaign||0) >= 20 },
-  { id:'wave30',      icon:'🌀', xp:450,  coins:350,  test:p=> (p.bestWaveCampaign||0) >= 30 },
-  { id:'wave50',      icon:'⚡', xp:900,  coins:800,  test:p=> (p.bestWaveCampaign||0) >= 50 },
-  { id:'nightmare20', icon:'😱', xp:700,  coins:600,  test:p=> (p.bestWaveNightmare||0) >= 20 },
+  { id:'wave30',      icon:'🌀', xp:450,  coins:350, gems:35,  test:p=> (p.bestWaveCampaign||0) >= 30 },
+  { id:'wave50',      icon:'⚡', xp:900,  coins:800, gems:80,  test:p=> (p.bestWaveCampaign||0) >= 50 },
+  { id:'nightmare20', icon:'😱', xp:700,  coins:600, gems:60,  test:p=> (p.bestWaveNightmare||0) >= 20 },
   { id:'butcher',     icon:'🗡️', xp:150,  coins:120,  test:p=> (p.totalKills||0) >= 1000 },
-  { id:'slaughter',   icon:'⚔️', xp:600,  coins:500,  test:p=> (p.totalKills||0) >= 10000 },
-  { id:'rich',        icon:'💰', xp:250,  coins:200,  test:p=> (p.totalCoinsEarned||0) >= 10000 },
-  { id:'sixHeroes',   icon:'🎭', xp:400,  coins:300,  test:p=> heroWinCount(p) >= 6 },
-  { id:'allHeroes',   icon:'🏆', xp:1200, coins:1000, test:p=> heroWinCount(p) >= Object.keys(CLASSES).filter(heroListed).length },
-  { id:'untouched',   icon:'🛡️', xp:500,  coins:400,  test:p=> (p.noHitRuns||0) >= 1 },
-  { id:'veteran',     icon:'🎖️', xp:300,  coins:250,  test:p=> (p.totalRuns||0) >= 50 },
-  { id:'sealMaster',  icon:'✨', xp:350,  coins:280,  test:p=> (p.totalUlts||0) >= 100 },
-  { id:'level25',     icon:'⭐', xp:0,    coins:600,  test:p=> profileLevel() >= 25 },
+  { id:'slaughter',   icon:'⚔️', xp:600,  coins:500, gems:50,  test:p=> (p.totalKills||0) >= 10000 },
+  { id:'rich',        icon:'💰', xp:250,  coins:200, gems:20,  test:p=> (p.totalCoinsEarned||0) >= 10000 },
+  { id:'sixHeroes',   icon:'🎭', xp:400,  coins:300, gems:30,  test:p=> heroWinCount(p) >= 6 },
+  { id:'allHeroes',   icon:'🏆', xp:1200, coins:1000, gems:100, test:p=> heroWinCount(p) >= Object.keys(CLASSES).filter(heroListed).length },
+  { id:'untouched',   icon:'🛡️', xp:500,  coins:400, gems:40,  test:p=> (p.noHitRuns||0) >= 1 },
+  { id:'veteran',     icon:'🎖️', xp:300,  coins:250, gems:25,  test:p=> (p.totalRuns||0) >= 50 },
+  { id:'sealMaster',  icon:'✨', xp:350,  coins:280, gems:30,  test:p=> (p.totalUlts||0) >= 100 },
+  { id:'level25',     icon:'⭐', xp:0,    coins:600, gems:60,  test:p=> profileLevel() >= 25 },
 ];
 const TROPHY_BY_ID = Object.fromEntries(TROPHIES.map(t=>[t.id,t]));
 
@@ -9253,6 +9261,7 @@ function checkTrophies(){
     if(!ok) continue;
     profile.trophies.push(t.id);
     if(t.coins) profile.coins = (profile.coins||0) + t.coins;
+    if(t.gems) profile.shards = (profile.shards||0) + t.gems;
     fresh.push(t);
   }
   if(!fresh.length) return [];
@@ -9267,6 +9276,7 @@ function checkTrophies(){
   if(fresh.length > 3){
     showTrophyToast({ icon:'🏆', xp:xpSum,
       coins: fresh.reduce((a,t)=>a+(t.coins||0), 0),
+      gems: fresh.reduce((a,t)=>a+(t.gems||0), 0),
       _name: T('trophyManyAtOnce', fresh.length) });
   } else {
     fresh.forEach((t,i)=> setTimeout(()=>showTrophyToast(t), i*1400));
@@ -9275,15 +9285,32 @@ function checkTrophies(){
   return fresh;
 }
 
+/* A gyémánt-jutalom később jött, mint a trófeák. Aki egy nehezebb trófeát
+   már korábban megszerzett, egyszer, utólag megkapja a hozzá járó gyémántot
+   — a jelző (trophyGemsPaid) miatt kétszer soha. */
+function payTrophyGemsOnce(){
+  if(profile.trophyGemsPaid) return 0;
+  const sum = (profile.trophies||[]).reduce((a,id)=>a+((TROPHY_BY_ID[id]&&TROPHY_BY_ID[id].gems)||0), 0);
+  profile.shards = (profile.shards||0) + sum;
+  profile.trophyGemsPaid = true;
+  saveProfile();
+  if(sum > 0){
+    showTrophyToast({ icon:'🔷', xp:0, coins:0, gems:sum, _top:T('trophyGemsTop'), _name:T('trophyGemsBackpay') });
+    if(typeof refreshMenu==='function') refreshMenu();
+  }
+  return sum;
+}
+setTimeout(()=>{ try{ payTrophyGemsOnce(); }catch(e){} }, 900);
+
 /* Rövid, magától eltűnő értesítés a képernyő tetején. */
 function showTrophyToast(t){
   const host = document.getElementById('trophyToasts'); if(!host) return;
   const el = document.createElement('div');
   el.className = 'trophyToast';
   el.innerHTML = `<div class="tIcon">${t.icon}</div>` +
-    `<div><div class="tTop">${T('trophyUnlocked')}</div>` +
+    `<div><div class="tTop">${t._top || T('trophyUnlocked')}</div>` +
     `<div class="tName">${t._name || trophyTxt(t.id,'name')}</div>` +
-    `<div class="tRew">+${t.xp} XP${t.coins?` · +${t.coins} 💰`:''}</div></div>`;
+    `<div class="tRew">${[t.xp?`+${t.xp} XP`:'', t.coins?`+${t.coins} 💰`:'', t.gems?`<b class="gemRew">+${t.gems} 🔷</b>`:''].filter(Boolean).join(' · ')}</div></div>`;
   host.appendChild(el);
   // legfeljebb három látszik egyszerre — a régebbi kimegy, hogy ne lógjon le a képernyőről
   while(host.children.length > 3) host.removeChild(host.firstChild);
@@ -9303,7 +9330,7 @@ function renderTrophies(){
       `<div class="trIcon">${got ? t.icon : '🔒'}</div>` +
       `<div class="trBody"><div class="trName">${trophyTxt(t.id,'name')}</div>` +
       `<div class="trDesc">${trophyTxt(t.id,'desc')}</div></div>` +
-      `<div class="trRew">${got ? T('trophyGot') : `+${t.xp} XP`}</div></div>`;
+      `<div class="trRew">${got ? T('trophyGot') : `+${t.xp} XP`}${t.gems?`<div class="trGem">+${t.gems} 🔷</div>`:''}</div></div>`;
   }).join('');
 }
 
@@ -9372,7 +9399,7 @@ function winGame(){
     let shardBonus = 14 + (taken-1) * 4;
     let xpBonus    = 0;
     if(allDone){
-      // a nagy zsákmány: pontosan 20 profil-szintnyi XP nulláról, plusz pénz és kristály
+      // a nagy zsákmány: pontosan 20 profil-szintnyi XP nulláról, plusz pénz és gyémánt
       xpBonus    = PROFILE_STEP * 20;
       coinBonus += 12000;
       shardBonus += 240;
@@ -11592,7 +11619,7 @@ function grandfatherHeroes(){
    ne veszítsen semmit: egyszer, a mentés első betöltésekor visszakapja
    - a hős árát pénzben,
    - a rá vett fizetős kinézetek árát pénzben,
-   - a hős-fejlesztésekre költött kristályt.
+   - a hős-fejlesztésekre költött gyémántot.
    A félbehagyott futam a mágussal folytatható (ők is a mágus fegyverét
    használták). A régi kulcsok (hősönkénti legjobb hullám, győzelmek,
    statisztika) érintetlenek maradnak — csak már semmi nem olvassa őket. */
@@ -11672,7 +11699,7 @@ function buyHero(cls){
 
    Mostantól mindenkinek saját készlete van:
      ALAP  — a kaszt feloldásakor AZONNAL jár, nem kell külön megszerezni
-     ELIT  — kasztonként öt, kizárólagos, kristályért vehető meg
+     ELIT  — kasztonként öt, kizárólagos, gyémántért vehető meg
 
    Az ELIT lista nincs kézzel felsorolva: abból áll, ami az ABILITIES
    táblában ehhez a kaszthoz van kötve és epic/legendary. Így egy új elit
@@ -11710,7 +11737,7 @@ function eliteOwned(cls, id){
   const list = profile.eliteUnlocks[cls];
   return !!(list && list.includes(id));
 }
-/* Az elit képességek ára kristályban. Minél erősebb, annál drágább. */
+/* Az elit képességek ára gyémántban. Minél erősebb, annál drágább. */
 function eliteCost(id){
   const a = ABILITIES[id]; if(!a) return 0;
   return a.legendary ? 60 : 35;
