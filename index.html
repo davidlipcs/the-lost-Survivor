@@ -875,7 +875,7 @@
 /* A VERZIÓ: ugyanaz a szám, mint az sw.js CACHE_NAME-jében (minden kiadásnál
    együtt emeljük). A főmenü sarkában látszik, így mindig ellenőrizhető,
    melyik változat fut. */
-const APP_VERSION = 'v52';
+const APP_VERSION = 'v53';
 /* ÖNFRISSÍTÉS: egy háttérben nyitva hagyott (vagy kezdőképernyőre tett) játék
    magától nem tölt újra — órákig a régi változat futhatott, pedig az új már
    kint volt. Ezért visszatéréskor (és 10 percenként) megnézzük, van-e újabb;
@@ -8283,6 +8283,7 @@ function update(){
   // a dér magától lejár, ha nem tartod rajta a jeges lövést
   for(const en of game.enemies){ if(en.chillT>0){ en.chillT--; if(en.chillT===0) en.chill=0; } }
   updatePickups();   // földön heverő mágikus tárgyak felszedése
+  tickCollectFx(p);  // a felvett tárgy berepülése (akkor is fut, ha már nincs tárgy a földön)
 
   // szétlőtt rombolható fedezékek eltakarítása
   if(game.obstacles.some(o=>o._dead)){
@@ -10207,6 +10208,7 @@ function draw(){
   for(const w of game.earthWalls) for(const b2 of w.blocks) stand(b2.x, b2.y, ()=> drawEarthBlock(ctx, w, b2), 1);
 
   drawShadowClones(stand, ctx, p);
+  if(game.pickups) for(const pu of game.pickups) stand(pu.x, pu.y, ()=> drawPickup3D(ctx, pu));
   game.turrets.forEach(t=> stand(t.x, t.y, ()=>{
     if(t.perm && t.hp < t.maxHp){   // a feltámasztott csontváz élete
       const f = clamp(t.hp/t.maxHp, 0, 1);
@@ -10321,6 +10323,8 @@ function draw(){
   // mélység szerint hátulról előre
   standing.sort((a,b)=> a.d - b.d);
   for(const u of standing) arenaUpright(ctx, u.x, u.y, u.fn, u.scale);
+  // a felvett tárgy berepülése: mindenki előtt, hogy a tömegben is látsszon
+  if(game.collectFx) for(const f of game.collectFx) arenaUpright(ctx, f.x, f.y, ()=> drawCollectFx(ctx, f));
 
   // boss életcsík: KÉPERNYŐ-tér, a kép tetején
   if(game.boss){
@@ -12103,6 +12107,7 @@ function tickItemOffers(p){
     if(itemRoll() < ITEM_CHANCE) queueItemOffer();
   }
   if(game.itemOffers > 0 && game.state === 'playing'){
+    if(game._offerHold > 0){ game._offerHold--; return; }   // előbb berepül a pecsét, utána áll meg a harc
     if(canOfferItem(p)) openItemPick(); else game.itemOffers = 0;
   }
 }
@@ -13121,13 +13126,15 @@ function dropEnemyLoot(en){
   game.pickups.push({ x:en.x, y:en.y, loot:def.id, icon:def.icon, col:def.col, t:0, r:14 });
   addRing(en.x, en.y, def.col, 46, 18, 3);
 }
-function giveLoot(p, id){
+function lootLabel(p, id){ const def = LOOT_BY_ID[id]; return def.icon+' '+T('loot_'+id+'_name')+(def.max>1 ? ' '+lootN(p,id)+'/'+def.max : ''); }
+function giveLoot(p, id, quiet){
   const def = LOOT_BY_ID[id]; if(!def) return false;
   p.loot = p.loot || {};
   if(lootN(p, id) >= def.max) return false;
   p.loot[id] = lootN(p, id) + 1;
   if(id === 'vigor'){ const add = Math.round(p.maxHp*0.2); p.maxHp += add; p.hp = Math.min(p.maxHp, p.hp + add); }
-  addFloater(p.x, p.y - p.r - 18, def.icon+' '+T('loot_'+id+'_name')+(def.max>1 ? ' '+p.loot[id]+'/'+def.max : ''), def.col, true);
+  if(quiet) return true;   // a felirat és a fény a berepülés végén jön (collectFx)
+  addFloater(p.x, p.y - p.r - 18, lootLabel(p, id), def.col, true);
   addRing(p.x, p.y, def.col, 64, 18, 3);
   try { SFX.orb && SFX.orb(); } catch(e){}
   return true;
@@ -13156,28 +13163,177 @@ function updatePickups(){
     pu.t++;
     if(dist(pu.x, pu.y, p.x, p.y) < pu.r + p.r){
       pu.taken = true;
-      if(pu.loot){ giveLoot(p, pu.loot); continue; }
-      if(pu.sigil && queueItemOffer()){
-        addFloater(p.x, p.y - p.r - 18, T('itemSigil'), '#c9a6ff', true);
-        addRing(p.x, p.y, '#c9a6ff', 70, 20, 4);
-      }
+      /* A hatás AZONNAL érvényes (mentés, tesztek); a látvány — a tárgy
+         berepül a hősbe, és ott felragyog — utána fut le. */
+      let label = null;
+      if(pu.loot){ if(giveLoot(p, pu.loot, true)) label = lootLabel(p, pu.loot); }
+      else if(pu.sigil && queueItemOffer()){ label = T('itemSigil'); game._offerHold = COLLECT_FLY + 4; }
+      startCollectFx(pu, label);
     }
   }
   game.pickups = game.pickups.filter(pu=>!pu.taken && pu.t < 3600);
 }
+/* ---------- FELVÉTEL-ANIMÁCIÓ ----------
+   A tárgy felugrik, pörögve, ívben berepül a hős mellkasába, és ott
+   felragyog: fényoszlop, két gyűrű, szikrák, és a tárgy neve. */
+const COLLECT_FLY = 32, COLLECT_AFTER = 30, COLLECT_POP = 7;
+function startCollectFx(pu, label){
+  game.collectFx = game.collectFx || [];
+  game.collectFx.push({ x0:pu.x, y0:pu.y, x:pu.x, y:pu.y, h:34, t:0, icon:pu.icon, col:pu.col, sigil:!!pu.sigil, label, spin:(pu.t||0)/22, s:1 });
+  addRing(pu.x, pu.y, pu.col, 30, 12, 3);
+  addParticles(pu.x, pu.y, pu.col, 8);
+  try { SFX.orb && SFX.orb(); } catch(e){}
+}
+function tickCollectFx(p){
+  if(!game.collectFx || !game.collectFx.length) return;
+  for(const f of game.collectFx){
+    f.t++;
+    if(f.t <= COLLECT_FLY){
+      if(f.t <= COLLECT_POP){
+        // FELPATTANÁS: előbb a helyén ugrik egyet és kicsit megnő — ebből látszik, hogy "megvan"
+        const q = f.t / COLLECT_POP;
+        f.h = 34 + Math.sin(q*Math.PI*0.5)*22; f.s = 1 + 0.35*Math.sin(q*Math.PI); f.spin += 0.5;
+      } else {
+        const k = (f.t - COLLECT_POP) / (COLLECT_FLY - COLLECT_POP), e = k*k*(3 - 2*k);   // lágy indulás és érkezés
+        f.x = f.x0 + (p.x - f.x0)*e; f.y = f.y0 + (p.y - f.y0)*e;
+        f.h = 56 + (30 - 56)*e + Math.sin(k*Math.PI)*60;        // magas ív, a mellkasba érkezik
+        f.s = 1 - 0.5*e; f.spin += 0.4 + k*0.7;                 // gyorsulva pörög, közben összemegy
+      }
+      if(f.t % 2 === 0) addParticles(f.x, f.y, f.col, 1);
+      if(f.t === COLLECT_FLY){
+        // BEÉRKEZÉS: felragyog a hősön
+        addRing(p.x, p.y, f.col, 96, 24, 6); addRing(p.x, p.y, '#ffffff', 52, 16, 3); addRing(p.x, p.y, f.col, 140, 30, 2);
+        addParticles(p.x, p.y, f.col, 30); addParticles(p.x, p.y, '#ffffff', 14);
+        addFlash(f.col, 0.16, 14); addChroma(0.35); addShake(2, 5);
+        // felfelé szálló szikrák
+        f.sparks = []; for(let i=0;i<16;i++) f.sparks.push({ a:Math.random()*PI2, r:6+Math.random()*16, h:20+Math.random()*20, v:1.4+Math.random()*1.8, s:1+Math.random()*1.6 });
+        if(f.label) addFloater(p.x, p.y - p.r - 18, f.label, f.col, true);
+        try { SFX.levelup && SFX.levelup(); } catch(e){}
+      }
+    } else { f.x = p.x; f.y = p.y; }
+  }
+  game.collectFx = game.collectFx.filter(f=>f.t < COLLECT_FLY + COLLECT_AFTER);
+}
+/* A TALAJON csak a tárgy fénye: lüktető folt és két táguló gyűrű. Ez a
+   talajsíkon rajzolódik, tehát helyesen, rombuszként fekszik. */
 function drawPickups(g){
   if(!game || !game.pickups) return;
   for(const pu of game.pickups){
-    const bob = Math.sin(pu.t/16)*4;
+    const t = pu.t, pulse = 0.5 + 0.5*Math.sin(t/10);
     g.save();
-    g.globalAlpha = 0.3; g.fillStyle='#000';
-    g.beginPath(); g.ellipse(pu.x, pu.y+6, 12, 5, 0, 0, PI2); g.fill();
-    g.globalAlpha = 0.55 + 0.25*Math.sin(pu.t/10);
-    g.fillStyle = pu.col;
-    g.beginPath(); g.arc(pu.x, pu.y - 10 + bob, 16, 0, PI2); g.fill();
-    g.globalAlpha = 1;
-    g.font = '18px system-ui, sans-serif'; g.textAlign='center'; g.textBaseline='middle';
-    g.fillText(pu.icon, pu.x, pu.y - 10 + bob);
+    const gr = g.createRadialGradient(pu.x, pu.y, 2, pu.x, pu.y, 30);
+    gr.addColorStop(0, rgba(pu.col, 0.55)); gr.addColorStop(0.6, rgba(pu.col, 0.18)); gr.addColorStop(1, rgba(pu.col, 0));
+    g.fillStyle = gr; g.beginPath(); g.arc(pu.x, pu.y, 30, 0, PI2); g.fill();
+    for(let i=0;i<2;i++){ const k = ((t/60) + i*0.5) % 1;
+      g.globalAlpha = (1-k)*0.7; g.strokeStyle = pu.col; g.lineWidth = 2;
+      g.beginPath(); g.arc(pu.x, pu.y, 10 + k*26, 0, PI2); g.stroke(); }
+    g.globalAlpha = 0.35 + 0.25*pulse; g.fillStyle = 'rgba(0,0,0,0.5)';
+    g.beginPath(); g.arc(pu.x, pu.y, 7 - 2*Math.sin(t/18), 0, PI2); g.fill();   // az árnyék a lebegéssel együtt szűkül-tágul
+    g.restore();
+  }
+}
+/* A LEBEGŐ TÁRGY — állva, a vetített pont fölött (arenaUpright), tehát
+   nem nyomja laposra a padló. Két alak:
+     ZSÁKMÁNY — vastag, forgó érme: az éle látszik, amikor elfordul, a
+                lapján az ikon, csillogó fénycsík fut át rajta.
+     PECSÉT   — forgó, lila kristály (két gúla), a lapok fénye forgás
+                közben változik.
+   Mindkettőből fényoszlop tör fel, és szikrák keringenek körülötte. */
+function drawItem3D(g, x, y, h, spin, col, icon, sigil, sc, beam, t){
+  sc = sc || 1;
+  const cy = y - h;
+  g.save();
+  // fényoszlop
+  if(beam > 0){
+    g.globalCompositeOperation = 'lighter';
+    const bg = g.createLinearGradient(x, y, x, y - 120);
+    bg.addColorStop(0, rgba(col, 0.32*beam)); bg.addColorStop(0.5, rgba(col, 0.14*beam)); bg.addColorStop(1, rgba(col, 0));
+    g.fillStyle = bg; g.fillRect(x - 7, y - 120, 14, 120);
+    g.fillStyle = rgba('#ffffff', 0.10*beam); g.fillRect(x - 2, y - 110, 4, 110);
+    g.globalCompositeOperation = 'source-over';
+  }
+  // glória
+  const gs = glowSprite(col, 20*sc);
+  g.globalAlpha = 0.55 + 0.2*Math.sin(t/9); g.drawImage(gs.c, x - gs.S, cy - gs.S, gs.S*2, gs.S*2); g.globalAlpha = 1;
+  // mögötte keringő szikrák (a hátsó fél)
+  const spark = (front)=>{ for(let i=0;i<3;i++){ const a = t/24 + i*PI2/3, z = Math.sin(a); if((z > 0) !== front) continue;
+      const px = x + Math.cos(a)*17*sc, py = cy + z*5*sc - 2; g.fillStyle = front ? '#ffffff' : rgba(col, 0.8);
+      g.beginPath(); g.arc(px, py, (front?1.8:1.3)*sc, 0, PI2); g.fill(); } };
+  spark(false);
+  if(!sigil){
+    // ÉRME: a forgás koszinusza adja a látszó szélességet
+    const R = 11*sc, c = Math.cos(spin), w = Math.max(0.1, Math.abs(c))*R, th = 3.2*sc*(1 - Math.abs(c)*0.7);
+    const dir = c >= 0 ? 1 : -1;
+    // az érme éle (vastagság)
+    g.fillStyle = shade(col, -0.45);
+    g.beginPath(); g.ellipse(x - dir*th, cy, w, R, 0, 0, PI2); g.fill();
+    g.fillRect(x - dir*th - 0.01, cy - R, dir*th, R*2);
+    // a lap
+    const fg = g.createLinearGradient(x - w, cy - R, x + w, cy + R);
+    fg.addColorStop(0, shade(col, 0.55)); fg.addColorStop(0.5, col); fg.addColorStop(1, shade(col, -0.25));
+    g.fillStyle = fg; g.beginPath(); g.ellipse(x, cy, w, R, 0, 0, PI2); g.fill();
+    g.strokeStyle = 'rgba(255,240,200,0.9)'; g.lineWidth = 1.4*sc; g.stroke();
+    g.strokeStyle = rgba('#ffffff', 0.35); g.lineWidth = 1; g.beginPath(); g.ellipse(x, cy, w*0.78, R*0.78, 0, 0, PI2); g.stroke();
+    // ikon a lapon (összenyomva, ahogy fordul)
+    if(Math.abs(c) > 0.25){
+      g.save(); g.translate(x, cy); g.scale(Math.abs(c), 1);
+      g.font = Math.round(13*sc)+'px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.fillText(icon, 0, 1); g.restore();
+    }
+    // átfutó csillogás
+    const gl = ((t/50) % 1.6) - 0.3;
+    if(gl > 0 && gl < 1){ g.save(); g.beginPath(); g.ellipse(x, cy, w, R, 0, 0, PI2); g.clip();
+      g.globalCompositeOperation = 'lighter'; g.fillStyle = 'rgba(255,255,255,0.45)';
+      g.beginPath(); const gx = x - w + gl*2*w; g.moveTo(gx - 3, cy - R); g.lineTo(gx + 2, cy - R); g.lineTo(gx - 4, cy + R); g.lineTo(gx - 9, cy + R); g.fill(); g.restore(); }
+  } else {
+    // KRISTÁLY: két gúla, négy látszó lap, a forgással változó fény
+    const R = 10*sc, H = 15*sc;
+    const pts = [0,1,2,3].map(i=>{ const a = spin + i*Math.PI/2; return { x: x + Math.cos(a)*R, z: Math.sin(a) }; });
+    const faces = [];
+    for(let i=0;i<4;i++){ const a = pts[i], b = pts[(i+1)%4]; const z = (a.z + b.z)/2; faces.push({ a, b, z }); }
+    faces.sort((u,v)=>u.z - v.z);
+    for(const f of faces){
+      const lit = 0.5 + 0.5*Math.cos(Math.atan2(f.z, 1) + 0.6);
+      for(const [tip, k] of [[cy - H, 0.25], [cy + H*0.8, -0.35]]){
+        g.fillStyle = shade(col, (lit - 0.5)*0.9 + k);
+        g.beginPath(); g.moveTo(f.a.x, cy + f.a.z*3*sc); g.lineTo(f.b.x, cy + f.b.z*3*sc); g.lineTo(x, tip); g.closePath(); g.fill();
+        g.strokeStyle = 'rgba(255,255,255,0.35)'; g.lineWidth = 0.8; g.stroke();
+      }
+    }
+    g.fillStyle = 'rgba(255,255,255,0.7)'; g.beginPath(); g.arc(x - R*0.25, cy - H*0.45, 1.6*sc, 0, PI2); g.fill();
+  }
+  spark(true);
+  g.restore();
+}
+const ITEM_SCALE = 1.35;   // a lebegő tárgyak mérete (telefonon is jól látsszon)
+function drawPickup3D(g, pu){
+  const t = pu.t, bob = Math.sin(t/18)*5;
+  drawItem3D(g, pu.x, pu.y, 34 + bob, t/22, pu.col, pu.icon, !!pu.sigil, ITEM_SCALE, 1, t);
+}
+function drawCollectFx(g, f){
+  if(f.t <= COLLECT_FLY){
+    drawItem3D(g, f.x, f.y, f.h, f.spin, f.col, f.icon, f.sigil, f.s*ITEM_SCALE, Math.max(0, 1 - f.t/COLLECT_POP), f.t);
+    // repülés közben fénycsóva a tárgy mögött
+    if(f.t > COLLECT_POP){ g.save(); g.globalCompositeOperation='lighter';
+      const gs = glowSprite(f.col, 10); g.globalAlpha = 0.6; g.drawImage(gs.c, f.x - gs.S, f.y - f.h - gs.S, gs.S*2, gs.S*2); g.restore(); }
+  } else {
+    // BEÉRKEZÉS: fényoszlop, sugárirányú fénysugarak és felszálló szikrák a hősön
+    const k = (f.t - COLLECT_FLY) / COLLECT_AFTER, fade = 1 - k, chest = f.y - 30;
+    g.save(); g.globalCompositeOperation = 'lighter';
+    const w = 26 + 26*k, top = f.y - 190;
+    const bg = g.createLinearGradient(f.x, f.y, f.x, top);
+    bg.addColorStop(0, rgba(f.col, 0.75*fade)); bg.addColorStop(0.6, rgba(f.col, 0.3*fade)); bg.addColorStop(1, rgba(f.col, 0));
+    g.fillStyle = bg; g.fillRect(f.x - w/2, top, w, 190);
+    g.fillStyle = rgba('#ffffff', 0.6*fade); g.fillRect(f.x - 3, top + 30, 6, 160);
+    // fénysugarak
+    for(let i=0;i<10;i++){ const a = i/10*PI2 + f.t*0.04, L = 28 + 46*Math.min(1, k*2.2);
+      g.strokeStyle = rgba(i%2 ? '#ffffff' : f.col, 0.55*fade); g.lineWidth = i%2 ? 2 : 3.5; g.lineCap = 'round';
+      g.beginPath(); g.moveTo(f.x + Math.cos(a)*10, chest + Math.sin(a)*6); g.lineTo(f.x + Math.cos(a)*L, chest + Math.sin(a)*L*0.55); g.stroke(); }
+    const gs = glowSprite(f.col, 34); g.globalAlpha = 0.8*fade; g.drawImage(gs.c, f.x - gs.S, chest - gs.S, gs.S*2, gs.S*2); g.globalAlpha = 1;
+    // felszálló szikrák
+    if(f.sparks) for(const sp of f.sparks){ const hh = sp.h + sp.v*(f.t - COLLECT_FLY)*1.6;
+      g.fillStyle = rgba(sp.s > 1.8 ? '#ffffff' : f.col, fade);
+      g.beginPath(); g.arc(f.x + Math.cos(sp.a)*sp.r, f.y - hh, sp.s*1.3, 0, PI2); g.fill(); }
     g.restore();
   }
 }
