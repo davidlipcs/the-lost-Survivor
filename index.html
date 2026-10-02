@@ -168,8 +168,10 @@
     85%{ opacity:.4; }
     100%{ transform:translate(var(--ex,20px),-108vh); opacity:0; }
   }
-  /* keskeny kijelzőn semmi ne lógjon ki oldalra */
-  .overlay > *{ max-width:100%; }
+  /* keskeny kijelzőn semmi ne lógjon ki oldalra; és ha a tartalom magasabb a
+     képernyőnél, GÖRGESSEN, ne nyomja össze a gombokat (az overflow:hidden gomb
+     automatikus minimum-magassága nulla, különben a flex laposra zsugorítaná) */
+  .overlay > *{ max-width:100%; flex-shrink:0; }
   .hidden{ display:none !important; }
   h1.title{ font-size:clamp(24px, 8vw, 42px); margin:0; letter-spacing:2px; font-weight:900;
     background: linear-gradient(180deg, #fff 18%, var(--accent) 70%, #ff8c3c 130%);
@@ -191,8 +193,8 @@
   #previewCanvas{ width:200px; height:220px; cursor:pointer; pointer-events:all;
     background: radial-gradient(ellipse at 50% 72%, #1a2438, #0d1119 78%); }
   #menuHeroStage{ width:min(560px, 94vw); height:auto; aspect-ratio:560/200; display:block;
-    margin:-6px auto 2px; pointer-events:none; }
-  @media (max-height:600px){ #menuHeroStage{ display:none; } }
+    margin:-6px auto 0; pointer-events:none; }
+  @media (max-height:640px){ #menuHeroStage{ display:none; } }
   .classCard .cPortrait{ height:112px; }
   .classCard::before{ height:112px; }
   #heroDetailPanel canvas{ width:120px; height:140px; cursor:pointer; pointer-events:all; }
@@ -674,7 +676,7 @@
     </div>
     <div class="charCustom">
 
-      <canvas id="previewCanvas" width="200" height="220" title="Koppints: suhintás"></canvas>
+      <canvas id="previewCanvas" width="200" height="220"></canvas>
       <div>
         <input id="nameInput" type="text" placeholder="Karakter neve" data-i18n-ph="nameInputPh" maxlength="14" value="Hős">
         <div class="colorRow" id="colorRow" style="margin-top:14px;"></div>
@@ -889,7 +891,7 @@
 /* A VERZIÓ: ugyanaz a szám, mint az sw.js CACHE_NAME-jében (minden kiadásnál
    együtt emeljük). A főmenü sarkában látszik, így mindig ellenőrizhető,
    melyik változat fut. */
-const APP_VERSION = 'v53';
+const APP_VERSION = 'v54';
 /* ÖNFRISSÍTÉS: egy háttérben nyitva hagyott (vagy kezdőképernyőre tett) játék
    magától nem tölt újra — órákig a régi változat futhatott, pedig az új már
    kint volt. Ezért visszatéréskor (és 10 percenként) megnézzük, van-e újabb;
@@ -10089,8 +10091,8 @@ function drawTableauFigure(g, x, groundY, hh, cfg, label){
   if(label){
     g.font=`bold ${Math.max(10,Math.round(S*5))}px 'Trebuchet MS'`; g.textAlign='center';
     g.lineWidth=3; g.strokeStyle='rgba(0,0,0,0.75)';
-    g.strokeText(label, x, groundY + S*7.5);
-    g.fillStyle='#ffe9a8'; g.fillText(label, x, groundY + S*7.5);
+    g.strokeText(label, x, groundY + S*6);
+    g.fillStyle='#ffe9a8'; g.fillText(label, x, groundY + S*6);
   }
   g.restore();
 }
@@ -10103,7 +10105,7 @@ function renderVictoryTableau(){
   const g = cv.getContext('2d');
   drawCastleScene(g, w, h);
 
-  const groundY = h*0.94, figH = h*0.40;
+  const groundY = h*0.90, figH = h*0.40;   // a nevek a talp alá férjenek
   // a barátod balra, te középen, a hercegnő jobbra — mind a játék saját figurája
   if(chosenCompanionClass && CLASSES[chosenCompanionClass]){
     drawTableauFigure(g, w*0.30, groundY, figH*0.92,

@@ -105,9 +105,23 @@ a baj, mit csináltál, hogyan tesztelted. Magyarul.
 ## Tesztelés
 
 Fejetlen Chromium + Playwright, a böngésző itt:
-`/opt/pw-browsers/chromium-1194/chrome-linux/chrome`.
-A tesztkészletek a munkamenet scratchpad-jében vannak, két kiszolgálóval:
-8901 = a repó, 8902 = a scratchpad másolata.
+`/opt/pw-browsers/chromium-1194/chrome-linux/chrome` (más gépen a
+`CHROME_PATH` környezeti változóval adható meg).
+A tesztkészlet a repóban van: `tests/smoke.js` (20 ellenőrzés a valódi
+hurokkal, kilépési kód 1 hibánál), `tests/screens.js` (képernyő-sweep,
+telefon-méretekkel is), `tests/sheet.js` (sprite-lap a figura-animációról).
+Leírás: `tests/README.md`. Kiszolgáló: `python -m http.server 8901` a repó
+gyökerén.
+
+## Figurák és menü-portrék
+
+A 45 fokos figura-rajzoló (`ISO`, `ISO_LOADOUT`, `isoFigureRaw`,
+`getFigureSprite`, `isoDrawFigure` ...) és a `FIG_WIDE`/`arenaWideBody` a
+MENÜ UI szakasz ELŐTT áll, mert a hősválasztó portréi betöltéskor kisülnek,
+és a script-szintű `const`-ok csak a definíciójuk után érhetők el. Ha új
+figura-függvényt írsz, oda tedd. A menü minden figurája ugyanabból a
+sprite-gyorsítótárból jön, mint a harc (`stageSetup` / `stageDraw`), tehát
+amit a hősválasztóban látsz, azt kapod a pályán is.
 
 A teszt a VALÓDI játékhurkot hajtsa, ne szimulálja a logikát. Minden
 változtatás után fusson a teljes sweep, és a válaszban szerepeljen, mi
