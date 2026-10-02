@@ -519,6 +519,9 @@
     background-size: auto, 170% 170%, 170% 170%, auto;
     animation: overlayDrift 22s ease-in-out infinite alternate; }
   @keyframes overlayDrift{ 0%{ background-position: 0 0, 0% 0%, 100% 100%, 0 0; } 100%{ background-position: 0 0, 100% 70%, 0% 30%, 0 0; } }
+  /* képernyőváltás: a megjelenő menü rövid, lágy beúszással jön (a háttér-hömpölygés mellett) */
+  .overlay:not(.hidden){ animation: overlayDrift 22s ease-in-out infinite alternate, screenIn .3s cubic-bezier(.2,.9,.3,1); }
+  @keyframes screenIn{ from{ opacity:0; transform:translateY(10px) scale(0.988); } to{ opacity:1; transform:none; } }
   h1.title{ animation: titleGlow 4.5s ease-in-out infinite alternate; }
   @keyframes titleGlow{ from{ text-shadow:0 0 40px rgba(110,231,255,0.3), 0 0 80px rgba(255,140,60,0.12); }
     to{ text-shadow:0 0 60px rgba(110,231,255,0.55), 0 0 110px rgba(255,140,60,0.28); } }
@@ -4845,81 +4848,76 @@ function drawBossFlames(g,R,col,t,light){     // Láng: lobogó tűznyelvek a pe
   g.restore();
   if(!light && (VFX.t%3===0)) addPuff(Math.cos(t/300)*R*0.5, Math.sin(t/300)*R*0.5, '#ff9a4a', 0, 3, 1);
 }
-function drawBossCape(g,R,col,t,face){        // Király: bíbor köpeny a háta mögött
-  g.save(); g.rotate(face);
-  const wav = Math.sin(t/260)*R*0.15;
-  g.fillStyle='#7a1a2e'; g.beginPath(); g.moveTo(-R*0.3,-R*0.8); g.quadraticCurveTo(-R*1.5,-R*0.6+wav,-R*1.7,wav*0.5); g.quadraticCurveTo(-R*1.5,R*0.6+wav,-R*0.3,R*0.8); g.closePath(); g.fill();
-  g.strokeStyle='#e8c96a'; g.lineWidth=R*0.06; g.beginPath(); g.moveTo(-R*1.65,wav*0.5); g.quadraticCurveTo(-R*1.5,R*0.6+wav,-R*0.3,R*0.8); g.stroke();
+function drawBossCape(g,S,col,t,faceRight){   // Király: bíbor köpeny a figura háta mögött, lengve
+  const F = faceRight ? 1 : -1, wav = Math.sin(t/300)*2.2*S;
+  g.save();
+  g.fillStyle='#6e1628';
+  g.beginPath();
+  g.moveTo(-F*4*S, -31*S); g.lineTo(F*5*S, -31*S);
+  g.quadraticCurveTo(F*8*S + wav, -14*S, F*3*S + wav*1.4, -1*S);
+  g.lineTo(-F*13*S + wav*1.2, 0);
+  g.quadraticCurveTo(-F*12*S + wav*0.6, -16*S, -F*4*S, -31*S);
+  g.closePath(); g.fill();
+  g.strokeStyle='#e8c96a'; g.lineWidth=0.7*S;
+  g.beginPath(); g.moveTo(-F*13*S + wav*1.2, 0); g.lineTo(F*3*S + wav*1.4, -1*S); g.stroke();
   g.restore();
+}
+/* A boss FIGURA: ugyanaz a csontváz-rigelt, kisütött alak, mint a hősé és az
+   ellenfeleké, csak nagyobb testtel, szarvas (a Királynál koronás) fejjel és
+   a típusára jellemző háttér-réteggel (csápok, jégtűk, lángok, köpeny). A régi,
+   felülnézeti korong volt az egyetlen alak, ami nem állt a többiek között. */
+const BOSS_LOADOUT = {
+  shadow: { w:'axe',   build:1.55 },
+  frost:  { w:'staff', build:1.5 },
+  flame:  { w:'sword', build:1.5 },
+  king:   { w:'sword', build:1.45 },
+};
+const BOSS_BODY = {
+  shadow: { body:'hulk',  head:'horned', hip:1.5 },
+  frost:  { body:'hulk',  head:'horned', hip:1.45 },
+  flame:  { body:'hulk',  head:'horned', hip:1.5 },
+  king:   { body:'plate', head:'king',   hip:1.4 },
+};
+function bossBodyStyle(type){
+  const base = BOSS_BODY[type] || BOSS_BODY.shadow;
+  if(!base._wide) base._wide = Object.assign({}, base, { hip: base.hip * FIG_WIDE });
+  return base._wide;
 }
 function drawBoss(g, b, face){
   const col = b.col || '#ff5c7c', t = Date.now(), light = fxLight();
-  const R = (b.r0 !== undefined) ? b.r0 : b.r;   // a rajz az eredeti sugárból (a szélességet a hívó nyújtja)
+  const R = (b.r0 !== undefined) ? b.r0 : b.r;
   const intro = b._introT>0 ? b._introT/70 : 0;   // 1 → 0
   const scaleIn = intro>0 ? (1 - intro*intro)*(1 + Math.sin((1-intro)*Math.PI)*0.16) : 1;
-  const hover = Math.sin(t/900)*3;
-  let ox=0, oy=hover;
+  const hover = (b.type==='king') ? 0 : Math.sin(t/900)*2;
+  let ox=0, oy=0;
   if(b._knock>0){ ox+=Math.cos(b._kdir||0)*b._knock*1.5; oy+=Math.sin(b._kdir||0)*b._knock*1.5; }
-  // talaj-árnyék
-  g.beginPath(); g.ellipse(b.x+R*LIGHT.sx*0.5, b.y+R*0.72, R*1.15*scaleIn, R*0.46*scaleIn, 0,0,PI2); g.fillStyle='rgba(0,0,0,0.45)'; g.fill();
-  if(scaleIn<=0.02) return;
-  g.save(); g.translate(b.x+ox, b.y+oy); g.scale(scaleIn, scaleIn);
-  // aura
-  const gs = glowSprite(col, R*2.3); g.globalAlpha = (light?0.35:0.5)+0.15*Math.sin(t/260); g.drawImage(gs.c,-gs.S,-gs.S,gs.S*2,gs.S*2); g.globalAlpha=1;
-  // típus-réteg a test mögött
-  if(b.type==='frost') drawBossShards(g,R,col,t,light);
-  else if(b.type==='flame') drawBossFlames(g,R,col,t,light);
-  else if(b.type==='king') drawBossCape(g,R,col,t,face);
-  else drawBossTendrils(g,R,col,t,light);
-  // rúna-gyűrűk
-  g.save(); g.rotate(t/1400); g.strokeStyle=rgbaAny(col,0.55); g.lineWidth=2; g.setLineDash([R*0.25,R*0.18]); g.beginPath(); g.arc(0,0,R*1.35,0,PI2); g.stroke(); g.setLineDash([]); g.restore();
-  g.save(); g.rotate(-t/2100); g.strokeStyle=rgbaAny(col,0.3); g.lineWidth=1.2; g.beginPath(); g.arc(0,0,R*1.55,0,PI2); g.stroke();
-  g.fillStyle=col; for(let i=0;i<6;i++){ const a=i/6*PI2; g.beginPath(); g.arc(Math.cos(a)*R*1.55,Math.sin(a)*R*1.55,R*0.06,0,PI2); g.fill(); } g.restore();
-  // törzs
-  const flash = b.hitFlash>0, frozen = b.frozen>0 && !b.surrendered;
-  // találatkor nem vakít fehérre (gyors tüzelésnél folyton fehér lenne), csak felvilágosodik és fehér peremet kap
-  const bodyBase = flash ? shade(col,0.35) : (frozen ? '#bfe9ff' : (b.isMini ? shade(col,-0.55) : shade(col,-0.72)));
-  const grad = g.createRadialGradient(-R*0.4,-R*0.45,R*0.1, 0,0,R*1.1);
-  grad.addColorStop(0, flash?'#ffffff':(frozen?'#e6f6ff':shade(col,-0.25))); grad.addColorStop(0.55, bodyBase); grad.addColorStop(1, flash?shade(col,-0.1):shade(col,-0.9));
-  g.beginPath(); g.arc(0,0,R,0,PI2); g.fillStyle=grad; g.fill();
-  g.lineWidth=flash?5:3; g.strokeStyle=flash?'#ffffff':col; if(!light){ g.shadowColor=col; g.shadowBlur=18; } g.stroke(); g.shadowBlur=0;
-  // lüktető belső erezet
-  g.save(); g.beginPath(); g.arc(0,0,R,0,PI2); g.clip();
-  g.strokeStyle=rgbaAny(col, 0.35+0.2*Math.sin(t/200)); g.lineWidth=R*0.05; g.lineCap='round';
-  for(let i=0;i<5;i++){ const a=i/5*PI2+t/3000; g.beginPath(); g.moveTo(Math.cos(a)*R*0.2,Math.sin(a)*R*0.2);
-    g.quadraticCurveTo(Math.cos(a+0.5)*R*0.6,Math.sin(a+0.5)*R*0.6,Math.cos(a+0.2)*R*1.05,Math.sin(a+0.2)*R*1.05); g.stroke(); }
-  const rim = g.createRadialGradient(-R*0.3,-R*0.3,R*0.5,0,0,R); rim.addColorStop(0,'rgba(255,255,255,0)'); rim.addColorStop(1,'rgba(0,0,0,0.35)');
-  g.fillStyle=rim; g.fillRect(-R,-R,R*2,R*2);
+  const z = b.isMini ? 1.1 : 1.4;
+  const lo = BOSS_LOADOUT[b.type] || BOSS_LOADOUT.shadow;
+  const opt = { loadout: lo, bodyStyle: bossBodyStyle(b.type), marker:false, hpBar:false, shadow:false,
+                flash: b.hitFlash>0, frozen: b.frozen>0 && !b.surrendered };
+  const S = 1.72*z*(lo.build||1);
+  const a = arenaIsoActor(b, true); a.etype = 'boss'; a.color = col; a.facing = face;   // mindig a hős felé fordul
+  const faceRight = isoFaceRight(face);
+  // talaj: aura-tócsa + lágy árnyék (a belépőnél a földből nő ki)
+  const gs = glowSprite(col, R*2.0);
+  g.globalAlpha = (light?0.3:0.45)+0.12*Math.sin(t/260); g.drawImage(gs.c, b.x-gs.S, b.y-gs.S+R*0.3, gs.S*2, gs.S*2); g.globalAlpha=1;
+  drawSoftShadow(g, b.x + 1.5*S, b.y, 15*S*scaleIn, 7.5*S*scaleIn, 0.95);
+  // rúna-gyűrű a talpa körül, a talajra lapítva
+  g.save(); g.translate(b.x, b.y); g.scale(1, 0.5); g.rotate(t/1400);
+  g.strokeStyle=rgbaAny(col,0.55); g.lineWidth=2.5; g.setLineDash([R*0.25,R*0.18]); g.beginPath(); g.arc(0,0,R*1.25,0,PI2); g.stroke(); g.setLineDash([]);
+  g.rotate(-t/1400 - t/2100); g.strokeStyle=rgbaAny(col,0.3); g.lineWidth=1.2; g.beginPath(); g.arc(0,0,R*1.45,0,PI2); g.stroke();
+  g.fillStyle=col; for(let i=0;i<6;i++){ const an=i/6*PI2; g.beginPath(); g.arc(Math.cos(an)*R*1.45,Math.sin(an)*R*1.45,R*0.06,0,PI2); g.fill(); }
   g.restore();
-  withRot(g, 0, 0, face, ()=>{
-    // korona-tüskék hátul/körben
-    g.fillStyle=shade(col,-0.85);
-    for(let i=0;i<7;i++){ const a=Math.PI*0.5 + (i-3)*0.5; g.beginPath();
-      g.moveTo(Math.cos(a-0.12)*R*0.7,Math.sin(a-0.12)*R*0.7);
-      g.lineTo(Math.cos(a)*R*1.15,Math.sin(a)*R*1.15);
-      g.lineTo(Math.cos(a+0.12)*R*0.7,Math.sin(a+0.12)*R*0.7); g.closePath(); g.fill(); }
-    // előre görbülő szarvak (a boss típusa szerint eltérő árnyalat)
-    const hg = g.createLinearGradient(R*0.1,0,R*1.25,0);
-    const hc = b.type==='frost' ? '#e6f4ff' : (b.type==='flame' ? '#ffe0b0' : (b.type==='king' ? '#f4dc8a' : '#e8e2ea'));
-    hg.addColorStop(0, shade(hc,-0.35)); hg.addColorStop(1, hc);
-    g.fillStyle = hg;
-    for(const s of [-1,1]){ g.beginPath(); g.moveTo(R*0.1,s*R*0.5); g.quadraticCurveTo(R*1.2,s*R*0.7,R*1.25,s*R*0.15);
-      g.quadraticCurveTo(R*0.9,s*R*0.4,R*0.35,s*R*0.2); g.closePath(); g.fill(); }
-    if(b.type==='king'){   // korona a fej tetején
-      g.fillStyle='#ffd166'; g.beginPath(); g.moveTo(-R*0.55,-R*0.45); g.lineTo(-R*0.85,-R*0.9); g.lineTo(-R*0.6,-R*0.65); g.lineTo(-R*0.45,-R*1.05); g.lineTo(-R*0.3,-R*0.65);
-      g.lineTo(-R*0.05,-R*1.05); g.lineTo(R*0.1,-R*0.65); g.lineTo(R*0.25,-R*0.9); g.lineTo(R*0.05,-R*0.4); g.closePath(); g.fill();
-      g.fillStyle='#ff5c7c'; g.beginPath(); g.arc(-R*0.25,-R*0.55,R*0.07,0,PI2); g.fill();
-    }
-    // ragyogó szemek
-    g.save(); if(!light){ g.shadowColor=col; g.shadowBlur=R*0.9; } g.fillStyle=shade(col,0.25);
-    const blink = (Math.sin(t/1700)>0.97) ? 0.15 : 1;
-    for(const s of [-1,1]){ g.beginPath(); g.ellipse(R*0.4, s*R*0.28, R*0.2, R*0.12*blink, 0,0,PI2); g.fill(); }
-    g.restore();
-    g.fillStyle='#fff'; for(const s of [-1,1]){ g.beginPath(); g.arc(R*0.46, s*R*0.26, R*0.045*blink, 0,PI2); g.fill(); }
-    // fogazott száj
-    g.strokeStyle=shade(col,0.4); g.lineWidth=R*0.05; g.beginPath();
-    for(let i=0;i<=6;i++){ const yy=(-0.3+i*0.1)*R; const xx=R*(0.62+ (i%2?0.08:0)); i?g.lineTo(xx,yy):g.moveTo(xx,yy);} g.stroke();
-  });
+  if(scaleIn<=0.02) return;
+  g.save(); g.translate(b.x+ox, b.y+oy-hover); g.scale(scaleIn, scaleIn); g.translate(-b.x, -b.y);
+  // típus-réteg a test MÖGÖTT, a mellkas magasságában
+  g.save(); g.translate(b.x, b.y - 22*S);
+  if(b.type==='frost') drawBossShards(g,R*0.85,col,t,light);
+  else if(b.type==='flame') drawBossFlames(g,R*0.85,col,t,light);
+  else if(b.type==='king') drawBossCape(g,S,col,t,faceRight);
+  else drawBossTendrils(g,R*0.85,col,t,light);
+  g.restore();
+  isoDrawFigure(g, a, b.x, b.y, z, opt);
   g.restore();
 }
 
@@ -6124,7 +6122,7 @@ function figScratchRim(srcCv, w, h, d){
    ("kommandós") a kaszt saját sziluettjét hagyja; a többi felülírja. */
 function heroHeadStyle(baseHead, chosen, team){
   if(team === 'foe' || !chosen || chosen === 'commando' || baseHead === 'none') return baseHead;
-  const m = { gasmask:'gasmask', cyber:'cyber', ninja:'hood', spartan:'spartan' };
+  const m = { gasmask:'gasmask', cyber:'cyber', ninja:'hood', spartan:'spartan', crown:'crown' };
   return m[chosen] || baseHead;
 }
 
@@ -6167,7 +6165,37 @@ function drawSkinTrim(g, idx, c){
 
 /* A fej TÖMEGE — lapos anyagszín, hogy a nyakkal összeolvadjon. */
 function isoHeadShape(g, style, x, y, r, col, F, skin, steel, accent){
-  if(style === 'spartan'){
+  if(style === 'horned' || style === 'king'){
+    // boss: sötét acélsisak, előre görbülő csontszarvakkal; a Királynál arany korona
+    g.fillStyle = shade(steel, -0.3);
+    g.beginPath();
+    g.moveTo(x-r*1.05, y+r*0.75); g.quadraticCurveTo(x-r*1.1, y-r*1.05, x, y-r*1.2);
+    g.quadraticCurveTo(x+r*1.1, y-r*1.05, x+r*1.05, y+r*0.75); g.quadraticCurveTo(x+r*0.55, y+r*1.25, x, y+r*1.25);
+    g.quadraticCurveTo(x-r*0.55, y+r*1.25, x-r*1.05, y+r*0.75); g.closePath(); g.fill();
+    g.fillStyle = '#e8e2ea';
+    for(const sgn of [-1,1]){
+      g.beginPath(); g.moveTo(x+sgn*r*0.75, y-r*0.35);
+      g.quadraticCurveTo(x+sgn*r*1.85, y-r*0.9, x+sgn*r*1.35 + F*r*0.5, y-r*2.2);
+      g.quadraticCurveTo(x+sgn*r*1.25, y-r*1.1, x+sgn*r*0.95, y-r*0.7); g.closePath(); g.fill();
+    }
+    if(style === 'king'){
+      g.fillStyle = '#ffd166';
+      g.beginPath(); g.moveTo(x-r*0.7, y-r*0.9);
+      for(let i=0;i<4;i++){ g.lineTo(x-r*0.7 + i*r*0.47, y-r*1.75); g.lineTo(x-r*0.7 + (i+0.5)*r*0.47, y-r*1.05); }
+      g.lineTo(x+r*0.7, y-r*0.9); g.closePath(); g.fill();
+    }
+  } else if(style === 'crown'){
+    // hercegnő: hosszú haj, kis tiara
+    g.fillStyle = skin;
+    g.beginPath(); g.ellipse(x, y, r*0.9, r, 0, 0, PI2); g.fill();
+    g.fillStyle = '#5a3a2a';
+    g.beginPath(); g.ellipse(x, y - r*0.3, r*1.0, r*0.85, 0, Math.PI, PI2); g.fill();
+    g.beginPath(); g.ellipse(x - F*r*0.85, y + r*0.55, r*0.4, r*1.3, 0, 0, PI2); g.fill();
+    g.fillStyle = '#ffd166';
+    g.beginPath(); g.moveTo(x-r*0.55, y-r*0.85);
+    for(let i=0;i<3;i++){ g.lineTo(x-r*0.55 + i*r*0.55, y-r*1.45); g.lineTo(x-r*0.55 + (i+0.5)*r*0.55, y-r*0.95); }
+    g.lineTo(x+r*0.55, y-r*0.85); g.closePath(); g.fill();
+  } else if(style === 'spartan'){
     // korinthoszi sisak: acél kupola, hátranyúló taréj a csapatszínben
     g.fillStyle = steel;
     g.beginPath();
@@ -6229,7 +6257,25 @@ function isoHeadShape(g, style, x, y, r, col, F, skin, steel, accent){
 
 /* A fej VONÁSAI — a fény után, a sziluetten belülre vágva. */
 function isoHeadFace(g, style, x, y, r, col, F, skinD, accent){
-  if(style === 'spartan'){
+  if(style === 'horned' || style === 'king'){
+    g.fillStyle = 'rgba(6,7,12,0.92)';   // széles arcrés
+    g.beginPath(); g.moveTo(x-r*0.75, y-r*0.2); g.lineTo(x+r*0.75, y-r*0.2);
+    g.lineTo(x+r*0.6, y+r*0.35); g.lineTo(x-r*0.6, y+r*0.35); g.closePath(); g.fill();
+    // két ferde, izzó szem
+    g.fillStyle = accent;
+    for(const sgn of [-1,1]){ g.beginPath(); g.ellipse(x + sgn*r*0.32 + F*r*0.08, y + r*0.05, r*0.2, r*0.1, sgn*0.35, 0, PI2); g.fill(); }
+    g.fillStyle = 'rgba(255,255,255,0.85)';
+    for(const sgn of [-1,1]){ g.beginPath(); g.arc(x + sgn*r*0.32 + F*r*0.12, y + r*0.04, r*0.05, 0, PI2); g.fill(); }
+    g.strokeStyle = 'rgba(255,250,235,0.2)'; g.lineWidth = r*0.1;   // sisak-él
+    g.beginPath(); g.moveTo(x-r*0.9, y+r*0.55); g.quadraticCurveTo(x, y+r*0.8, x+r*0.9, y+r*0.55); g.stroke();
+    if(style === 'king'){ g.fillStyle = '#ff5c7c'; g.beginPath(); g.arc(x, y - r*1.15, r*0.14, 0, PI2); g.fill(); }
+  } else if(style === 'crown'){
+    g.fillStyle = 'rgba(36,28,20,0.9)';
+    g.beginPath(); g.ellipse(x + F*r*0.34, y + r*0.05, r*0.1, r*0.14, 0, 0, PI2); g.fill();
+    g.strokeStyle = 'rgba(200,90,110,0.8)'; g.lineWidth = r*0.1; g.lineCap = 'round';
+    g.beginPath(); g.moveTo(x + F*r*0.2, y + r*0.5); g.lineTo(x + F*r*0.5, y + r*0.48); g.stroke();
+    g.fillStyle = '#ff5c7c'; g.beginPath(); g.arc(x, y - r*1.2, r*0.1, 0, PI2); g.fill();
+  } else if(style === 'spartan'){
     g.fillStyle = 'rgba(8,9,14,0.92)';   // T-alakú arcrés
     g.fillRect(x + F*r*0.05 - r*0.12, y - r*0.2, r*0.24, r*0.95);
     g.fillRect(x - r*0.62, y - r*0.2, r*1.24, r*0.3);
@@ -9217,7 +9263,7 @@ function update(){
       b.x = clamp(b.x,b.r,WORLD.w-b.r); b.y = clamp(b.y,b.r,WORLD.h-b.r);   // a VILÁG széle, nem a vászoné
       resolveObstacles(b);
       if(b.attackTimer > 80*dif.fireRate*(b.fireRate||1)){
-        b.attackTimer=0; SFX.bossShoot();
+        b.attackTimer=0; b._atk = 1; SFX.bossShoot();   // a figura meglendíti a fegyverét
         const bcol = b.col || '#ff5c7c';
         /* A boss lövedék-sebzése fix 8 volt, akármelyik fejezetben — a 9. fejezetben
            egy 560 életű hősnek ez semmi. Most a nehézségi hullámmal együtt nő. */
@@ -10032,60 +10078,19 @@ function drawCastleScene(g, w, h){
   }
 }
 
-// egy álló alak felülnézet helyett OLDALNÉZETBEN — a diadal-képhez
-function drawStandingFigure(g, x, groundY, hh, bodyCol, accentCol, headStyle, label){
-  const s = hh/100;
+// egy álló alak a diadal-képhez: a JÁTÉKBELI figura (kinézet, fej, szín), a kész sprite-ból
+function drawTableauFigure(g, x, groundY, hh, cfg, label){
+  const S = hh/39;   // a figura ~39 S magas
+  const sp = stageSprite(cfg, null, S), k = S/sp.S;
   g.save();
-  // árnyék
-  g.beginPath(); g.ellipse(x, groundY, hh*0.26, hh*0.07, 0,0,PI2);
-  g.fillStyle='rgba(0,0,0,0.45)'; g.fill();
-  // lábak
-  g.strokeStyle='#2a2530'; g.lineWidth=s*7; g.lineCap='round';
-  g.beginPath(); g.moveTo(x-s*7, groundY-s*30); g.lineTo(x-s*9, groundY-s*2); g.stroke();
-  g.beginPath(); g.moveTo(x+s*7, groundY-s*30); g.lineTo(x+s*9, groundY-s*2); g.stroke();
-  // törzs
-  g.beginPath();
-  g.moveTo(x-s*13, groundY-s*30); g.lineTo(x-s*15, groundY-s*62);
-  g.quadraticCurveTo(x, groundY-s*72, x+s*15, groundY-s*62);
-  g.lineTo(x+s*13, groundY-s*30); g.closePath();
-  g.fillStyle=bodyCol; g.fill();
-  g.lineWidth=s*2.4; g.strokeStyle='rgba(0,0,0,0.45)'; g.stroke();
-  // vállvért / dísz
-  g.fillStyle=accentCol;
-  g.beginPath(); g.ellipse(x-s*15, groundY-s*60, s*7, s*5, -0.3,0,PI2); g.fill();
-  g.beginPath(); g.ellipse(x+s*15, groundY-s*60, s*7, s*5, 0.3,0,PI2); g.fill();
-  // karok
-  g.strokeStyle=bodyCol; g.lineWidth=s*6.5;
-  g.beginPath(); g.moveTo(x-s*15, groundY-s*58); g.lineTo(x-s*21, groundY-s*36); g.stroke();
-  g.beginPath(); g.moveTo(x+s*15, groundY-s*58); g.lineTo(x+s*21, groundY-s*36); g.stroke();
-  // fej
-  const hy = groundY-s*80;
-  g.beginPath(); g.arc(x, hy, s*11, 0, PI2);
-  g.fillStyle='#d9b48f'; g.fill();
-  g.lineWidth=s*2; g.strokeStyle='rgba(0,0,0,0.4)'; g.stroke();
-  // sisak / haj a fej-stílus szerint
-  g.fillStyle = headStyle==='crown' ? '#e8c96a' : accentCol;
-  if(headStyle==='crown'){
-    g.beginPath(); g.moveTo(x-s*11, hy-s*7);
-    for(let i=0;i<4;i++){ g.lineTo(x-s*11+i*s*7.3, hy-s*15); g.lineTo(x-s*11+(i+0.5)*s*7.3, hy-s*7); }
-    g.lineTo(x+s*11, hy-s*7); g.closePath(); g.fill();
-  } else if(headStyle==='hair'){
-    g.beginPath(); g.arc(x, hy-s*2, s*11.5, Math.PI, 0); g.fill();
-    g.beginPath(); g.ellipse(x-s*11, hy+s*5, s*3.5, s*11, 0,0,PI2); g.fill();
-    g.beginPath(); g.ellipse(x+s*11, hy+s*5, s*3.5, s*11, 0,0,PI2); g.fill();
-  } else {
-    g.beginPath(); g.arc(x, hy-s*1, s*11.5, Math.PI, 0); g.fill();
-    g.fillRect(x-s*11.5, hy-s*2, s*23, s*3.5);
-  }
-  // szemek
-  g.fillStyle='#20242e';
-  g.beginPath(); g.arc(x-s*4, hy+s*1.5, s*1.5,0,PI2); g.arc(x+s*4, hy+s*1.5, s*1.5,0,PI2); g.fill();
-  // név
+  drawSoftShadow(g, x + 1.2*S, groundY, 12.5*S, 5*S, 0.85);
+  g.imageSmoothingQuality = 'high';
+  g.drawImage(sp.c, x - sp.ox*k, groundY - sp.oy*k, sp.c.width*k, sp.c.height*k);
   if(label){
-    g.font=`bold ${Math.max(10,Math.round(s*13))}px 'Trebuchet MS'`; g.textAlign='center';
+    g.font=`bold ${Math.max(10,Math.round(S*5))}px 'Trebuchet MS'`; g.textAlign='center';
     g.lineWidth=3; g.strokeStyle='rgba(0,0,0,0.75)';
-    g.strokeText(label, x, groundY + s*20);
-    g.fillStyle='#ffe9a8'; g.fillText(label, x, groundY + s*20);
+    g.strokeText(label, x, groundY + S*7.5);
+    g.fillStyle='#ffe9a8'; g.fillText(label, x, groundY + S*7.5);
   }
   g.restore();
 }
@@ -10099,15 +10104,17 @@ function renderVictoryTableau(){
   drawCastleScene(g, w, h);
 
   const groundY = h*0.94, figH = h*0.40;
-  const heroSkin = heroSkinData(chosenClass, chosenSkin).skin;
-  // a barátod balra, te középen, a hercegnő jobbra
+  // a barátod balra, te középen, a hercegnő jobbra — mind a játék saját figurája
   if(chosenCompanionClass && CLASSES[chosenCompanionClass]){
-    const cs = heroSkinData(chosenCompanionClass, 0).skin;
-    drawStandingFigure(g, w*0.30, groundY, figH*0.92, cs.col, cs.accent, 'helmet',
+    drawTableauFigure(g, w*0.30, groundY, figH*0.92,
+      { cls: chosenCompanionClass, skin:0, head:'commando', color: CLASSES[chosenCompanionClass].col, team:'ally', faceRight:true },
       clsTxt(chosenCompanionClass,'label'));
   }
-  drawStandingFigure(g, w*0.50, groundY, figH, heroSkin.col, heroSkin.accent, 'helmet', heroDisplayName());
-  drawStandingFigure(g, w*0.70, groundY, figH*0.90, '#c96a9a', '#ffd9ea', 'hair', T('princessSpeaker'));
+  drawTableauFigure(g, w*0.50, groundY, figH,
+    { cls: chosenClass, skin: chosenSkin, head: chosenHead, color: chosenColor, team:'ally', faceRight:true }, heroDisplayName());
+  drawTableauFigure(g, w*0.70, groundY, figH*0.90,
+    { cls:'support', skin:0, head:'crown', color:'#c96a9a', team:'ally', faceRight:false, loadout:{ w:'none', build:0.95 } },
+    T('princessSpeaker'));
 
   const txt = document.getElementById('tableauText');
   if(txt) txt.innerHTML = T('tableauText', heroDisplayName());
@@ -11035,7 +11042,15 @@ function draw(){
   // rajza ide-oda vált a talajsík és a képernyő-tér között.
   const shaking = shakeT>0 && shakeMag>0;
   worldFit();
-  if(game && game.player) arenaCamFollow(game.player.x, game.player.y, !ARENA_CAM.ready);
+  if(game && game.player){
+    /* Kamera-előretartás: a kép kicsit a célzás irányába néz, hogy lásd, mire
+       lősz, és a mozgás iránya felé nyíljon a tér. Lágyan követ, nem rándul. */
+    const p0 = game.player; let lx = 0, ly = 0;
+    if(game.state==='playing' && (game.runFrames||0) > 2 && typeof input.aimX === 'number'){
+      lx = clamp((input.aimX - p0.x)*0.16, -80, 80); ly = clamp((input.aimY - p0.y)*0.16, -80, 80);
+    }
+    arenaCamFollow(p0.x + lx, p0.y + ly, !ARENA_CAM.ready);
+  }
   const A = arenaIsoFit(WORLD.w, WORLD.h);
   if(shaking){
     const amp = shakeMag * (shakeT/12);
@@ -11268,8 +11283,7 @@ function draw(){
 
   if(game.boss){
     const b = game.boss;
-    stand(b.x, b.y, ()=>{ ctx.save(); ctx.translate(b.x, b.y); ctx.scale(BODY_MUL, 1); ctx.translate(-b.x, -b.y);
-      drawBoss(ctx, b, Math.atan2(p.y-b.y, p.x-b.x)); ctx.restore(); });
+    stand(b.x, b.y, ()=> drawBoss(ctx, b, Math.atan2(p.y-b.y, p.x-b.x)));
   }
 
   // ---- JÁTÉKOS ----
