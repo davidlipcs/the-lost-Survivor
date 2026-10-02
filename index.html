@@ -5380,7 +5380,10 @@ function figCacheKey(a, opt, bakeS){
   const mv = ((a._spd||0) > 0.004) ? 1 : 0;
   const dir = opt.faceRight ? 1 : 0;
   const at = (a._atk > 0) ? (1 + Math.round((1-a._atk) * (ATK_STEPS-1))) : 0;
-  return [bs.body||'x', bs.head||'x', lo.w||'x', a.color||'x', (a.skin===undefined?'x':a.skin), a.head||'x',
+  // a kaszt és a csapat is a kulcs része: a Mágus, a Nekromanta és a Támogató
+  // teste/feje/fegyvere azonos, de a kinézetük színe a kasztból jön
+  return [bs.body||'x', bs.head||'x', lo.w||'x', a.cls||'x', a.etype||'x', a.team||'x', a.color||'x',
+          (a.skin===undefined?'x':a.skin), a.head||'x',
           at, at?0:mv, (at||!mv)?0:ph, dir, bakeS].join('|');
 }
 
@@ -5397,7 +5400,7 @@ function bakeFigure(a, opt, faceRight, phase, moving, S, atk){
   // a figurát egy ideiglenes vászonra rajzoljuk, hogy a kontúrhoz legyen sziluettünk
   const tmp = document.createElement('canvas'); tmp.width=W; tmp.height=H;
   const tg = tmp.getContext('2d');
-  const stub = { cls:a.cls, color:a.color, facing: faceRight?0:Math.PI,
+  const stub = { cls:a.cls, etype:a.etype, color:a.color, facing: faceRight?0:Math.PI,
                  _walk: phase, _spd: moving?0.02:0, _atk: atk||0,
                  team:a.team, hp:1, maxHp:1, skin:a.skin, head:a.head };
   isoFigureRaw(tg, stub, ox, oy, S, opt, faceRight);
