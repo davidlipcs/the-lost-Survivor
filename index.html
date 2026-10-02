@@ -10745,13 +10745,19 @@ function arenaFloorLayer(w, h, th){
 
    A forma a sugárból jön, a szín a fejezet stílusából; a rombolhatók a
    saját színüket viszik, és sérülten meg is repednek. */
+/* A kulcsok a fejezetek groundTheme azonosítói (ruins, forest, farm, kingdom,
+   cave, ash, frost, void). Korábban 'snow' és 'lava' állt itt, amit egyetlen
+   fejezet sem használ, ezért a hamu-, jég-, királyság- és kapu-pályán is a
+   romok szürke oszlopai álltak. */
 const ARENA_PILLAR_COL = {
-  ruins:  ['#6a6f7a', '#3b3f47'],
-  forest: ['#5d6a54', '#333a2e'],
-  farm:   ['#7a6a4c', '#443b2a'],
-  cave:   ['#5a5560', '#322f38'],
-  snow:   ['#8d99a6', '#4d555f'],
-  lava:   ['#6b4b40', '#39241e'],
+  ruins:   ['#6a6f7a', '#3b3f47'],
+  forest:  ['#5d6a54', '#333a2e'],
+  farm:    ['#7a6a4c', '#443b2a'],
+  kingdom: ['#7c8290', '#454b58'],
+  cave:    ['#5a5560', '#322f38'],
+  ash:     ['#5e4f48', '#2f2623'],
+  frost:   ['#9db4c8', '#4e6274'],
+  void:    ['#5c4a7e', '#2a1e3f'],
 };
 function arenaDrawPillar(g, o, theme, dmgF){
   const base = ARENA_PILLAR_COL[theme] || ARENA_PILLAR_COL.ruins;
