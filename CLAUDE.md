@@ -100,6 +100,15 @@ a baj, mit csináltál, hogyan tesztelted. Magyarul.
 - **Pálya:** sima csatában a vászon 2,4-szerese tengelyenként
   (`WORLD_SCALE_PLAIN`) — a korábbi 3,4-es terület fele. A lőtávolság
   (`rangeMul`) a pályával együtt változik (David így kérte).
+- **Bossok (v55, David kérte):** a három sima boss MÁS ALAKÚ szörny 45
+  fokban (`drawBossMonster`): Árnyék = lebegő, csuklyás, szarvas démon,
+  körülötte a földből csápok; Jég = tömbökből és kristályokból álló
+  jéggólem, keringő jégszilánkokkal; Láng = magma-kő óriás lángsörénnyel
+  és lángoló pallossal, a lába körül lángnyelvek. A hatásuk a TALAJON
+  fekszik (2:1 lapítás, hátsó fele a test mögött, első fele előtte). A
+  fejezet-boss (király) figura marad.
+- **Tank elérése:** a csapás 111 (régen 74, +50%); a láncos buzogány
+  (`FLAIL_REACH`) ennek másfélszerese, 166.
 - **Mobilon is működjön minden.**
 
 ## Tesztelés
