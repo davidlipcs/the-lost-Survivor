@@ -17,6 +17,8 @@ Statikus kiszolgáló a repó gyökerén: `python -m http.server 8901`.
 - `node tests/screens.js <url> shots/screens` - képernyő-sweep: főmenü, hősválasztó
   (rámutatás, kiválasztás, kinézet/fej), diadal-kép, a 4 boss közelről, sprint,
   halál-animáció, telefon álló és fekvő.
+- `node tests/items.js <url>` - a v56 tárgyak (mind a 15) hatása a valódi hurokkal, a tárgy-gombok
+  mentése/visszatöltése és az ellenfél-szorzók. Kilépési kód 1, ha bármi elbukik.
 - `node tests/sheet.js <url> shots/sheet.png [lépték]` - sprite-lap: a kisütött
   járás- és támadás-fázisok egymás mellett több hősre és ellenfélre (a figura-
   animáció szemrevételezéséhez).
