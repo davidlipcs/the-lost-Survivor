@@ -76,13 +76,31 @@ a baj, mit csináltál, hogyan tesztelted. Magyarul.
   eltalál; a nagy kőtömb végiggörget a soron, mindenkit megsebez (annyit,
   mint régen az első: ütés + robbanás) és félrelök, a végén becsapódik.
   Saját ötletet ne tegyél be.
+  **v56 — más játékok mintájára** (David választotta a javaslatokból):
+  Tank: Napmag-páncél (égő kör, csapásonként forróbb, max. 3×), Utórengés
+  (minden 3. csapás földrengés + 1 mp kábítás). Mesterlövész: Holtszem
+  (AKTÍV: 3 mp lassú idő, max. 6 jelölés, a végén mind lelövi), Negyedik
+  lövés (minden 4. kritikus + kivégzés 25% alatt). Berserker: Spártai düh
+  (dühmérő → 8 mp dupla sebzés, ütés gyógyít), Halhatatlan düh (5 mp nem
+  hal meg, 60 mp-enként), Becsapódó ugrás (AKTÍV). Orgyilkos: Füstbomba
+  (SOHA nem látják, csak dobás után 2 mp-ig; minden dobás +70%, de fele
+  táv; AKTÍV: nagy kábító füst, benne dupla találat). Nekromanta:
+  Csontpáncél, Életszívás (10%). Vadász: Sárkánycsapás (8 mp-enként két
+  szellemsárkány a lövés vonalán), Kazettás nyíl (4 bomba). Gépész: Harci
+  robot (AKTÍV, 10 mp), Tesla-torony (AKTÍV: lerakható, az élete 20 mp alatt
+  elfogy, utána újra lerakható), Pókaknák (10 mp-enként 6).
+  Az AKTÍV tárgyak saját képesség-gombot kapnak a következő szabad
+  billentyűn (kontrolleren a d-paden), a meglévő képességek megmaradnak;
+  a gomb nem mentődik, a tárgyból jön újra (`grantItemAbility`).
 - **Ellenfél-zsákmány:** mesterlövész→Távcső, tank→Életerő, rajlény→Dupla
   lövés, rohamozó→Gyorstöltés, felderítő→Fürgeség; ölésenként 10%,
   rétegenként max. 3 (a Dupla lövés 1), nem foglal felszerelés-helyet.
 - **Gyógyítás:** minden hősnek saját gombon (H / zöld ✚ / LT), 30% életerő,
   10 mp; a „Gyógyulás” képesség nem foglal képesség-helyet.
-- **Ellenfelek:** feleannyi (`ENEMY_COUNT_MUL` 0,5), kétszeres élet,
-  másfélszeres sebzés; a boss nem változik.
+- **Ellenfelek:** feleannyi (`ENEMY_COUNT_MUL` 0,5), háromszoros élet,
+  2,25-szörös sebzés (v56: +50% / +50%, mert NEM térnek ki a lövések elől —
+  David kérte; a `dodgeBullets` megszűnt). Az XP ellenfelenként nem nőtt
+  (a szintlépés tempója marad). A boss nem változik.
 - **Gyémánt (🔷):** így hívjuk a régi „kristályt” (angolul *diamond*; a
   kódban továbbra is `profile.shards`). Napi küldetésekből és a
   **nehezebb trófeákból** jár: a trófea `gems` mezője, kb. a pénzjutalma
@@ -118,7 +136,7 @@ Fejetlen Chromium + Playwright, a böngésző itt:
 `CHROME_PATH` környezeti változóval adható meg).
 A tesztkészlet a repóban van: `tests/smoke.js` (20 ellenőrzés a valódi
 hurokkal, kilépési kód 1 hibánál), `tests/screens.js` (képernyő-sweep,
-telefon-méretekkel is), `tests/sheet.js` (sprite-lap a figura-animációról).
+telefon-méretekkel is), `tests/items.js` (a v56 tárgyak, 24 ellenőrzés), `tests/sheet.js` (sprite-lap a figura-animációról).
 Leírás: `tests/README.md`. Kiszolgáló: `python -m http.server 8901` a repó
 gyökerén.
 
